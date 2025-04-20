@@ -1,485 +1,409 @@
-import { Authenticated, Unauthenticated, useQuery, useMutation, useAction } from "convex/react";
-import { api } from "../convex/_generated/api";
-import { SignInForm } from "./SignInForm";
-import { SignOutButton } from "./SignOutButton";
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { Toaster, toast } from "sonner";
-import { motion, AnimatePresence, useAnimation } from "framer-motion";
+import { generateStory, listStories, toggleFavorite } from "./lib/api";
 
-// Theme definitions
 const themes = [
-  {
-    value: "friendship",
-    label: "Friendship",
-    icon: "🤝",
-    description: "Stories about making friends and being kind"
-  },
-  {
-    value: "adventure",
-    label: "Adventure",
-    icon: "🗺️",
-    description: "Epic quests and exciting journeys"
-  },
-  {
-    value: "nature",
-    label: "Nature",
-    icon: "🌳",
-    description: "Tales about animals and the environment"
-  },
-  {
-    value: "magic",
-    label: "Magic",
-    icon: "✨",
-    description: "Magical stories with wonder and fantasy"
-  },
-  {
-    value: "learning",
-    label: "Learning",
-    icon: "📚",
-    description: "Educational stories that teach new things"
-  },
-  {
-    value: "family",
-    label: "Family",
-    icon: "👨‍👩‍👧‍👦",
-    description: "Stories about family love and togetherness"
-  }
+  "Adventure",
+  "Friendship",
+  "Animals",
+  "Space",
+  "Magic",
+  "Sports",
+  "Nature",
+  "Music",
+  "Art",
+  "Science",
 ];
 
-// Age group definitions
 const ageGroups = [
-  {
-    value: "3-5",
-    label: "Preschool",
-    icon: "🎨",
-    description: "Simple, colorful stories"
-  },
-  {
-    value: "5-8",
-    label: "Early readers",
-    icon: "📖",
-    description: "Engaging tales with morals"
-  },
-  {
-    value: "8-12",
-    label: "Confident readers",
-    icon: "🚀",
-    description: "More complex adventures"
-  }
+  { label: "3-5 years", value: "3-5" },
+  { label: "6-8 years", value: "6-8" },
+  { label: "9-12 years", value: "9-12" },
 ];
 
-// Interactive background patterns
 function BackgroundPatterns() {
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden">
-      {/* Floating shapes */}
-      <FloatingShapes />
-      {/* Animated patterns */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="absolute top-0 left-0 w-full h-full pattern-dots" />
-        <div className="absolute top-0 left-0 w-full h-full pattern-crosses rotate-45 scale-150" />
-      </div>
-      {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/80 via-purple-50/80 to-pink-50/80" />
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-blue-50" />
+      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
     </div>
   );
 }
 
-// Enhanced floating shapes with more variety
 function FloatingShapes() {
   return (
+    <div className="fixed inset-0 -z-10 overflow-hidden">
+      <motion.div
+        className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-purple-200/30"
+        animate={{
+          scale: [1, 1.2, 1],
+          x: [0, 20, 0],
+          y: [0, -20, 0],
+        }}
+        transition={{
+          duration: 8,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+      <motion.div
+        className="absolute bottom-1/4 right-1/4 w-64 h-64 rounded-full bg-blue-200/30"
+        animate={{
+          scale: [1, 1.2, 1],
+          x: [0, -20, 0],
+          y: [0, 20, 0],
+        }}
+        transition={{
+          duration: 8,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+    </div>
+  );
+}
+
+// Modal component to display full story
+function StoryModal({ story, isOpen, onClose }: { story: any; isOpen: boolean; onClose: () => void }) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg shadow-xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-start mb-4">
+          <h2 className="text-2xl font-bold text-gray-900">{story.title}</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        
+        <div className="flex flex-wrap gap-2 mb-4">
+          <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
+            {story.theme}
+          </span>
+          <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+            {story.ageGroup} years
+          </span>
+          {story.characters.map((character: string, index: number) => (
+            <span
+              key={index}
+              className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm"
+            >
+              {character}
+            </span>
+          ))}
+        </div>
+        
+        <div className="prose prose-lg max-w-none">
+          {story.content.split('\n').map((paragraph: string, index: number) => (
+            paragraph.trim() ? <p key={index}>{paragraph}</p> : <br key={index} />
+          ))}
+        </div>
+        
+        <div className="mt-6 text-right">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StoryCard({ story, onToggleFavorite }: { story: any; onToggleFavorite: (id: number) => void }) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  return (
     <>
-      {[...Array(25)].map((_, i) => (
-        <motion.div
-          key={i}
-          className="absolute"
-          initial={{
-            x: Math.random() * window.innerWidth,
-            y: Math.random() * window.innerHeight,
-            scale: Math.random() * 0.5 + 0.5,
-            rotate: Math.random() * 360,
-          }}
-          animate={{
-            x: [
-              Math.random() * window.innerWidth,
-              Math.random() * window.innerWidth,
-              Math.random() * window.innerWidth,
-            ],
-            y: [
-              Math.random() * window.innerHeight,
-              Math.random() * window.innerHeight,
-              Math.random() * window.innerHeight,
-            ],
-            rotate: [0, 180, 360],
-            scale: [1, 1.2, 1],
-          }}
-          transition={{
-            duration: Math.random() * 20 + 20,
-            repeat: Infinity,
-            ease: "linear",
-            times: [0, 0.5, 1],
-          }}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white rounded-lg shadow-lg p-6 space-y-4"
+      >
+        <div className="flex justify-between items-start">
+          <h3 className="text-xl font-bold text-gray-900">{story.title}</h3>
+          <button
+            onClick={() => onToggleFavorite(story.id)}
+            className={`p-2 rounded-full ${
+              story.isFavorite ? "text-yellow-500" : "text-gray-400"
+            } hover:text-yellow-500 transition-colors`}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill={story.isFavorite ? "currentColor" : "none"}
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+              />
+            </svg>
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
+            {story.theme}
+          </span>
+          <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+            {story.ageGroup} years
+          </span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {story.characters.map((character: string, index: number) => (
+            <span
+              key={index}
+              className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm"
+            >
+              {character}
+            </span>
+          ))}
+        </div>
+        <div 
+          className="text-gray-600 line-clamp-3 cursor-pointer hover:text-purple-600"
+          onClick={() => setIsModalOpen(true)}
         >
-          <div 
-            className={`opacity-10 ${
-              i % 4 === 0 
-                ? "w-12 h-12 bg-indigo-400 rounded-full" 
-                : i % 4 === 1 
-                ? "w-10 h-10 bg-pink-400 rounded" 
-                : i % 4 === 2
-                ? "w-8 h-8 bg-yellow-400 triangle"
-                : "w-16 h-16 bg-purple-400 star"
-            }`}
-          />
-        </motion.div>
-      ))}
+          {story.content}
+        </div>
+        <div className="flex justify-between items-center">
+          <div className="text-sm text-gray-500">
+            {new Date(story.createdAt).toLocaleDateString()}
+          </div>
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="text-sm text-purple-600 hover:text-purple-800 font-medium"
+          >
+            Read Full Story
+          </button>
+        </div>
+      </motion.div>
+      
+      <StoryModal 
+        story={story} 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+      />
     </>
   );
 }
 
-// Interactive card component with hover effects
-function StoryCard({ story, onToggleFavorite }: { 
-  story: any; 
-  onToggleFavorite: (id: string) => void;
-}) {
-  const controls = useAnimation();
-  
-  useEffect(() => {
-    controls.start({ scale: 1, opacity: 1 });
-  }, []);
-
-  return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={controls}
-      whileHover={{ 
-        scale: 1.02,
-        boxShadow: "0 25px 30px -5px rgba(0, 0, 0, 0.1), 0 15px 15px -5px rgba(0, 0, 0, 0.04)",
-      }}
-      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      className="p-8 bg-white/80 backdrop-blur-sm rounded-xl shadow-xl transform-gpu max-w-4xl mx-auto"
-    >
-      <motion.div 
-        className="flex justify-between items-start mb-6"
-        whileHover={{ y: -2 }}
-      >
-        <h3 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
-          {story.title}
-        </h3>
-        <motion.button
-          onClick={() => onToggleFavorite(story._id)}
-          className={`text-4xl ${story.isFavorite ? 'text-yellow-500' : 'text-gray-300'}`}
-          whileHover={{ scale: 1.2, rotate: [0, -10, 10, 0] }}
-          whileTap={{ scale: 0.8 }}
-          transition={{ type: "spring", stiffness: 400, damping: 10 }}
-        >
-          {story.isFavorite ? "★" : "☆"}
-        </motion.button>
-      </motion.div>
-      <motion.p 
-        className="text-xl leading-relaxed text-gray-700 whitespace-pre-wrap mb-6"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-      >
-        {story.content}
-      </motion.p>
-      <motion.div 
-        className="mt-6 flex flex-wrap gap-3"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        {story.characters.map((char: string, i: number) => (
-          <motion.span
-            key={i}
-            className="px-5 py-2 bg-indigo-100 rounded-full text-lg font-medium"
-            whileHover={{ scale: 1.1, backgroundColor: "#e0e7ff" }}
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: i * 0.1 }}
-          >
-            {char}
-          </motion.span>
-        ))}
-      </motion.div>
-      <motion.div 
-        className="mt-4 text-lg text-gray-600 font-medium"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.4 }}
-      >
-        Age group: {story.ageGroup}
-      </motion.div>
-    </motion.div>
-  );
-}
-
-// Theme selector with visual feedback
-function ThemeSelector({ value, onChange, themes }: {
-  value: string;
-  onChange: (value: string) => void;
-  themes: Array<{
-    value: string;
-    label: string;
-    icon: string;
-    description: string;
-  }>;
-}) {
-  return (
-    <div className="space-y-4">
-      <label className="block text-xl font-bold mb-4">Story Theme</label>
-      <div className="grid grid-cols-2 gap-6 sm:grid-cols-3">
-        {themes.map((t) => (
-          <motion.button
-            key={t.value}
-            onClick={() => onChange(t.value)}
-            className={`p-6 rounded-xl text-left transition-colors ${
-              value === t.value 
-                ? 'bg-indigo-100 border-3 border-indigo-500' 
-                : 'bg-white/80 border-3 border-transparent hover:border-indigo-200'
-            }`}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <span className="text-4xl mb-3 block">{t.icon}</span>
-            <span className="text-xl font-bold block mb-2">{t.label}</span>
-            <span className="text-lg text-gray-600">{t.description}</span>
-          </motion.button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export default function App() {
-  const [currentTheme, setCurrentTheme] = useState("default");
-  
-  const themeStyles = {
-    default: "from-indigo-50 via-purple-50 to-pink-50",
-    fantasy: "from-blue-50 via-purple-50 to-pink-50",
-    nature: "from-green-50 via-emerald-50 to-teal-50",
-    space: "from-slate-800 via-purple-900 to-slate-900 text-white",
-  };
-
-  return (
-    <div className={`min-h-screen flex flex-col bg-gradient-to-br ${themeStyles[currentTheme as keyof typeof themeStyles]} transition-colors duration-1000`}>
-      <BackgroundPatterns />
-      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-sm p-4 flex justify-between items-center border-b">
-        <div className="flex items-center gap-4">
-          <motion.h2 
-            className="text-xl font-semibold text-indigo-600"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            AI Storyteller
-          </motion.h2>
-          <div className="flex gap-2">
-            {Object.keys(themeStyles).map((theme) => (
-              <motion.button
-                key={theme}
-                onClick={() => setCurrentTheme(theme)}
-                className={`w-6 h-6 rounded-full ${
-                  theme === currentTheme ? 'ring-2 ring-offset-2 ring-indigo-500' : ''
-                }`}
-                whileHover={{ scale: 1.2 }}
-                whileTap={{ scale: 0.9 }}
-                style={{
-                  background: theme === 'default' ? 'linear-gradient(135deg, #818cf8, #c084fc, #f472b6)' :
-                           theme === 'fantasy' ? 'linear-gradient(135deg, #60a5fa, #c084fc, #f472b6)' :
-                           theme === 'nature' ? 'linear-gradient(135deg, #34d399, #10b981, #14b8a6)' :
-                           'linear-gradient(135deg, #1e293b, #6b21a8, #1e293b)'
-                }}
-              />
-            ))}
-          </div>
-        </div>
-        <SignOutButton />
-      </header>
-      <main className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-4xl mx-auto">
-          <Content />
-        </div>
-      </main>
-      <Toaster />
-    </div>
-  );
-}
-
-function Content() {
+  const [stories, setStories] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [theme, setTheme] = useState("");
   const [characters, setCharacters] = useState<string[]>([]);
-  const [ageGroup, setAgeGroup] = useState("5-8");
-  const [newCharacter, setNewCharacter] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
-  
-  const stories = useQuery(api.stories.listStories);
-  const generateStory = useAction(api.stories.generateStory);
-  const toggleFavorite = useMutation(api.stories.toggleFavorite);
+  const [characterInput, setCharacterInput] = useState("");
+  const [ageGroup, setAgeGroup] = useState("");
 
-  const handleAddCharacter = () => {
-    if (newCharacter && !characters.includes(newCharacter)) {
-      setCharacters([...characters, newCharacter]);
-      setNewCharacter("");
+  useEffect(() => {
+    fetchStories();
+  }, []);
+
+  const fetchStories = async () => {
+    try {
+      const response = await listStories();
+      setStories(response);
+    } catch (error) {
+      console.error("Error fetching stories:", error);
+      toast.error("Failed to fetch stories");
     }
   };
 
   const handleGenerateStory = async () => {
-    if (!theme || characters.length === 0) {
-      toast.error("Please enter a theme and at least one character");
+    if (!theme || characters.length === 0 || !ageGroup) {
+      toast.error("Please fill in all fields");
       return;
     }
 
-    setIsGenerating(true);
+    setIsLoading(true);
     try {
-      await generateStory({ theme, characters, ageGroup });
-      toast.success("Story created successfully!");
+      const newStory = await generateStory(theme, characters, ageGroup);
+      setStories([newStory, ...stories]);
       setTheme("");
       setCharacters([]);
+      setCharacterInput("");
+      setAgeGroup("");
+      toast.success("Story generated successfully!");
     } catch (error) {
-      toast.error("Failed to create story. Please try again.");
-      console.error("Story generation error:", error);
+      console.error("Error generating story:", error);
+      toast.error("Failed to generate story");
     } finally {
-      setIsGenerating(false);
+      setIsLoading(false);
     }
   };
 
+  const handleToggleFavorite = async (storyId: number) => {
+    try {
+      const updatedStory = await toggleFavorite(storyId);
+      setStories(
+        stories.map((story) =>
+          story.id === storyId ? updatedStory : story
+        )
+      );
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+      toast.error("Failed to update favorite status");
+    }
+  };
+
+  const addCharacter = () => {
+    if (characterInput.trim() && !characters.includes(characterInput.trim())) {
+      setCharacters([...characters, characterInput.trim()]);
+      setCharacterInput("");
+    }
+  };
+
+  const removeCharacter = (characterToRemove: string) => {
+    setCharacters(characters.filter((char) => char !== characterToRemove));
+  };
+
   return (
-    <div className="flex flex-col gap-8">
-      <div className="text-center">
-        <motion.h1 
-          className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-4 animate-gradient"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          AI Storyteller
-        </motion.h1>
-        <Authenticated>
-          <motion.div 
-            className="max-w-xl mx-auto space-y-6"
-            initial={{ opacity: 0, y: 20 }}
+    <div className="min-h-screen bg-gray-50">
+      <BackgroundPatterns />
+      <FloatingShapes />
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <header className="text-center mb-12">
+          <motion.h1
+            initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
+            className="text-4xl font-bold text-gray-900 mb-4"
           >
-            <ThemeSelector value={theme} onChange={setTheme} themes={themes} />
+            AI Storyteller
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="text-xl text-gray-600"
+          >
+            Create magical stories for children
+          </motion.p>
+        </header>
 
-            <div className="space-y-2">
-              <label className="block text-sm font-medium">Characters</label>
-              <div className="flex gap-2">
-                <motion.input
-                  type="text"
-                  value={newCharacter}
-                  onChange={(e) => setNewCharacter(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleAddCharacter()}
-                  placeholder="Add a character"
-                  className="flex-1 p-2 border rounded bg-white/80 backdrop-blur-sm"
-                  whileFocus={{ scale: 1.02 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                />
-                <motion.button
-                  onClick={handleAddCharacter}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Add
-                </motion.button>
-              </div>
-              <div className="flex flex-wrap gap-2 mt-2">
-                <AnimatePresence>
-                  {characters.map((char, i) => (
-                    <motion.span 
-                      key={char}
-                      initial={{ opacity: 0, scale: 0, rotate: -180 }}
-                      animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                      exit={{ opacity: 0, scale: 0, rotate: 180 }}
-                      className="px-3 py-1 bg-white/80 backdrop-blur-sm rounded-full flex items-center gap-2 shadow-sm"
-                    >
-                      {char}
-                      <button
-                        onClick={() => setCharacters(characters.filter((_, idx) => idx !== i))}
-                        className="text-indigo-600 hover:text-indigo-800"
-                      >
-                        ×
-                      </button>
-                    </motion.span>
-                  ))}
-                </AnimatePresence>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium">Age Group</label>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-white rounded-lg shadow-lg p-6 mb-8"
+        >
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            Create a New Story
+          </h2>
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Theme
+              </label>
               <select
-                value={ageGroup}
-                onChange={(e) => setAgeGroup(e.target.value)}
-                className="w-full p-2 border rounded bg-white/80 backdrop-blur-sm"
+                value={theme}
+                onChange={(e) => setTheme(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               >
-                {ageGroups.map((ag) => (
-                  <option key={ag.value} value={ag.value}>
-                    {ag.icon} {ag.label} - {ag.description}
+                <option value="">Select a theme</option>
+                {themes.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
                   </option>
                 ))}
               </select>
             </div>
 
-            <motion.button
-              onClick={handleGenerateStory}
-              disabled={isGenerating || !theme || characters.length === 0}
-              className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-              whileHover={{ scale: 1.02, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)" }}
-              whileTap={{ scale: 0.98 }}
-            >
-              {isGenerating ? (
-                <div className="flex items-center justify-center gap-2">
-                  <motion.div
-                    className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  />
-                  Creating Story...
-                </div>
-              ) : (
-                "Generate Story"
-              )}
-            </motion.button>
-          </motion.div>
-
-          <motion.div 
-            className="mt-12"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
-          >
-            <h2 className="text-2xl font-bold mb-6">Your Stories</h2>
-            <div className="grid gap-6 md:grid-cols-2">
-              <AnimatePresence>
-                {stories?.map((story) => (
-                  <StoryCard 
-                    key={story._id} 
-                    story={story} 
-                    onToggleFavorite={toggleFavorite}
-                  />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Characters
+              </label>
+              <div className="flex gap-2 mb-2">
+                <input
+                  type="text"
+                  value={characterInput}
+                  onChange={(e) => setCharacterInput(e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && addCharacter()}
+                  placeholder="Add a character"
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+                <button
+                  onClick={addCharacter}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                >
+                  Add
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {characters.map((character) => (
+                  <span
+                    key={character}
+                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800"
+                  >
+                    {character}
+                    <button
+                      onClick={() => removeCharacter(character)}
+                      className="ml-2 text-purple-600 hover:text-purple-800"
+                    >
+                      ×
+                    </button>
+                  </span>
                 ))}
-              </AnimatePresence>
+              </div>
             </div>
-          </motion.div>
-        </Authenticated>
-        
-        <Unauthenticated>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <p className="text-xl text-slate-600 mb-4">Sign in to create magical stories!</p>
-            <SignInForm />
-          </motion.div>
-        </Unauthenticated>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Age Group
+              </label>
+              <select
+                value={ageGroup}
+                onChange={(e) => setAgeGroup(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+                <option value="">Select age group</option>
+                {ageGroups.map((group) => (
+                  <option key={group.value} value={group.value}>
+                    {group.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              onClick={handleGenerateStory}
+              disabled={isLoading}
+              className="w-full px-6 py-3 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? "Generating..." : "Generate Story"}
+            </button>
+          </div>
+        </motion.div>
+
+        <div className="space-y-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Your Stories</h2>
+          {stories.length === 0 ? (
+            <p className="text-center text-gray-500">No stories yet. Create one!</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {stories.map((story) => (
+                <StoryCard
+                  key={story.id}
+                  story={story}
+                  onToggleFavorite={handleToggleFavorite}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
+      <Toaster position="top-right" />
     </div>
   );
 }

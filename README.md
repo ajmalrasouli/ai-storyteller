@@ -4,8 +4,7 @@ An interactive AI-powered storytelling application that generates personalized c
 
 ## Features
 
-- 🤖 AI-powered story generation using OpenAI's GPT-4
-- 👥 User authentication
+- 🤖 AI-powered story generation using Azure OpenAI
 - 📚 Multiple age group support (3-5, 5-8, 8-12 years)
 - 🎨 Various story themes (Friendship, Adventure, Nature, etc.)
 - ⭐ Story favoriting system
@@ -15,8 +14,8 @@ An interactive AI-powered storytelling application that generates personalized c
 ## Tech Stack
 
 - Frontend: React + Vite + TypeScript
-- Backend: Convex
-- AI: OpenAI GPT-4
+- Backend: Flask + SQLAlchemy
+- AI: Azure OpenAI
 - Styling: TailwindCSS
 - Animations: Framer Motion
 
@@ -24,7 +23,7 @@ An interactive AI-powered storytelling application that generates personalized c
 
 1. Clone the repository:
    ```bash
-   git clone <your-repo-url>
+   git clone https://github.com/ajmalrasouli/ai-storyteller.git
    cd ai-storyteller
    ```
 
@@ -33,33 +32,37 @@ An interactive AI-powered storytelling application that generates personalized c
    npm install
    ```
 
-3. Create a `.env.local` file in the root directory with your Convex and OpenAI credentials:
+3. Create a `.env` file in the root directory with your Azure OpenAI credentials:
    ```
-   CONVEX_DEPLOY_KEY=your_convex_deploy_key
-   CONVEX_DEPLOYMENT=your_convex_deployment
-   VITE_CONVEX_URL=your_convex_url
-   CONVEX_OPENAI_API_KEY=your_openai_api_key
-   CONVEX_OPENAI_BASE_URL=https://api.openai.com/v1
+   DATABASE_URL=sqlite:///stories.db
+   AZURE_OPENAI_API_KEY=your_azure_openai_api_key
+   AZURE_OPENAI_ENDPOINT=your_azure_openai_endpoint
+   FLASK_APP=app.py
+   FLASK_ENV=development
    ```
 
-4. Start the development server:
+4. Start the development servers:
    ```bash
-   npm run dev
+   # Start the Flask backend
+   python app.py
+   
+   # In a separate terminal, start the frontend
+   npm run dev:frontend
    ```
 
 ## Environment Variables
 
-- `CONVEX_DEPLOY_KEY`: Your Convex deployment key
-- `CONVEX_DEPLOYMENT`: Your Convex deployment name
-- `VITE_CONVEX_URL`: Your Convex deployment URL
-- `CONVEX_OPENAI_API_KEY`: Your OpenAI API key
-- `CONVEX_OPENAI_BASE_URL`: OpenAI API base URL
+- `DATABASE_URL`: SQLite database URL
+- `AZURE_OPENAI_API_KEY`: Your Azure OpenAI API key
+- `AZURE_OPENAI_ENDPOINT`: Your Azure OpenAI endpoint URL
+- `FLASK_APP`: Flask application entry point
+- `FLASK_ENV`: Flask environment (development/production)
 
 ## Development
 
-- `npm run dev`: Start development server
-- `npm run build`: Build for production
-- `npm run lint`: Run TypeScript type checking
+- `npm run dev:frontend`: Start frontend development server
+- `python app.py`: Start backend server
+- `npm run build`: Build frontend for production
 
 ## License
 

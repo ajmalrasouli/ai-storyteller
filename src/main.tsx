@@ -1,16 +1,14 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { ConvexAuthProvider } from "@convex-dev/auth/react";
-import { ConvexReactClient } from "convex/react";
-import "./index.css";
 import App from "./App";
+import "./index.css";
 
-const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
+const rootElement = document.getElementById("root");
+if (!rootElement) throw new Error("Failed to find the root element");
 
-createRoot(document.getElementById("root")!).render(
+const root = createRoot(rootElement);
+root.render(
   <StrictMode>
-    <ConvexAuthProvider client={convex}>
-      <App />
-    </ConvexAuthProvider>
-  </StrictMode>,
+    <App />
+  </StrictMode>
 );
