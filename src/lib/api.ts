@@ -67,7 +67,7 @@ export async function getCurrentUser(token: string): Promise<User> {
   if (!token) {
     throw new Error("Authentication token is required");
   }
-  return fetchWithAuth("/auth/me", { method: "GET" }, token);
+  return fetchWithAuth("/auth/me", { method: "GET" });
 }
 
 export async function generateStory(

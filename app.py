@@ -29,8 +29,11 @@ endpoint = "https://ajmal-m9psmmwe-eastus2.openai.azure.com/"
 AZURE_DEPLOYMENT = "gpt-4.1-mini"
 api_version = "2024-12-01-preview"
 
-client = AzureOpenAI(
-    api_key=os.getenv("AZURE_OPENAI_API_KEY"),  
+# Try to use the OPENAI_API_KEY first, then fall back to AZURE_OPENAI_API_KEY
+api_key = os.getenv("OPENAI_API_KEY") or os.getenv("AZURE_OPENAI_API_KEY")
+
+openai_client = AzureOpenAI(
+    api_key=api_key,  
     api_version=api_version,
     azure_endpoint=endpoint
 )
@@ -76,6 +79,14 @@ def debug_config():
 
 # Enhanced fallback story generator
 def generate_creative_story(theme, characters, age_group):
+    # Ensure we have a valid list of characters
+    if not characters or not isinstance(characters, list):
+        characters = ["a brave child", "a wise adult"]
+    
+    # Make sure we have at least two characters for our templates
+    while len(characters) < 2:
+        characters.append("a helpful friend")
+    
     # Story elements by theme
     theme_elements = {
         "Friendship": {
@@ -213,7 +224,7 @@ class Story(db.Model):
 
 # Create tables
 with app.app_context():
-    db.drop_all()  # Drop existing tables
+    # Only create tables if they don't exist
     db.create_all()  # Create new tables
 
 # Story routes
@@ -226,7 +237,7 @@ def get_stories():
             'title': story.title,
             'content': story.content,
             'theme': story.theme,
-            'characters': story.characters.split(','),
+            'characters': [char.strip() for char in story.characters.split(',') if char.strip()],
             'ageGroup': story.age_group,
             'isFavorite': story.is_favorite,
             'createdAt': story.created_at.isoformat()
@@ -244,16 +255,23 @@ def create_story():
         if 'theme' not in data:
             return jsonify({'message': 'Missing required field: theme'}), 400
 
-        if 'characters' not in data or not isinstance(data['characters'], list):
-            return jsonify({'message': 'Missing or invalid characters field'}), 400
+        if 'characters' not in data or not isinstance(data['characters'], list) or len(data['characters']) == 0:
+            return jsonify({'message': 'Missing or invalid characters field. Please provide at least one character.'}), 400
 
         if 'ageGroup' not in data:
             return jsonify({'message': 'Missing required field: ageGroup'}), 400
         
+        # Ensure characters are valid strings and join them for display
+        characters = [str(char).strip() for char in data['characters'] if str(char).strip()]
+        if not characters:
+            return jsonify({'message': 'Please provide at least one valid character'}), 400
+            
+        characters_text = ', '.join(characters)
+        
         # Generate story using Azure OpenAI
         prompt = f"""Create a children's story with the following details:
         Theme: {data['theme']}
-        Characters: {', '.join(data['characters'])}
+        Characters: {characters_text}
         Age Group: {data['ageGroup']} years old
         
         Please include:
@@ -267,7 +285,7 @@ def create_story():
         Make it engaging, educational, and age-appropriate."""
 
         try:
-            response = client.chat.completions.create(
+            response = openai_client.chat.completions.create(
                 model=AZURE_DEPLOYMENT,
                 messages=[
                     {"role": "system", "content": "You are a creative children's story writer with expertise in creating engaging, age-appropriate stories that entertain and teach valuable lessons."},
@@ -294,7 +312,7 @@ def create_story():
             title=title,
             content=story_content,
             theme=data['theme'],
-            characters=','.join(data['characters']),
+            characters=','.join(characters),  # Use our sanitized characters
             age_group=data['ageGroup'],
             user_id=1  # Using a default user ID for now
         )
@@ -306,7 +324,7 @@ def create_story():
             'title': story.title,
             'content': story.content,
             'theme': story.theme,
-            'characters': story.characters.split(','),
+            'characters': characters,  # Return as an array directly
             'ageGroup': story.age_group,
             'isFavorite': story.is_favorite,
             'createdAt': story.created_at.isoformat()

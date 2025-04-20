@@ -1,211 +1,609 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Toaster, toast } from "sonner";
-import { generateStory, listStories, toggleFavorite } from "./lib/api";
+import React, { useEffect, useState } from 'react';
+import { generateStory, listStories, Story, toggleFavorite } from './lib/api';
+import { Toaster } from 'react-hot-toast';
+import './App.css';
 
-const themes = [
-  "Adventure",
-  "Friendship",
-  "Animals",
-  "Space",
-  "Magic",
-  "Sports",
-  "Nature",
-  "Music",
-  "Art",
-  "Science",
-];
+// Enhanced themes with emojis
+const themes = ["🚀 Space Adventure", "🏰 Magic Kingdom", "🌊 Ocean Explorer", "🐯 Jungle Safari", "🦕 Dinosaur World"];
 
+// Enhanced age groups with emojis
 const ageGroups = [
-  { label: "3-5 years", value: "3-5" },
-  { label: "6-8 years", value: "6-8" },
-  { label: "9-12 years", value: "9-12" },
+  "🧒 Little Explorers (3-5 years)",
+  "👦 Curious Minds (6-8 years)", 
+  "👧 Young Adventurers (9-12 years)"
 ];
 
-function BackgroundPatterns() {
+// Decorative bubbles for the header
+const HeaderBubbles = () => {
+  const bubbles = Array.from({ length: 15 }, (_, i) => ({
+    size: Math.random() * 40 + 10,
+    left: Math.random() * 100,
+    animationDelay: Math.random() * 5,
+    opacity: Math.random() * 0.5 + 0.1
+  }));
+
   return (
-    <div className="fixed inset-0 -z-10 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-blue-50" />
-      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {bubbles.map((bubble, i) => (
+        <div 
+          key={i}
+          className="decorative-shape"
+          style={{
+            width: `${bubble.size}px`,
+            height: `${bubble.size}px`,
+            left: `${bubble.left}%`,
+            top: Math.random() * 100,
+            animationDelay: `${bubble.animationDelay}s`,
+            opacity: bubble.opacity
+          }}
+        />
+      ))}
     </div>
   );
-}
+};
 
-function FloatingShapes() {
+// Story card component
+const StoryCard = ({ story, onView, onToggleFavorite }: { 
+  story: Story, 
+  onView: (story: Story) => void, 
+  onToggleFavorite: (storyId: number) => void 
+}) => {
+  const themeIcon = getThemeIcon(story.theme);
+  
   return (
-    <div className="fixed inset-0 -z-10 overflow-hidden">
-      <motion.div
-        className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-purple-200/30"
-        animate={{
-          scale: [1, 1.2, 1],
-          x: [0, 20, 0],
-          y: [0, -20, 0],
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      />
-      <motion.div
-        className="absolute bottom-1/4 right-1/4 w-64 h-64 rounded-full bg-blue-200/30"
-        animate={{
-          scale: [1, 1.2, 1],
-          x: [0, -20, 0],
-          y: [0, 20, 0],
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      />
-    </div>
-  );
-}
-
-// Modal component to display full story
-function StoryModal({ story, isOpen, onClose }: { story: any; isOpen: boolean; onClose: () => void }) {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-start mb-4">
-          <h2 className="text-2xl font-bold text-gray-900">{story.title}</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+    <div className="story-card" onClick={() => onView(story)}>
+      <div className="story-card-header">
+        <div className="theme-badge">{themeIcon} {story.theme.split(' ')[1]}</div>
+        <button 
+          className="favorite-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleFavorite(story.id);
+          }}
+        >
+          <span className="text-3xl">{story.isFavorite ? '❤️' : '🤍'}</span>
+        </button>
+      </div>
+      <div className="story-card-content">
+        <h3>{story.title}</h3>
+        <div className="story-preview">
+          <p className="text-gray-600">
+            {story.content.substring(0, 300)}...
+          </p>
         </div>
-        
-        <div className="flex flex-wrap gap-2 mb-4">
-          <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
-            {story.theme}
-          </span>
-          <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-            {story.ageGroup} years
-          </span>
-          {story.characters.map((character: string, index: number) => (
-            <span
-              key={index}
-              className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm"
-            >
-              {character}
+        <div className="character-list">
+          {story.characters.slice(0, 3).map((character, index) => (
+            <span key={index} className="character-tag">
+              <span className="character-emoji">👤</span> {character}
             </span>
           ))}
+          {story.characters.length > 3 && (
+            <span className="character-tag">+{story.characters.length - 3} more</span>
+          )}
         </div>
-        
-        <div className="prose prose-lg max-w-none">
-          {story.content.split('\n').map((paragraph: string, index: number) => (
-            paragraph.trim() ? <p key={index}>{paragraph}</p> : <br key={index} />
-          ))}
-        </div>
-        
-        <div className="mt-6 text-right">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
-          >
-            Close
-          </button>
+        <div className="story-card-footer">
+          <span className="age-badge">{story.ageGroup}</span>
+          <span className="story-date">{new Date(story.createdAt).toLocaleDateString()}</span>
         </div>
       </div>
     </div>
   );
+};
+
+interface StoryModalProps {
+  story: Story;
+  isOpen: boolean;
+  onClose: () => void;
+  onToggleFavorite: (storyId: number) => void;
 }
 
-function StoryCard({ story, onToggleFavorite }: { story: any; onToggleFavorite: (id: number) => void }) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  
+const StoryModal = ({ story, isOpen, onClose, onToggleFavorite }: StoryModalProps) => {
+  if (!isOpen) return null;
+
+  const handlePrint = () => {
+    // Create a new window with just the story content for printing
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>${story.title}</title>
+            <style>
+              body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                line-height: 1.6;
+                color: #333;
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 20px;
+              }
+              h1 {
+                font-size: 24px;
+                margin-bottom: 20px;
+              }
+              p {
+                margin-bottom: 15px;
+              }
+              .story-meta {
+                color: #666;
+                font-size: 14px;
+                margin-bottom: 20px;
+              }
+            </style>
+          </head>
+          <body>
+            <h1>${story.title}</h1>
+            <div class="story-meta">
+              <div>Theme: ${story.theme}</div>
+              <div>Age Group: ${story.ageGroup}</div>
+              <div>Date: ${new Date(story.createdAt).toLocaleDateString()}</div>
+            </div>
+            ${story.content.split("\n\n").map((paragraph: string) => `<p>${paragraph}</p>`).join('')}
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+    }
+  };
+
+  const handleEmail = () => {
+    const subject = encodeURIComponent(`Story: ${story.title}`);
+    const body = encodeURIComponent(
+      `${story.title}\n\n` +
+      `Theme: ${story.theme}\n` +
+      `Age Group: ${story.ageGroup}\n\n` +
+      `${story.content}\n\n` +
+      `Created with AI Storyteller`
+    );
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  };
+
   return (
-    <>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-lg shadow-lg p-6 space-y-4"
-      >
-        <div className="flex justify-between items-start">
-          <h3 className="text-xl font-bold text-gray-900">{story.title}</h3>
-          <button
-            onClick={() => onToggleFavorite(story.id)}
-            className={`p-2 rounded-full ${
-              story.isFavorite ? "text-yellow-500" : "text-gray-400"
-            } hover:text-yellow-500 transition-colors`}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill={story.isFavorite ? "currentColor" : "none"}
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-              />
-            </svg>
-          </button>
+    <div style={styles.storyModalOverlay} onClick={onClose}>
+      <div style={styles.storyModal} onClick={(e) => e.stopPropagation()}>
+        <div style={styles.modalHeader}>
+          <h2 style={styles.modalTitle}>{story.title}</h2>
+          <button style={styles.closeModal} onClick={onClose}>×</button>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
-            {story.theme}
-          </span>
-          <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-            {story.ageGroup} years
-          </span>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {story.characters.map((character: string, index: number) => (
-            <span
-              key={index}
-              className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm"
-            >
-              {character}
+        <div className="modal-content">
+          <div className="modal-story-meta">
+            <span className="modal-story-theme">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M2 1a1 1 0 0 0-1 1v4.586a1 1 0 0 0 .293.707l7 7a1 1 0 0 0 1.414 0l4.586-4.586a1 1 0 0 0 0-1.414l-7-7A1 1 0 0 0 6.586 1H2zm4 3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+              </svg>
+              {story.theme}
             </span>
+            <span className="modal-story-age">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+              </svg>
+              {story.ageGroup}
+            </span>
+          </div>
+          {story.content.split("\n\n").map((paragraph: string, index: number) => (
+            <p key={index}>{paragraph}</p>
           ))}
         </div>
-        <div 
-          className="text-gray-600 line-clamp-3 cursor-pointer hover:text-purple-600"
-          onClick={() => setIsModalOpen(true)}
-        >
-          {story.content}
-        </div>
-        <div className="flex justify-between items-center">
-          <div className="text-sm text-gray-500">
-            {new Date(story.createdAt).toLocaleDateString()}
+        <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #eee', padding: '15px 20px' }}>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              className={`favorite-button ${story.isFavorite ? 'active' : ''}`}
+              onClick={() => onToggleFavorite(story.id)}
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px',
+                background: 'none',
+                border: 'none',
+                padding: '8px 12px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                color: story.isFavorite ? '#ff6b6b' : '#666',
+                fontWeight: 'bold'
+              }}
+            >
+              {story.isFavorite ? '❤️' : '🤍'} {story.isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
+            </button>
+            
+            <button 
+              onClick={handleEmail}
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px',
+                background: 'none',
+                border: 'none',
+                padding: '8px 12px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                color: '#0077cc',
+                fontWeight: 'bold'
+              }}
+            >
+              ✉️ Email Story
+            </button>
+            
+            <button 
+              onClick={handlePrint}
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px',
+                background: 'none',
+                border: 'none',
+                padding: '8px 12px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                color: '#333',
+                fontWeight: 'bold'
+              }}
+            >
+              🖨️ Print Story
+            </button>
           </div>
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="text-sm text-purple-600 hover:text-purple-800 font-medium"
-          >
-            Read Full Story
-          </button>
+          
+          <span className="story-date" style={{ color: '#888', fontSize: '0.9rem' }}>
+            {new Date(story.createdAt).toLocaleDateString()}
+          </span>
         </div>
-      </motion.div>
-      
-      <StoryModal 
-        story={story} 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-      />
-    </>
+      </div>
+    </div>
   );
+};
+
+// Confetti component for celebrations
+const Confetti = ({ active = false }) => {
+  if (!active) return null;
+  
+  const confettiPieces = Array.from({ length: 50 }, (_, i) => {
+    const colors = ['bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-pink-500', 'bg-purple-500'];
+    const size = Math.random() * 10 + 5;
+    const left = Math.random() * 100;
+    const delay = Math.random() * 3;
+    const duration = Math.random() * 3 + 2;
+    
+    return (
+      <div 
+        key={i}
+        className={`confetti-piece ${colors[Math.floor(Math.random() * colors.length)]}`}
+        style={{
+          left: `${left}%`,
+          width: `${size}px`,
+          height: `${size}px`,
+          animation: `fall ${duration}s linear forwards`,
+          animationDelay: `${delay}s`
+        }}
+      />
+    );
+  });
+  
+  return (
+    <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+      {confettiPieces}
+    </div>
+  );
+};
+
+// Helper function to get theme emoji
+const getThemeIcon = (theme: string) => {
+  if (theme.includes("Space")) return "🚀";
+  if (theme.includes("Magic")) return "🏰";
+  if (theme.includes("Ocean")) return "🌊";
+  if (theme.includes("Jungle")) return "🐯";
+  if (theme.includes("Dinosaur")) return "🦕";
+  return "📚";
+};
+
+// Helper function to get age group emoji
+const getAgeGroupEmoji = (ageGroup: string) => {
+  if (ageGroup.includes("3-5")) return "🧒";
+  if (ageGroup.includes("6-8")) return "👦";
+  if (ageGroup.includes("9-12")) return "👧";
+  return "👪";
+};
+
+// Header with banner
+interface AppHeaderProps {
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+  storiesCount: number;
 }
 
+const AppHeader = ({ activeTab, setActiveTab, storiesCount }: AppHeaderProps) => {
+  const navButtonStyle: React.CSSProperties = {
+    backgroundColor: 'white',
+    color: '#9333ea',
+    border: 'none',
+    borderRadius: '25px',
+    padding: '10px 20px',
+    fontSize: '1.1rem',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 4px 0 rgba(0, 0, 0, 0.1)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px'
+  };
+
+  const activeButtonStyle: React.CSSProperties = {
+    ...navButtonStyle,
+    backgroundColor: '#ff6b6b',
+    color: 'white',
+    transform: 'translateY(-3px)',
+    boxShadow: '0 7px 0 rgba(0, 0, 0, 0.1)'
+  };
+
+  return (
+    <header className="app-header">
+      <img 
+        src="/banner.svg" 
+        alt="AI Storyteller Banner" 
+        className="absolute top-0 left-0 w-full h-full object-cover"
+      />
+      <div className="relative z-10">
+        <h1>✨ AI Storyteller ✨</h1>
+        <div className="nav-tabs">
+          <button 
+            style={activeTab === 'create' ? activeButtonStyle : navButtonStyle}
+            onClick={() => setActiveTab('create')}
+          >
+            ✏️ Create Story
+          </button>
+          <button 
+            style={activeTab === 'stories' ? activeButtonStyle : navButtonStyle}
+            onClick={() => setActiveTab('stories')}
+          >
+            📚 My Stories ({storiesCount})
+          </button>
+          <button 
+            style={activeTab === 'favorites' ? activeButtonStyle : navButtonStyle}
+            onClick={() => setActiveTab('favorites')}
+          >
+            ❤️ Favorites
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+};
+
+const ThemeSelector = ({ selectedTheme, onSelectTheme }: { selectedTheme: string, onSelectTheme: (theme: string) => void }) => {
+  const themeButtonStyle: React.CSSProperties = {
+    padding: '20px 15px',
+    backgroundColor: 'white',
+    border: '2px solid #e5e7eb',
+    borderRadius: '12px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease'
+  };
+
+  const activeThemeStyle: React.CSSProperties = {
+    ...themeButtonStyle,
+    backgroundColor: 'rgba(147, 51, 234, 0.1)',
+    borderColor: '#9333ea',
+    transform: 'translateY(-2px)'
+  };
+
+  const iconStyle: React.CSSProperties = {
+    fontSize: '3rem',
+    marginBottom: '10px'
+  };
+
+  const nameStyle: React.CSSProperties = {
+    fontSize: '1.1rem',
+    fontWeight: 'bold',
+    color: '#333'
+  };
+
+  return (
+    <div className="theme-selector">
+      {themes.map((theme, index) => {
+        const icon = getThemeIcon(theme);
+        const name = theme.split(' ').slice(1).join(' ');
+        
+        return (
+          <button
+            key={index}
+            style={selectedTheme === theme ? activeThemeStyle : themeButtonStyle}
+            onClick={() => onSelectTheme(theme)}
+          >
+            <span style={iconStyle}>{icon}</span>
+            <span style={nameStyle}>{name}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
+const AgeGroupSelector = ({ selectedAgeGroup, onSelectAgeGroup }: { selectedAgeGroup: string, onSelectAgeGroup: (age: string) => void }) => {
+  const ageButtonStyle: React.CSSProperties = {
+    flex: 1,
+    minWidth: '120px',
+    backgroundColor: 'white',
+    border: '2px solid #e5e7eb',
+    borderRadius: '12px',
+    padding: '15px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease'
+  };
+
+  const activeAgeStyle: React.CSSProperties = {
+    ...ageButtonStyle,
+    backgroundColor: 'rgba(147, 51, 234, 0.1)',
+    borderColor: '#9333ea'
+  };
+
+  const iconStyle: React.CSSProperties = {
+    fontSize: '2.5rem',
+    marginBottom: '8px'
+  };
+
+  const labelStyle: React.CSSProperties = {
+    fontSize: '1.1rem',
+    fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center'
+  };
+
+  const rangeStyle: React.CSSProperties = {
+    fontSize: '0.8rem',
+    color: '#6b7280'
+  };
+
+  return (
+    <div className="age-selector">
+      {ageGroups.map((ageGroup, index) => {
+        const parts = ageGroup.split('(');
+        const label = parts[0].trim();
+        const range = parts[1] ? `(${parts[1]}` : '';
+        const icon = getAgeGroupEmoji(ageGroup);
+        
+        return (
+          <button
+            key={index}
+            style={selectedAgeGroup === ageGroup ? activeAgeStyle : ageButtonStyle}
+            onClick={() => onSelectAgeGroup(ageGroup)}
+          >
+            <span style={iconStyle}>{icon}</span>
+            <span style={labelStyle}>{label}</span>
+            <span style={rangeStyle}>{range}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
+// Footer component
+const AppFooter = () => {
+  return (
+    <footer className="app-footer">
+      <div className="footer-content">
+        <div className="footer-logo">✨ AI Storyteller ✨</div>
+        <p>Create magical stories for children of all ages!</p>
+        
+        <div className="footer-links">
+          <a href="#" className="footer-link">About</a>
+          <a href="#" className="footer-link">Privacy Policy</a>
+          <a href="#" className="footer-link">Contact Us</a>
+          <a href="#" className="footer-link">Help</a>
+        </div>
+        
+        <p className="text-sm">© 2025 AI Storyteller. All rights reserved.</p>
+      </div>
+    </footer>
+  );
+};
+
+// Empty State component
+const EmptyState = ({ onCreateNew }: { onCreateNew: () => void }) => {
+  return (
+    <div className="empty-state">
+      <div className="empty-illustration">
+        <img src="/grid.svg" alt="No stories yet" />
+      </div>
+      <h3 className="empty-title">No Stories Yet!</h3>
+      <p className="empty-message">Create your first magical story adventure!</p>
+      <button className="action-button" onClick={onCreateNew}>
+        <span>✏️</span> Create My First Story
+      </button>
+    </div>
+  );
+};
+
+// Define CSS styles as a regular CSS string
+const styles = {
+  appContainer: {
+    position: 'relative',
+    minHeight: '100vh',
+    overflowX: 'hidden',
+  } as React.CSSProperties,
+  
+  appBackground: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    zIndex: -1,
+  } as React.CSSProperties,
+  
+  backgroundWhite: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#ffffff',
+  } as React.CSSProperties,
+  
+  storyModalOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  } as React.CSSProperties,
+  
+  storyModal: {
+    backgroundColor: 'white',
+    borderRadius: '8px',
+    width: '90%',
+    maxWidth: '700px',
+    maxHeight: '90vh',
+    overflowY: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+  } as React.CSSProperties,
+  
+  modalHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '15px 20px',
+    borderBottom: '1px solid #eee',
+  } as React.CSSProperties,
+  
+  modalTitle: {
+    margin: 0,
+    fontSize: '1.5rem',
+    color: '#333',
+  } as React.CSSProperties,
+  
+  closeModal: {
+    background: 'none',
+    border: 'none',
+    fontSize: '1.5rem',
+    cursor: 'pointer',
+    color: '#666',
+  } as React.CSSProperties,
+};
+
 export default function App() {
-  const [stories, setStories] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [stories, setStories] = useState<Story[]>([]);
   const [theme, setTheme] = useState("");
-  const [characters, setCharacters] = useState<string[]>([]);
-  const [characterInput, setCharacterInput] = useState("");
+  const [characters, setCharacters] = useState("");
   const [ageGroup, setAgeGroup] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [viewStory, setViewStory] = useState<Story | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [activeTab, setActiveTab] = useState("create");
 
   useEffect(() => {
     fetchStories();
@@ -213,197 +611,202 @@ export default function App() {
 
   const fetchStories = async () => {
     try {
-      const response = await listStories();
-      setStories(response);
+      const fetchedStories = await listStories();
+      setStories(fetchedStories);
     } catch (error) {
-      console.error("Error fetching stories:", error);
-      toast.error("Failed to fetch stories");
+      console.error('Error fetching stories:', error);
     }
   };
 
   const handleGenerateStory = async () => {
-    if (!theme || characters.length === 0 || !ageGroup) {
-      toast.error("Please fill in all fields");
+    if (!theme || !characters || !ageGroup) {
+      alert("Please fill in all fields to create your magical story!");
       return;
     }
 
-    setIsLoading(true);
+    setLoading(true);
+    
     try {
-      const newStory = await generateStory(theme, characters, ageGroup);
-      setStories([newStory, ...stories]);
+      // Split characters by commas and trim whitespace
+      const charactersArray = characters.split(',')
+        .map(char => char.trim())
+        .filter(char => char.length > 0); // Filter out empty strings
+      
+      if (charactersArray.length === 0) {
+        alert("Please add at least one character to your story!");
+        setLoading(false);
+        return;
+      }
+      
+      await generateStory(theme, charactersArray, ageGroup);
+      await fetchStories();
+      // Show confetti when a story is successfully created
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 5000);
+      
+      // Clear form
       setTheme("");
-      setCharacters([]);
-      setCharacterInput("");
+      setCharacters("");
       setAgeGroup("");
-      toast.success("Story generated successfully!");
+      
+      // Switch to the stories tab
+      setActiveTab("stories");
     } catch (error) {
-      console.error("Error generating story:", error);
-      toast.error("Failed to generate story");
+      console.error('Error generating story:', error);
+      alert("Sorry, there was an error creating your story. Please try again.");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   const handleToggleFavorite = async (storyId: number) => {
     try {
-      const updatedStory = await toggleFavorite(storyId);
-      setStories(
-        stories.map((story) =>
-          story.id === storyId ? updatedStory : story
-        )
-      );
+      await toggleFavorite(storyId);
+      await fetchStories();
     } catch (error) {
-      console.error("Error toggling favorite:", error);
-      toast.error("Failed to update favorite status");
+      console.error('Error toggling favorite:', error);
     }
   };
 
-  const addCharacter = () => {
-    if (characterInput.trim() && !characters.includes(characterInput.trim())) {
-      setCharacters([...characters, characterInput.trim()]);
-      setCharacterInput("");
-    }
-  };
-
-  const removeCharacter = (characterToRemove: string) => {
-    setCharacters(characters.filter((char) => char !== characterToRemove));
+  const handleCreateNew = () => {
+    setActiveTab('create');
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <BackgroundPatterns />
-      <FloatingShapes />
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <header className="text-center mb-12">
-          <motion.h1
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-4xl font-bold text-gray-900 mb-4"
-          >
-            AI Storyteller
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="text-xl text-gray-600"
-          >
-            Create magical stories for children
-          </motion.p>
-        </header>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="bg-white rounded-lg shadow-lg p-6 mb-8"
-        >
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            Create a New Story
-          </h2>
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Theme
+    <div style={styles.appContainer}>
+      <div style={styles.appBackground}>
+        <div style={styles.backgroundWhite}></div>
+      </div>
+      <Toaster position="top-center" />
+      <Confetti active={showConfetti} />
+      
+      {/* Header */}
+      <AppHeader 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        storiesCount={stories.length}
+      />
+      
+      {/* Main content */}
+      <main className="content-area">
+        {activeTab === 'create' && (
+          <div className="create-story-container">
+            <h2>Create Your Own Magical Story!</h2>
+            
+            <div className="form-group">
+              <label>
+                <span className="inline-block mr-2">🎭</span> Pick a Theme:
               </label>
-              <select
-                value={theme}
-                onChange={(e) => setTheme(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              >
-                <option value="">Select a theme</option>
-                {themes.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
+              <ThemeSelector 
+                selectedTheme={theme} 
+                onSelectTheme={setTheme} 
+              />
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Characters
+            
+            <div className="form-group">
+              <label>
+                <span className="inline-block mr-2">👨‍👩‍👧‍👦</span> Add Characters:
               </label>
-              <div className="flex gap-2 mb-2">
-                <input
-                  type="text"
-                  value={characterInput}
-                  onChange={(e) => setCharacterInput(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && addCharacter()}
-                  placeholder="Add a character"
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              <div className="character-input-container">
+                <textarea
+                  className="form-control"
+                  placeholder="Enter characters for your story (e.g., 'a brave knight named Max, a friendly dragon named Sparky')"
+                  value={characters}
+                  onChange={(e) => setCharacters(e.target.value)}
+                  rows={3}
                 />
-                <button
-                  onClick={addCharacter}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-                >
-                  Add
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {characters.map((character) => (
-                  <span
-                    key={character}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800"
-                  >
-                    {character}
-                    <button
-                      onClick={() => removeCharacter(character)}
-                      className="ml-2 text-purple-600 hover:text-purple-800"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
+                {characters.length === 0 && (
+                  <div className="character-suggestions">
+                    <div className="suggestion-title">Try these characters:</div>
+                    <div className="suggestion-list">
+                      <span className="suggestion-item" onClick={() => setCharacters("a brave princess, a talking cat, a wise wizard")}>Princess & Friends</span>
+                      <span className="suggestion-item" onClick={() => setCharacters("a curious alien, a friendly robot, a space explorer")}>Space Crew</span>
+                      <span className="suggestion-item" onClick={() => setCharacters("a playful puppy, a grumpy cat, a clever rabbit")}>Animal Adventures</span>
+                      <span className="suggestion-item" onClick={() => setCharacters("a magical unicorn, a tiny fairy, a friendly dragon")}>Magical Creatures</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Age Group
+            
+            <div className="form-group">
+              <label>
+                <span className="inline-block mr-2">📚</span> Choose Age Group:
               </label>
-              <select
-                value={ageGroup}
-                onChange={(e) => setAgeGroup(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              >
-                <option value="">Select age group</option>
-                {ageGroups.map((group) => (
-                  <option key={group.value} value={group.value}>
-                    {group.label}
-                  </option>
-                ))}
-              </select>
+              <AgeGroupSelector 
+                selectedAgeGroup={ageGroup} 
+                onSelectAgeGroup={setAgeGroup} 
+              />
             </div>
-
+            
             <button
+              className="btn btn-primary btn-full mt-6"
               onClick={handleGenerateStory}
-              disabled={isLoading}
-              className="w-full px-6 py-3 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading || !theme || !characters || !ageGroup}
+              style={{ 
+                backgroundColor: '#9333ea', 
+                color: 'white', 
+                fontWeight: 'bold',
+                padding: '12px 24px',
+                width: '100%',
+                borderRadius: '8px',
+                fontSize: '1.2rem',
+                boxShadow: '0 4px 0 rgba(121, 45, 196, 0.5)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px'
+              }}
             >
-              {isLoading ? "Generating..." : "Generate Story"}
+              {loading ? (
+                <>
+                  <span className="loading-spinner"></span>
+                  Creating Your Story...
+                </>
+              ) : (
+                <span>✨ Create Magical Story ✨</span>
+              )}
             </button>
           </div>
-        </motion.div>
-
-        <div className="space-y-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Your Stories</h2>
-          {stories.length === 0 ? (
-            <p className="text-center text-gray-500">No stories yet. Create one!</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {stories.map((story) => (
-                <StoryCard
-                  key={story.id}
-                  story={story}
-                  onToggleFavorite={handleToggleFavorite}
-                />
-              ))}
+        )}
+        
+        {(activeTab === 'stories' || activeTab === 'favorites') && (
+          <>
+            <h2 className="text-2xl font-bold mb-4 text-center">
+              {activeTab === 'stories' ? 'All Your Magical Stories' : 'Your Favorite Stories'}
+            </h2>
+            
+            <div className="stories-grid">
+              {stories.length === 0 || (activeTab === 'favorites' && !stories.some(s => s.isFavorite)) ? (
+                <div className="col-span-full">
+                  <EmptyState onCreateNew={handleCreateNew} />
+                </div>
+              ) : (
+                (activeTab === 'stories' ? stories : stories.filter(s => s.isFavorite)).map(story => (
+                  <StoryCard
+                    key={story.id}
+                    story={story}
+                    onView={setViewStory}
+                    onToggleFavorite={handleToggleFavorite}
+                  />
+                ))
+              )}
             </div>
-          )}
-        </div>
-      </div>
-      <Toaster position="top-right" />
+          </>
+        )}
+      </main>
+      
+      {/* Footer */}
+      <AppFooter />
+      
+      {viewStory && (
+        <StoryModal
+          story={viewStory}
+          isOpen={viewStory !== null}
+          onClose={() => setViewStory(null)}
+          onToggleFavorite={handleToggleFavorite}
+        />
+      )}
     </div>
   );
 }
