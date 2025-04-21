@@ -1,7 +1,201 @@
 import React, { useEffect, useState } from 'react';
 import { generateStory, listStories, Story, toggleFavorite } from './lib/api';
-import { Toaster } from 'react-hot-toast';
+import { Toaster, toast } from 'react-hot-toast';
+import confetti from 'canvas-confetti';
 import './App.css';
+
+// Background patterns component
+const BackgroundPatterns: React.FC = () => {
+  return (
+    <>
+      <div className="improved-background" />
+      <div 
+        className="static-circle" 
+        style={{ 
+          width: '400px', 
+          height: '400px', 
+          backgroundColor: 'rgba(255, 182, 193, 0.4)', // Light pink
+          top: '10%', 
+          left: '15%'
+        }} 
+      />
+      <div 
+        className="static-circle" 
+        style={{ 
+          width: '300px', 
+          height: '300px', 
+          backgroundColor: 'rgba(135, 206, 250, 0.4)', // Light sky blue
+          bottom: '15%', 
+          right: '10%'
+        }} 
+      />
+      <div 
+        className="static-circle" 
+        style={{ 
+          width: '250px', 
+          height: '250px', 
+          backgroundColor: 'rgba(152, 251, 152, 0.3)', // Light green
+          top: '60%', 
+          left: '25%'
+        }} 
+      />
+    </>
+  );
+};
+
+// Floating shapes component
+const FloatingShapes: React.FC = () => {
+  return (
+    <>
+      <div 
+        style={{
+          position: 'fixed',
+          width: '120px',
+          height: '120px',
+          borderRadius: '24px',
+          backgroundColor: 'rgba(255, 255, 255, 0.4)',
+          boxShadow: '0 8px 32px rgba(31, 38, 135, 0.2)',
+          backdropFilter: 'blur(4px)',
+          transform: 'rotate(15deg)',
+          top: '20%',
+          right: '15%',
+          zIndex: -2,
+          animation: 'float1 25s ease-in-out infinite'
+        }}
+      />
+      <div 
+        style={{
+          position: 'fixed',
+          width: '80px',
+          height: '80px',
+          backgroundColor: 'rgba(255, 255, 255, 0.25)',
+          borderRadius: '50%',
+          boxShadow: '0 8px 32px rgba(31, 38, 135, 0.15)',
+          backdropFilter: 'blur(4px)',
+          bottom: '15%',
+          left: '10%',
+          zIndex: -2,
+          animation: 'float2 20s ease-in-out infinite'
+        }}
+      />
+      <div 
+        style={{
+          position: 'fixed',
+          width: '150px',
+          height: '150px',
+          backgroundColor: 'rgba(255, 255, 255, 0.2)',
+          borderRadius: '30%',
+          boxShadow: '0 8px 32px rgba(31, 38, 135, 0.1)',
+          backdropFilter: 'blur(4px)',
+          transform: 'rotate(-10deg)',
+          top: '70%',
+          right: '30%',
+          zIndex: -2,
+          animation: 'float1 30s ease-in-out infinite'
+        }}
+      />
+    </>
+  );
+};
+
+// --- NEW: Playful Decorations Component ---
+const PlayfulDecorations = () => {
+  // Define decorations: position, type, color, animation style
+  const decorations = [
+    // Left Side Decorations
+    { id: 'deco-1', type: 'squiggle', color: '#FF914D', top: '20%', left: '5%', animation: 'drift-slow 18s' },
+    { id: 'deco-2', type: 'dots', color: '#5CE1E6', top: '40%', left: '8%', animation: 'drift 15s' },
+    { id: 'deco-3', type: 'plus', color: '#A8E05F', top: '65%', left: '6%', animation: 'spin-subtle 25s', interactive: true },
+    { id: 'deco-4', type: 'circle-outline', color: '#7371FC', bottom: '10%', left: '10%', animation: 'drift-alt 20s' },
+
+    // Right Side Decorations
+    { id: 'deco-5', type: 'star', color: '#FFDE59', top: '25%', right: '6%', animation: 'spin-bounce 12s', interactive: true },
+    { id: 'deco-6', type: 'scribble', color: '#FF5757', top: '50%', right: '8%', animation: 'drift 16s' },
+    { id: 'deco-7', type: 'triangle-outline', color: '#CB6CE6', top: '70%', right: '5%', animation: 'drift-slow 22s', interactive: true },
+    { id: 'deco-8', type: 'dots', color: '#A8E05F', bottom: '15%', right: '10%', animation: 'drift-alt 19s' },
+  ];
+
+  return (
+    <div className="playful-decorations-container">
+      {decorations.map(deco => {
+        const [animName, animDuration] = deco.animation.split(' ');
+        return (
+          <div
+            key={deco.id}
+            // Remove Tailwind animation class
+            className={`playful-deco ${deco.type} ${deco.interactive ? 'interactive' : ''}`}
+            style={{
+              top: deco.top,
+              left: deco.left,
+              right: deco.right,
+              bottom: deco.bottom,
+              color: deco.color, 
+              // --- Re-apply full longhand properties inline --- 
+              animationName: animName,
+              animationDuration: animDuration,
+              animationTimingFunction: 'ease-in-out',
+              animationIterationCount: 'infinite',
+              animationDirection: 'alternate', // Note: spin-bounce might not want alternate?
+              animationDelay: `${Math.random() * 5}s`, 
+            }}
+          />
+        );
+      })}
+    </div>
+  );
+};
+
+// Story loading animation component
+const StoryLoadingAnimation = () => {
+  const [loadingMessage, setLoadingMessage] = useState("Creating your magical story...");
+  
+  const loadingMessages = [
+    "Creating your magical story...",
+    "Weaving characters into adventures...",
+    "Painting worlds with words...",
+    "Sprinkling in some fairy dust...",
+    "Whispering to the muses...",
+    "Gathering inspiration from the stars...",
+    "Crafting memorable moments...",
+    "Mixing imagination and magic..."
+  ];
+  
+  useEffect(() => {
+    let messageIndex = 0;
+    const messageInterval = setInterval(() => {
+      messageIndex = (messageIndex + 1) % loadingMessages.length;
+      setLoadingMessage(loadingMessages[messageIndex]);
+    }, 3000);
+    
+    return () => clearInterval(messageInterval);
+  }, []);
+  
+  return (
+    <div className="story-loading-container">
+      <div className="story-loading-text">{loadingMessage}</div>
+      <div className="story-loading-animation">
+        <div className="book"></div>
+        <div className="book-page page-1"></div>
+        <div className="book-page page-2"></div>
+        <div className="book-page page-3"></div>
+        <div className="writing-line line-1"></div>
+        <div className="writing-line line-2"></div>
+        <div className="writing-line line-3"></div>
+        <div className="writing-line line-4"></div>
+        <div className="story-loading-sparkles">
+          <div className="sparkle sparkle-1"></div>
+          <div className="sparkle sparkle-2"></div>
+          <div className="sparkle sparkle-3"></div>
+          <div className="sparkle sparkle-4"></div>
+          <div className="sparkle sparkle-5"></div>
+        </div>
+      </div>
+      <div className="loading-text">
+        <span className="typing-effect">Imagining wonderful adventures...</span>
+      </div>
+    </div>
+  );
+};
 
 // Enhanced themes with emojis and descriptions
 const themeIslands = [
@@ -163,6 +357,20 @@ interface StoryModalProps {
 }
 
 const StoryModal = ({ story, isOpen, onClose, onToggleFavorite }: StoryModalProps) => {
+  const [showContent, setShowContent] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      // Add a slight delay before showing content to allow for animation preparation
+      const timer = setTimeout(() => {
+        setShowContent(true);
+      }, 300);
+      return () => clearTimeout(timer);
+    } else {
+      setShowContent(false);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handlePrint = () => {
@@ -225,11 +433,15 @@ const StoryModal = ({ story, isOpen, onClose, onToggleFavorite }: StoryModalProp
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
   };
 
+  // Split the content into paragraphs
+  const paragraphs = story.content.split("\n\n");
+  const title = story.title;
+
   return (
     <div style={styles.storyModalOverlay} onClick={onClose}>
       <div style={styles.storyModal} onClick={(e) => e.stopPropagation()}>
         <div style={styles.modalHeader}>
-          <h2 style={styles.modalTitle}>{story.title}</h2>
+          <h2 style={styles.modalTitle} className="typing-effect">{title}</h2>
           <button style={styles.closeModal} onClick={onClose}>×</button>
         </div>
         <div className="modal-content">
@@ -247,9 +459,16 @@ const StoryModal = ({ story, isOpen, onClose, onToggleFavorite }: StoryModalProp
               {story.ageGroup}
             </span>
           </div>
-          {story.content.split("\n\n").map((paragraph: string, index: number) => (
-            <p key={index}>{paragraph}</p>
-          ))}
+          <div className="typing-container">
+            {showContent && paragraphs.map((paragraph: string, index: number) => (
+              <p 
+                key={index} 
+                className={`fade-in typewriter-delay-${Math.min(index + 1, 4)}`}
+              >
+                {paragraph}
+              </p>
+            ))}
+          </div>
         </div>
         <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #eee', padding: '15px 20px' }}>
           <div style={{ display: 'flex', gap: '10px' }}>
@@ -784,9 +1003,17 @@ const CreateStorySection = ({
         <p className="section-description">
           Please select a story theme and skill level to continue your adventure!
         </p>
-    </div>
-  );
-}
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="character-section">
+        <StoryLoadingAnimation />
+      </div>
+    );
+  }
 
   return (
     <div className="character-section">
@@ -859,7 +1086,7 @@ const CreateStorySection = ({
       <button
         className="adventure-button"
         onClick={handleGenerateStory}
-        disabled={loading || !characters}
+        disabled={!characters}
         style={{
           backgroundColor: selectedTheme.color,
           color: 'white',
@@ -875,14 +1102,7 @@ const CreateStorySection = ({
           gap: '10px'
         }}
       >
-        {loading ? (
-          <>
-            <span className="loading-spinner"></span>
-            Creating Your Adventure...
-          </>
-        ) : (
-          <span>✨ Begin Your Magical Adventure ✨</span>
-        )}
+        <span>✨ Begin Your Magical Adventure ✨</span>
       </button>
     </div>
   );
@@ -970,9 +1190,15 @@ export default function App() {
     <div style={{
       position: 'relative',
       minHeight: '100vh',
-      background: 'linear-gradient(to bottom, #f5f3ff, #ffffff)',
+      backgroundColor: '#f9fafc', // Main background color
+      overflow: 'hidden', // Prevent shapes from overflowing
       fontFamily: 'Nunito, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, sans-serif',
     }}>
+      {/* --- NEW: Add Background Components --- */}
+      <BackgroundPatterns />
+      <FloatingShapes />
+      <PlayfulDecorations />
+
       <Toaster position="top-center" />
       <Confetti active={showConfetti} />
       

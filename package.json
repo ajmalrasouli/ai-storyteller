@@ -11,6 +11,8 @@
     "lint": "tsc -noEmit --pretty false && vite build"
   },
   "dependencies": {
+    "@types/canvas-confetti": "^1.9.0",
+    "canvas-confetti": "^1.9.3",
     "framer-motion": "^12.7.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
