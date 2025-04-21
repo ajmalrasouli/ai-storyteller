@@ -12,9 +12,9 @@ An interactive AI-powered storytelling application that generates personalized c
 |:---:|:---:|
 | *My Stories* | *Favorites* |
 
-| ![About](public/images/about.png) |
-|:---:|
-| *About* |
+| ![Story Page View](public/images/storypage.png) | ![About](public/images/about.png) |
+|:---:|:---:|
+| *Story Page with Read Aloud* | *About* |
 
 ## Features
 
