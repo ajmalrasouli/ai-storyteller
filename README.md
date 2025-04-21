@@ -2,12 +2,27 @@
 
 An interactive AI-powered storytelling application that generates personalized children's stories based on themes, characters, and age groups.
 
+## Screenshots
+
+| ![Adventure](public/images/adventure.png) | ![Story Creation](public/images/story.png) |
+|:---:|:---:|
+| *Adventure Map* | *Story Creation* |
+
+| ![My Stories](public/images/mystories.png) | ![Favorites](public/images/favorites.png) |
+|:---:|:---:|
+| *My Stories* | *Favorites* |
+
+| ![About](public/images/about.png) |
+|:---:|
+| *About* |
+
 ## Features
 
 - 🤖 AI-powered story generation using Azure OpenAI
 - 📚 Multiple age group support (3-5, 6-8, 9-12 years)
 - 🎨 Various story themes (Space Adventure, Magic Kingdom, Ocean Explorer, etc.)
 - ⭐ Story favoriting system
+- 🔊 Text-to-speech narration with natural-sounding voices
 - 📧 Email stories directly from the application
 - 🖨️ Print-friendly story formatting
 - 🎯 Educational focus with learning objectives
@@ -24,6 +39,7 @@ An interactive AI-powered storytelling application that generates personalized c
 - Frontend: React + TypeScript
 - Backend: Flask + SQLAlchemy
 - AI: Azure OpenAI (GPT-4 Mini)
+- Text-to-Speech: Web Speech API with premium voice selection
 - Database: SQLite
 - Styling: CSS with inline styles for consistent rendering
 
@@ -74,6 +90,7 @@ An interactive AI-powered storytelling application that generates personalized c
 
 3. **Story Actions**:
    - Add/remove stories from favorites
+   - Listen to stories with natural text-to-speech narration
    - Email stories to share them with others
    - Print stories in a nicely formatted layout
 
@@ -85,6 +102,16 @@ The application includes several animation features to enhance the user experien
 - **Text Reveal**: Typewriter effect for story titles and fade-in animations for paragraphs
 - **Loading Messages**: Dynamic, changing messages during story generation to keep users engaged
 - **Visual Feedback**: Sparkle effects, confetti celebration, and floating decorative elements
+
+## Text-to-Speech Features
+
+The application offers an immersive narration experience:
+
+- **Premium Voice Selection**: Automatically selects the highest quality voice available
+- **Natural Rhythm**: Adds appropriate pauses between sentences and paragraphs
+- **Enhanced Storytelling**: Optimized speech parameters for clarity and engagement
+- **Age-Appropriate**: Narration speed and tone suitable for children's stories
+- **Interactive Control**: Simple toggle between play and pause functionality
 
 ## Environment Variables
 

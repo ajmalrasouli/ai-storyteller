@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { generateStory, listStories, Story, toggleFavorite } from './lib/api';
 import { Toaster, toast } from 'react-hot-toast';
 import confetti from 'canvas-confetti';
@@ -434,6 +434,8 @@ interface StoryModalProps {
 
 const StoryModal = ({ story, isOpen, onClose, onToggleFavorite }: StoryModalProps) => {
   const [showContent, setShowContent] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const speechRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -444,8 +446,21 @@ const StoryModal = ({ story, isOpen, onClose, onToggleFavorite }: StoryModalProp
       return () => clearTimeout(timer);
     } else {
       setShowContent(false);
+      // Stop speaking if modal is closed
+      if (isSpeaking) {
+        stopSpeaking();
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, isSpeaking]);
+
+  // Clean up speech synthesis when component unmounts
+  useEffect(() => {
+    return () => {
+      if (speechRef.current) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
 
   if (!isOpen) return null;
 
@@ -507,6 +522,141 @@ const StoryModal = ({ story, isOpen, onClose, onToggleFavorite }: StoryModalProp
       `Created with AI Storyteller`
     );
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  };
+
+  const handleListen = () => {
+    if (isSpeaking) {
+      stopSpeaking();
+      return;
+    }
+
+    // Initialize speech synthesis
+    stopSpeaking(); // Cancel any previous speech
+    
+    // Get all available voices
+    let voices = window.speechSynthesis.getVoices();
+    
+    // If no voices are available yet, wait for them to load
+    if (voices.length === 0) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        voices = window.speechSynthesis.getVoices();
+        startSpeaking(voices);
+      };
+    } else {
+      startSpeaking(voices);
+    }
+  };
+
+  const startSpeaking = (voices: SpeechSynthesisVoice[]) => {
+    // Filter for premium/high-quality voices first
+    const premiumVoices = voices.filter(voice => 
+      voice.name.includes('Premium') || 
+      voice.name.includes('Enhanced') || 
+      voice.name.includes('Neural') ||
+      voice.name.includes('Wavenet') ||
+      voice.name.includes('Polyglot')
+    );
+    
+    // Then filter for English voices
+    const englishVoices = voices.filter(voice => voice.lang.includes('en'));
+    
+    // Preferred voice order: premium english > any premium > english female > any english > default
+    let selectedVoice = null;
+    
+    // Find premium English voice
+    const premiumEnglishVoice = premiumVoices.find(voice => voice.lang.includes('en'));
+    
+    // Find female English voice (often better for storytelling)
+    const femaleEnglishVoice = englishVoices.find(voice => 
+      voice.name.includes('female') || 
+      voice.name.includes('woman') || 
+      voice.name.includes('girl') ||
+      voice.name.includes('Samantha') ||
+      voice.name.includes('Victoria') ||
+      voice.name.includes('Moira') ||
+      voice.name.includes('Karen') ||
+      voice.name.includes('Tessa')
+    );
+    
+    // Select the best available voice
+    selectedVoice = premiumEnglishVoice || 
+                    (premiumVoices.length > 0 ? premiumVoices[0] : null) || 
+                    femaleEnglishVoice || 
+                    (englishVoices.length > 0 ? englishVoices[0] : null);
+    
+    // Prepare and process the story text
+    const title = story.title;
+    
+    // Break content into paragraphs for more natural reading
+    const paragraphs = story.content.split("\n\n");
+    
+    // Function to create appropriate pauses
+    const createPause = (duration: number) => {
+      const pause = new SpeechSynthesisUtterance(" ");
+      pause.volume = 0;
+      pause.rate = 0.1;
+      pause.pitch = 0;
+      pause.lang = "en-US";
+      
+      // Longer pause = more repetitions
+      for (let i = 0; i < duration; i++) {
+        window.speechSynthesis.speak(pause);
+      }
+    };
+    
+    // Create and configure title speech
+    const titleSpeech = new SpeechSynthesisUtterance(title);
+    titleSpeech.voice = selectedVoice;
+    titleSpeech.rate = 0.9;     // Slightly slower for clarity
+    titleSpeech.pitch = 1.05;   // Slightly higher for engagement
+    titleSpeech.volume = 1;
+    
+    // Configure events for the first utterance
+    titleSpeech.onstart = () => setIsSpeaking(true);
+    
+    // Speak the title first
+    speechRef.current = titleSpeech;
+    window.speechSynthesis.speak(titleSpeech);
+    
+    // Create pause after title
+    createPause(2);
+    
+    // Read each paragraph with appropriate pauses
+    paragraphs.forEach((paragraph, index) => {
+      // Process paragraph to add slight pauses after sentences for more natural rhythm
+      const sentences = paragraph.split(/(?<=[.!?])\s+/);
+      
+      sentences.forEach((sentence, i) => {
+        const speech = new SpeechSynthesisUtterance(sentence);
+        speech.voice = selectedVoice;
+        speech.rate = 0.9;  // Slightly slower for clarity
+        speech.pitch = 1.0; // Natural pitch
+        speech.volume = 1;
+        
+        // Set onend only for the very last utterance
+        if (index === paragraphs.length - 1 && i === sentences.length - 1) {
+          speech.onend = () => setIsSpeaking(false);
+          speech.onerror = () => setIsSpeaking(false);
+        }
+        
+        window.speechSynthesis.speak(speech);
+        
+        // Add small pause after each sentence except the last one
+        if (i < sentences.length - 1) {
+          createPause(1);
+        }
+      });
+      
+      // Add longer pause between paragraphs
+      if (index < paragraphs.length - 1) {
+        createPause(3);
+      }
+    });
+  };
+
+  const stopSpeaking = () => {
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
   };
 
   // Split the content into paragraphs
@@ -601,6 +751,24 @@ const StoryModal = ({ story, isOpen, onClose, onToggleFavorite }: StoryModalProp
               }}
             >
               🖨️ Print Story
+            </button>
+            
+            <button 
+              onClick={handleListen}
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px',
+                background: 'none',
+                border: 'none',
+                padding: '8px 12px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                color: '#009688',
+                fontWeight: 'bold'
+              }}
+            >
+              {isSpeaking ? '🔇 Stop' : '🔊 Listen'}
             </button>
           </div>
           
@@ -838,8 +1006,124 @@ const AgeGroupSelector = ({ selectedAgeGroup, onSelectAgeGroup }: { selectedAgeG
   );
 };
 
-// Footer component
+// Add a popup component to display footer information
+const FooterPopup = ({ 
+  title, 
+  content, 
+  isOpen, 
+  onClose,
+  popupType
+}: { 
+  title: string, 
+  content: React.ReactNode, 
+  isOpen: boolean, 
+  onClose: () => void,
+  popupType: 'about' | 'privacy' | 'contact' | 'help'
+}) => {
+  // Use a ref for the popup content
+  const popupRef = useRef<HTMLDivElement>(null);
+  
+  // Handle clicks outside the popup
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+    
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
+  
+  if (!isOpen) return null;
+  
+  return (
+    <div 
+      className="footer-popup"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 999,
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.2)',
+      }}
+    >
+      <div 
+        ref={popupRef}
+        className={`footer-popup-content popup-${popupType}`}
+        style={{
+          position: 'relative',
+          maxWidth: '90%',
+          animation: 'popup-appear 0.3s forwards'
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+          <h3>{title}</h3>
+          <button className="footer-popup-close" onClick={onClose}>
+            ×
+          </button>
+        </div>
+        <div>
+          {content}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Footer component with popups
 const AppFooter = () => {
+  const [activePopup, setActivePopup] = useState<string | null>(null);
+  
+  // Content for each popup
+  const aboutContent = (
+    <>
+      <p>AI Storyteller is an interactive storytelling app designed for children of all ages.</p>
+      <p>Our mission is to spark creativity and imagination through personalized stories tailored to each child's interests.</p>
+      <p>Created with ❤️ by Ajmal Rasouli, a passionate educator and developer.</p>
+      <p>AI Agents Hackathon 2025. https://microsoft.github.io/AI_Agents_Hackathon/</p>
+      <p>Version 1.0.0</p>
+    </>
+  );
+  
+  const privacyContent = (
+    <>
+      <p><strong>Data Collection:</strong> We only collect information necessary to provide our services.</p>
+      <p><strong>Story Data:</strong> Stories generated are stored securely and only accessible to your account.</p>
+      <p><strong>Children's Privacy:</strong> We're committed to protecting children's privacy and complying with all applicable laws.</p>
+      <p><strong>Third Parties:</strong> We don't sell your data to third parties.</p>
+      <p>For the complete policy, please contact us.</p>
+    </>
+  );
+  
+  const contactContent = (
+    <>
+      <p><strong>Email:</strong> ajrasouli@hotmail.com</p>
+      <p><strong>Hours:</strong> Monday-Friday, 9am-5pm EST</p>
+      <p><strong>Response Time: GMT</strong> We aim to respond to all inquiries within 24 hours.</p>
+      <p>For urgent matters, please include "URGENT" in your email subject.</p>
+    </>
+  );
+  
+  const helpContent = (
+    <>
+      <p><strong>Creating Stories:</strong> Select a theme, add characters, choose an age group, and click "Generate".</p>
+      <p><strong>Reading Stories:</strong> Use the Listen button to hear your story read aloud.</p>
+      <p><strong>Sharing:</strong> Click Email Story to share via email, or Print Story for a paper copy.</p>
+      <p><strong>Favorites:</strong> Click the heart icon to add stories to your favorites collection.</p>
+    </>
+  );
+  
   return (
     <footer className="app-footer">
       <div className="footer-content">
@@ -847,14 +1131,75 @@ const AppFooter = () => {
         <p>Create magical stories for children of all ages!</p>
         
         <div className="footer-links">
-          <a href="#" className="footer-link">About</a>
-          <a href="#" className="footer-link">Privacy Policy</a>
-          <a href="#" className="footer-link">Contact Us</a>
-          <a href="#" className="footer-link">Help</a>
+          <button 
+            className="footer-link" 
+            onClick={() => setActivePopup('about')}
+          >
+            About
+          </button>
+          <button
+            className="footer-link" 
+            onClick={() => setActivePopup('privacy')}
+          >
+            Privacy Policy
+          </button>
+          <button 
+            className="footer-link" 
+            onClick={() => setActivePopup('contact')}
+          >
+            Contact Us
+          </button>
+          <button 
+            className="footer-link" 
+            onClick={() => setActivePopup('help')}
+          >
+            Help
+          </button>
         </div>
         
         <p className="text-sm">© 2025 AI Storyteller. All rights reserved.</p>
       </div>
+      
+      {/* Render the active popup */}
+      {activePopup === 'about' && (
+        <FooterPopup
+          title="About AI Storyteller"
+          content={aboutContent}
+          isOpen={true}
+          onClose={() => setActivePopup(null)}
+          popupType="about"
+        />
+      )}
+      
+      {activePopup === 'privacy' && (
+        <FooterPopup
+          title="Privacy Policy"
+          content={privacyContent}
+          isOpen={true}
+          onClose={() => setActivePopup(null)}
+          popupType="privacy"
+        />
+      )}
+      
+      {activePopup === 'contact' && (
+        <FooterPopup
+          title="Contact Us"
+          content={contactContent}
+          isOpen={true}
+          onClose={() => setActivePopup(null)}
+          popupType="contact"
+        />
+      )}
+      
+      {activePopup === 'help' && (
+        <FooterPopup
+          title="Help & Instructions"
+          content={helpContent}
+          isOpen={true}
+          onClose={() => setActivePopup(null)}
+          popupType="help"
+        />
+      )}
     </footer>
   );
 };
