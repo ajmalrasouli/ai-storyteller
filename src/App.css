@@ -184,7 +184,7 @@ body {
   margin-bottom: 18px;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(180deg, #7c3aed 0%, #9333ea 100%);
+  background: linear-gradient(180deg, #FF9AA2 0%, #FFB7B2 100%);
   color: white;
 }
 
@@ -1285,4 +1285,137 @@ body {
   }
 }
 */
-/* --- END REMOVE TEMPORARY DEBUG --- */ 
+/* --- END REMOVE TEMPORARY DEBUG --- */
+
+/* Moving bubbles animation */
+.moving-bubbles-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -3;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.moving-bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 20px 10px rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(5px);
+  transform-origin: center;
+  animation: bubble-float linear infinite;
+}
+
+@keyframes bubble-float {
+  0% {
+    transform: translateY(0) translateX(0) scale(1) rotate(0deg);
+    opacity: 0.2;
+  }
+  25% {
+    transform: translateY(-50px) translateX(50px) scale(1.1) rotate(90deg);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateY(-100px) translateX(0) scale(1) rotate(180deg);
+    opacity: 0.4;
+  }
+  75% {
+    transform: translateY(-50px) translateX(-50px) scale(0.9) rotate(270deg);
+    opacity: 0.3;
+  }
+  100% {
+    transform: translateY(0) translateX(0) scale(1) rotate(360deg);
+    opacity: 0.2;
+  }
+}
+
+/* Floating Storytelling Items */
+.floating-items-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.floating-item {
+  position: absolute;
+  transform-origin: center;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.6));
+  animation: item-float ease-in-out infinite;
+  user-select: none;
+  font-size: 30px;
+  opacity: 0.6;
+}
+
+/* Create a "safe zone" class to hide icons when they overlap main content */
+@media (max-width: 1200px) {
+  /* Hide middle icons on medium screens */
+  .floating-item-middle {
+    display: none !important;
+  }
+  
+  .floating-item {
+    /* Make remaining icons smaller */
+    font-size: 25px !important;
+    opacity: 0.5;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Hide more icons on small screens */
+  .floating-item-middle,
+  .floating-item-secondary {
+    display: none !important;
+  }
+  
+  .floating-item {
+    opacity: 0.4;
+    font-size: 22px !important;
+  }
+  
+  /* Only icons at extreme edges should show */
+  .floating-item-corners {
+    display: block !important;
+  }
+}
+
+/* Content safe area */
+.content-safe-area {
+  position: absolute;
+  top: 150px;
+  left: 15%;
+  right: 15%;
+  bottom: 100px;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes item-float {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(0.9);
+    opacity: 0.5;
+  }
+  25% {
+    transform: translateY(-30px) rotate(3deg) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-10px) rotate(0deg) scale(1.1);
+    opacity: 0.7;
+  }
+  75% {
+    transform: translateY(15px) rotate(-3deg) scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(0) rotate(0deg) scale(0.9);
+    opacity: 0.5;
+  }
+} 

@@ -145,6 +145,82 @@ const PlayfulDecorations = () => {
   );
 };
 
+// Add this new component after PlayfulDecorations
+const MovingBubbles = () => {
+  const bubbles = [
+    { size: 120, left: '10%', top: '15%', delay: 0, duration: 25 },
+    { size: 80, left: '75%', top: '20%', delay: 2, duration: 18 },
+    { size: 150, left: '50%', top: '60%', delay: 5, duration: 22 },
+    { size: 60, left: '20%', top: '70%', delay: 7, duration: 15 },
+    { size: 100, left: '85%', top: '75%', delay: 10, duration: 20 },
+    { size: 70, left: '35%', top: '40%', delay: 3, duration: 17 },
+    { size: 90, left: '60%', top: '85%', delay: 8, duration: 23 },
+  ];
+
+  return (
+    <div className="moving-bubbles-container">
+      {bubbles.map((bubble, index) => (
+        <div 
+          key={index}
+          className="moving-bubble"
+          style={{
+            width: `${bubble.size}px`,
+            height: `${bubble.size}px`,
+            left: bubble.left,
+            top: bubble.top,
+            animationDelay: `${bubble.delay}s`,
+            animationDuration: `${bubble.duration}s`
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
+// Add this new component after MovingBubbles
+const FloatingItems = () => {
+  const items = [
+    // Corner icons (will remain visible on all screen sizes)
+    { icon: "📚", size: 40, left: '5%', top: '20%', delay: 1, duration: 20, className: 'floating-item-corners' },
+    { icon: "🐉", size: 45, left: '15%', top: '90%', delay: 0, duration: 17, className: 'floating-item-corners' },
+    { icon: "🌟", size: 35, left: '85%', top: '18%', delay: 5, duration: 18, className: 'floating-item-corners' },
+    { icon: "🏰", size: 45, left: '80%', top: '92%', delay: 8, duration: 23, className: 'floating-item-corners' },
+    
+    // Secondary icons (visible on medium and large screens)
+    { icon: "🧙‍♂️", size: 40, left: '3%', top: '40%', delay: 2, duration: 22, className: 'floating-item-secondary' },
+    { icon: "🧚", size: 35, left: '92%', top: '65%', delay: 6, duration: 21, className: 'floating-item-secondary' },
+    
+    // Middle-positioned icons (only visible on large screens)
+    { icon: "✨", size: 30, left: '25%', top: '22%', delay: 3, duration: 15, className: 'floating-item-middle' },
+    { icon: "🦄", size: 40, left: '12%', top: '60%', delay: 7, duration: 16, className: 'floating-item-middle' },
+    { icon: "🔮", size: 35, left: '75%', top: '35%', delay: 4, duration: 19, className: 'floating-item-middle' }
+  ];
+
+  return (
+    <>
+      <div className="floating-items-container">
+        {items.map((item, index) => (
+          <div 
+            key={index}
+            className={`floating-item ${item.className}`}
+            style={{
+              fontSize: `${item.size}px`,
+              left: item.left,
+              top: item.top,
+              animationDelay: `${item.delay}s`,
+              animationDuration: `${item.duration}s`,
+              textShadow: '0 0 10px rgba(0,0,0,0.3)'
+            }}
+          >
+            {item.icon}
+          </div>
+        ))}
+      </div>
+      <div className="content-safe-area"></div>
+    </>
+  );
+};
+
 // Story loading animation component
 const StoryLoadingAnimation = () => {
   const [loadingMessage, setLoadingMessage] = useState("Creating your magical story...");
@@ -1190,11 +1266,15 @@ export default function App() {
     <div style={{
       position: 'relative',
       minHeight: '100vh',
-      backgroundColor: '#f9fafc', // Main background color
+      background: 'linear-gradient(45deg, #FF9AA2, #FFB7B2, #FFDAC1, #E2F0CB, #B5EAD7, #C7CEEA)',
+      backgroundSize: '400% 400%',
+      animation: 'gradient 15s ease infinite',
       overflow: 'hidden', // Prevent shapes from overflowing
       fontFamily: 'Nunito, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, sans-serif',
     }}>
       {/* --- NEW: Add Background Components --- */}
+      <MovingBubbles />
+      <FloatingItems />
       <BackgroundPatterns />
       <FloatingShapes />
       <PlayfulDecorations />
