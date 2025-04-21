@@ -674,7 +674,7 @@ interface AppHeaderProps {
 const AppHeader = ({ activeTab, setActiveTab, storiesCount }: AppHeaderProps) => {
   const navButtonStyle: React.CSSProperties = {
     backgroundColor: 'white',
-    color: '#5b21b6',
+    color: '#1A67A3',
     border: 'none',
     borderRadius: '25px',
     padding: '12px 24px',
@@ -682,7 +682,7 @@ const AppHeader = ({ activeTab, setActiveTab, storiesCount }: AppHeaderProps) =>
     fontWeight: 'bold',
     cursor: 'pointer',
     transition: 'all 0.3s ease',
-    boxShadow: '0 4px 0 rgba(0, 0, 0, 0.1)',
+    boxShadow: '0 4px 0 rgba(0, 0, 0, 0.1), 0 0 10px rgba(255, 255, 255, 0.5)',
     display: 'flex',
     alignItems: 'center',
     gap: '6px'
@@ -690,19 +690,15 @@ const AppHeader = ({ activeTab, setActiveTab, storiesCount }: AppHeaderProps) =>
 
   const activeButtonStyle: React.CSSProperties = {
     ...navButtonStyle,
-    backgroundColor: '#7c3aed',
-    color: 'white',
+    backgroundColor: '#FFC857',
+    color: '#1A67A3',
     transform: 'translateY(-3px)',
-    boxShadow: '0 7px 0 rgba(0, 0, 0, 0.1)'
+    boxShadow: '0 7px 0 rgba(0, 0, 0, 0.1), 0 0 15px rgba(255, 220, 89, 0.7)'
   };
 
   return (
     <header className="app-header">
-      <div className="header-background">
-        <div className="stars"></div>
-        <div className="mountains"></div>
-        <div className="clouds"></div>
-      </div>
+      <div className="sun"></div>
       <div className="relative z-10">
         <h1 className="site-title">✨ AI Storyteller ✨</h1>
         <p className="site-subtitle">Embark on a journey through magical worlds of storytelling</p>
@@ -1184,6 +1180,36 @@ const CreateStorySection = ({
   );
 };
 
+// Add this new component for moving clouds
+const MovingClouds = () => {
+  const clouds = [
+    { width: 120, top: '10%', left: '-10%', delay: 0, duration: 100 },
+    { width: 180, top: '15%', left: '-15%', delay: 20, duration: 120 },
+    { width: 150, top: '5%', left: '-5%', delay: 10, duration: 90 },
+    { width: 200, top: '20%', left: '-20%', delay: 5, duration: 110 },
+    { width: 100, top: '25%', left: '-8%', delay: 15, duration: 95 },
+    { width: 160, top: '8%', left: '-12%', delay: 25, duration: 105 },
+  ];
+
+  return (
+    <div className="moving-clouds-container">
+      {clouds.map((cloud, index) => (
+        <div 
+          key={index}
+          className="moving-cloud"
+          style={{
+            width: `${cloud.width}px`,
+            top: cloud.top,
+            left: cloud.left,
+            animationDelay: `${cloud.delay}s`,
+            animationDuration: `${cloud.duration}s`
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
 // Main App component
 export default function App() {
   const [stories, setStories] = useState<Story[]>([]);
@@ -1266,15 +1292,15 @@ export default function App() {
     <div style={{
       position: 'relative',
       minHeight: '100vh',
-      background: 'linear-gradient(45deg, #FF5757, #FFC857, #70D6FF, #7ED957, #9B5DE5, #FF70A6)',
-      backgroundSize: '400% 400%',
-      animation: 'gradient 15s ease infinite',
+      background: 'linear-gradient(to bottom, #70D6FF, #C0EAFF)',
       overflow: 'hidden', // Prevent shapes from overflowing
       fontFamily: 'Nunito, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, sans-serif',
     }}>
-      {/* --- NEW: Add Background Components --- */}
+      {/* --- Background Components --- */}
+      <MovingClouds />
       <MovingBubbles />
       <FloatingItems />
+      <div className="ground"></div>
       <BackgroundPatterns />
       <FloatingShapes />
       <PlayfulDecorations />

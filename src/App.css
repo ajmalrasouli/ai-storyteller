@@ -180,109 +180,118 @@ body {
 /* Header styles */
 .app-header {
   text-align: center;
-  padding: 25px 20px 21px;
-  margin-bottom: 18px;
+  padding: 30px 20px 45px;
+  margin-bottom: 25px;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(180deg, #FF5757 0%, #FFC857 100%);
+  background: linear-gradient(180deg, #70D6FF 0%, #C0EAFF 100%);
   color: white;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  border-bottom: 5px solid #FFC857;
 }
 
-.header-background {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  overflow: hidden;
-}
-
-.stars {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: 
-    radial-gradient(white 1px, transparent 1px),
-    radial-gradient(white 1px, transparent 1px);
-  background-size: 50px 50px;
-  background-position: 0 0, 25px 25px;
-  opacity: 0.3;
-}
-
-.stars::before,
-.stars::after {
+/* Add a wavy bottom border to the header */
+.app-header::after {
   content: '';
   position: absolute;
-  width: 4px;
-  height: 4px;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 20px;
+  background-image: 
+    radial-gradient(circle at 25% 0, transparent 50%, white 50%),
+    radial-gradient(circle at 75% 0, transparent 50%, white 50%);
+  background-size: 50px 20px;
+  background-repeat: repeat-x;
+  background-position: -25px 0;
+  z-index: 2;
+}
+
+/* Add sun to header */
+.sun {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  top: 20px;
+  right: 8%;
+  background: #FFDE59;
   border-radius: 50%;
-  background-color: white;
+  box-shadow: 0 0 50px #FFDE59;
+  z-index: 1;
+  animation: sun-glow 5s ease-in-out infinite alternate;
 }
 
-.stars::before {
-  top: 20%;
-  left: 30%;
-  animation: twinkle 2s infinite ease-in-out;
-}
-
-.stars::after {
-  top: 40%;
-  left: 70%;
-  animation: twinkle 3s infinite ease-in-out;
-}
-
-.mountains {
+.sun::before {
+  content: '';
   position: absolute;
-  bottom: -5px;
-  left: 0;
-  right: 0;
-  height: 30%;
-  background-image: 
-    linear-gradient(to top right, transparent 50%, #6d28d9 0),
-    linear-gradient(to top left, transparent 50%, #6d28d9 0);
-  background-size: 20% 100%, 30% 100%;
-  background-repeat: repeat-x;
-  background-position: 0 0, 20% 0;
-  opacity: 0.5;
+  top: -15px;
+  left: -15px;
+  right: -15px;
+  bottom: -15px;
+  background: radial-gradient(circle, rgba(255, 222, 89, 0.5) 0%, rgba(255, 222, 89, 0) 70%);
+  border-radius: 50%;
+  z-index: -1;
 }
 
-.clouds {
-  position: absolute;
-  bottom: 25%;
-  left: 0;
-  right: 0;
-  height: 20%;
-  background-image: 
-    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.5) 20%, transparent 80%),
-    radial-gradient(circle at 70% 50%, rgba(255, 255, 255, 0.5) 30%, transparent 70%);
-  background-size: 50% 100%, 40% 60%;
-  background-repeat: repeat-x;
-  background-position: 0 0, 50% 0;
-  animation: moveClouds 60s linear infinite;
+@keyframes sun-glow {
+  0% {
+    box-shadow: 0 0 20px #FFDE59;
+  }
+  100% {
+    box-shadow: 0 0 50px #FFDE59, 0 0 80px rgba(255, 222, 89, 0.5);
+  }
 }
 
 .site-title {
-  font-size: 3rem;
+  font-size: 3.5rem;
   font-weight: 900;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  margin-bottom: 0.3rem;
+  position: relative;
+  margin-bottom: 0.5rem;
   letter-spacing: 1px;
+  display: inline-block;
+  color: white;
+  text-shadow: 
+    2px 2px 0 #FFC857,
+    3px 3px 0 rgba(0, 0, 0, 0.2),
+    0 0 10px rgba(255, 255, 255, 0.5);
+  transform: rotate(-2deg);
+  transition: transform 0.3s ease;
+}
+
+.site-title:hover {
+  transform: rotate(0deg) scale(1.05);
+}
+
+.site-title::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: #FF70A6;
+  border-radius: 4px;
+  opacity: 0.8;
 }
 
 .site-subtitle {
-  font-size: 1.2rem;
-  margin-bottom: 1.5rem;
-  opacity: 0.9;
+  font-size: 1.3rem;
+  position: relative;
+  margin-bottom: 2rem;
+  opacity: 0.95;
+  font-weight: 600;
+  color: #1A67A3;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.5);
+  transform: rotate(-1deg);
 }
 
 .nav-tabs {
   display: flex;
   justify-content: center;
-  gap: 15px;
+  gap: 20px;
   flex-wrap: wrap;
+  position: relative;
+  z-index: 5;
 }
 
 /* Content area */
@@ -1418,4 +1427,66 @@ body {
     transform: translateY(0) rotate(0deg) scale(0.9);
     opacity: 0.5;
   }
+}
+
+/* Moving clouds animation */
+.moving-clouds-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 30%; /* Only in the top portion of the screen */
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.moving-cloud {
+  position: absolute;
+  height: 80px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 120'%3E%3Cpath fill='white' d='M75,30 C75,15 85,5 100,5 C115,5 125,15 125,30 C125,30 140,30 150,40 C160,50 160,65 150,75 C140,85 125,85 125,85 L75,85 C75,85 60,85 50,75 C40,65 40,50 50,40 C60,30 75,30 75,30 Z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-size: contain;
+  opacity: 0.85;
+  animation: cloud-move linear infinite;
+}
+
+@keyframes cloud-move {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.85;
+  }
+  90% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateX(calc(100vw + 300px));
+    opacity: 0;
+  }
+}
+
+/* Add a grass/ground element at the bottom */
+.ground {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 90px;
+  background-color: #7ED957;
+  background-image: 
+    radial-gradient(circle at 10% 50%, #8FE968 5%, transparent 5%),
+    radial-gradient(circle at 20% 60%, #8FE968 4%, transparent 4%),
+    radial-gradient(circle at 30% 55%, #8FE968 6%, transparent 6%),
+    radial-gradient(circle at 40% 50%, #8FE968 5%, transparent 5%),
+    radial-gradient(circle at 50% 60%, #8FE968 4%, transparent 4%),
+    radial-gradient(circle at 60% 55%, #8FE968 6%, transparent 6%),
+    radial-gradient(circle at 70% 50%, #8FE968 5%, transparent 5%),
+    radial-gradient(circle at 80% 60%, #8FE968 4%, transparent 4%),
+    radial-gradient(circle at 90% 55%, #8FE968 6%, transparent 6%);
+  border-top-left-radius: 50% 60%;
+  border-top-right-radius: 50% 60%;
+  z-index: 0;
 } 
