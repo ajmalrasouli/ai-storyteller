@@ -1,9 +1,4 @@
----
-description: 
-globs: 
-alwaysApply: false
----
- # Flask and SQLAlchemy guidelines
+# Flask and SQLAlchemy guidelines
 
 ## Flask Application Structure
 

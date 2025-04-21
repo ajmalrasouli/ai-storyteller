@@ -3,14 +3,79 @@ import { generateStory, listStories, Story, toggleFavorite } from './lib/api';
 import { Toaster } from 'react-hot-toast';
 import './App.css';
 
-// Enhanced themes with emojis
-const themes = ["🚀 Space Adventure", "🏰 Magic Kingdom", "🌊 Ocean Explorer", "🐯 Jungle Safari", "🦕 Dinosaur World"];
+// Enhanced themes with emojis and descriptions
+const themeIslands = [
+  {
+    id: "space",
+    name: "🚀 Space Adventure",
+    description: "Journey through the stars and discover new planets with brave astronauts and friendly aliens.",
+    color: "#4c1d95",
+    backgroundColor: "#c4b5fd",
+    icon: "🚀"
+  },
+  {
+    id: "magic",
+    name: "🏰 Magic Kingdom",
+    description: "Explore enchanted castles, meet wizards, and discover magical creatures in a world of wonder.",
+    color: "#5b21b6",
+    backgroundColor: "#ddd6fe",
+    icon: "🏰"
+  },
+  {
+    id: "ocean",
+    name: "🌊 Ocean Explorer",
+    description: "Dive deep into underwater adventures with mermaids, friendly sea creatures, and hidden treasures.",
+    color: "#1e40af",
+    backgroundColor: "#bfdbfe",
+    icon: "🌊"
+  },
+  {
+    id: "jungle",
+    name: "🐯 Jungle Safari",
+    description: "Trek through lush jungles filled with exotic animals, ancient ruins, and exciting discoveries.",
+    color: "#166534",
+    backgroundColor: "#bbf7d0",
+    icon: "🐯"
+  },
+  {
+    id: "dinosaur",
+    name: "🦕 Dinosaur World",
+    description: "Travel back in time to when dinosaurs ruled the Earth. Meet friendly dinos and discover their world.",
+    color: "#92400e",
+    backgroundColor: "#fed7aa",
+    icon: "🦕"
+  }
+];
 
-// Enhanced age groups with emojis
-const ageGroups = [
-  "🧒 Little Explorers (3-5 years)",
-  "👦 Curious Minds (6-8 years)", 
-  "👧 Young Adventurers (9-12 years)"
+// Enhanced age groups with progression levels
+const ageGroupLevels = [
+  {
+    id: "beginner",
+    name: "🧒 Little Explorers",
+    range: "(3-5 years)",
+    description: "Simple stories with basic words and concepts, perfect for the youngest adventurers.",
+    color: "#0891b2",
+    backgroundColor: "#a5f3fc",
+    icon: "🧒"
+  },
+  {
+    id: "intermediate",
+    name: "👦 Curious Minds", 
+    range: "(6-8 years)",
+    description: "More detailed adventures with expanded vocabulary and engaging plots.",
+    color: "#0e7490",
+    backgroundColor: "#67e8f9",
+    icon: "👦"
+  },
+  {
+    id: "advanced",
+    name: "👧 Young Adventurers",
+    range: "(9-12 years)",
+    description: "Complex stories with rich language, deeper themes, and exciting challenges.",
+    color: "#0369a1",
+    backgroundColor: "#bae6fd",
+    icon: "👧"
+  }
 ];
 
 // Decorative bubbles for the header
@@ -266,7 +331,7 @@ const Confetti = ({ active = false }) => {
     
     return (
       <div 
-        key={i}
+            key={i}
         className={`confetti-piece ${colors[Math.floor(Math.random() * colors.length)]}`}
         style={{
           left: `${left}%`,
@@ -314,10 +379,10 @@ interface AppHeaderProps {
 const AppHeader = ({ activeTab, setActiveTab, storiesCount }: AppHeaderProps) => {
   const navButtonStyle: React.CSSProperties = {
     backgroundColor: 'white',
-    color: '#9333ea',
+    color: '#5b21b6',
     border: 'none',
     borderRadius: '25px',
-    padding: '10px 20px',
+    padding: '12px 24px',
     fontSize: '1.1rem',
     fontWeight: 'bold',
     cursor: 'pointer',
@@ -330,7 +395,7 @@ const AppHeader = ({ activeTab, setActiveTab, storiesCount }: AppHeaderProps) =>
 
   const activeButtonStyle: React.CSSProperties = {
     ...navButtonStyle,
-    backgroundColor: '#ff6b6b',
+    backgroundColor: '#7c3aed',
     color: 'white',
     transform: 'translateY(-3px)',
     boxShadow: '0 7px 0 rgba(0, 0, 0, 0.1)'
@@ -338,19 +403,20 @@ const AppHeader = ({ activeTab, setActiveTab, storiesCount }: AppHeaderProps) =>
 
   return (
     <header className="app-header">
-      <img 
-        src="/banner.svg" 
-        alt="AI Storyteller Banner" 
-        className="absolute top-0 left-0 w-full h-full object-cover"
-      />
+      <div className="header-background">
+        <div className="stars"></div>
+        <div className="mountains"></div>
+        <div className="clouds"></div>
+      </div>
       <div className="relative z-10">
-        <h1>✨ AI Storyteller ✨</h1>
+        <h1 className="site-title">✨ AI Storyteller ✨</h1>
+        <p className="site-subtitle">Embark on a journey through magical worlds of storytelling</p>
         <div className="nav-tabs">
           <button 
             style={activeTab === 'create' ? activeButtonStyle : navButtonStyle}
             onClick={() => setActiveTab('create')}
           >
-            ✏️ Create Story
+            🗺️ Story Adventure
           </button>
           <button 
             style={activeTab === 'stories' ? activeButtonStyle : navButtonStyle}
@@ -403,15 +469,15 @@ const ThemeSelector = ({ selectedTheme, onSelectTheme }: { selectedTheme: string
 
   return (
     <div className="theme-selector">
-      {themes.map((theme, index) => {
-        const icon = getThemeIcon(theme);
-        const name = theme.split(' ').slice(1).join(' ');
+      {themeIslands.map((theme, index) => {
+        const icon = getThemeIcon(theme.name);
+        const name = theme.name.split(' ').slice(1).join(' ');
         
         return (
           <button
             key={index}
-            style={selectedTheme === theme ? activeThemeStyle : themeButtonStyle}
-            onClick={() => onSelectTheme(theme)}
+            style={selectedTheme === theme.name ? activeThemeStyle : themeButtonStyle}
+            onClick={() => onSelectTheme(theme.name)}
           >
             <span style={iconStyle}>{icon}</span>
             <span style={nameStyle}>{name}</span>
@@ -462,21 +528,18 @@ const AgeGroupSelector = ({ selectedAgeGroup, onSelectAgeGroup }: { selectedAgeG
 
   return (
     <div className="age-selector">
-      {ageGroups.map((ageGroup, index) => {
-        const parts = ageGroup.split('(');
-        const label = parts[0].trim();
-        const range = parts[1] ? `(${parts[1]}` : '';
-        const icon = getAgeGroupEmoji(ageGroup);
+      {ageGroupLevels.map((level, index) => {
+        const isSelected = selectedAgeGroup === `${level.name} ${level.range}`;
         
         return (
           <button
             key={index}
-            style={selectedAgeGroup === ageGroup ? activeAgeStyle : ageButtonStyle}
-            onClick={() => onSelectAgeGroup(ageGroup)}
+            style={isSelected ? activeAgeStyle : ageButtonStyle}
+            onClick={() => onSelectAgeGroup(`${level.name} ${level.range}`)}
           >
-            <span style={iconStyle}>{icon}</span>
-            <span style={labelStyle}>{label}</span>
-            <span style={rangeStyle}>{range}</span>
+            <span style={iconStyle}>{level.icon}</span>
+            <span style={labelStyle}>{level.name}</span>
+            <span style={rangeStyle}>{level.range}</span>
           </button>
         );
       })}
@@ -511,7 +574,7 @@ const EmptyState = ({ onCreateNew }: { onCreateNew: () => void }) => {
     <div className="empty-state">
       <div className="empty-illustration">
         <img src="/grid.svg" alt="No stories yet" />
-      </div>
+        </div>
       <h3 className="empty-title">No Stories Yet!</h3>
       <p className="empty-message">Create your first magical story adventure!</p>
       <button className="action-button" onClick={onCreateNew}>
@@ -595,6 +658,237 @@ const styles = {
   } as React.CSSProperties,
 };
 
+// New component: Adventure Map
+const AdventureMap = ({ 
+  selectedTheme, 
+  onSelectTheme, 
+  selectedAgeGroup, 
+  onSelectAgeGroup,
+  storyCount
+}: { 
+  selectedTheme: string, 
+  onSelectTheme: (theme: string) => void,
+  selectedAgeGroup: string,
+  onSelectAgeGroup: (age: string) => void,
+  storyCount: number
+}) => {
+  return (
+    <div className="adventure-map">
+      <h2 className="adventure-title">Your Story Adventure Map</h2>
+      <p className="adventure-subtitle">Choose an island theme and skill level to begin your storytelling journey!</p>
+      
+      <div className="island-selection">
+        <h3 className="section-heading">Choose Your Story Island</h3>
+        <div className="islands-grid">
+          {themeIslands.map((island) => {
+            const isSelected = selectedTheme === island.name;
+            
+            return (
+              <div 
+                key={island.id}
+                className={`island-card ${isSelected ? 'selected' : ''}`}
+                onClick={() => onSelectTheme(island.name)}
+                style={{
+                  backgroundColor: isSelected ? island.backgroundColor : '#ffffff',
+                  borderColor: isSelected ? island.color : '#e5e7eb',
+                  boxShadow: isSelected ? `0 10px 15px -3px ${island.backgroundColor}` : '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                }}
+              >
+                <div className="island-icon" style={{ backgroundColor: island.color }}>
+                  <span>{island.icon}</span>
+                </div>
+                <div className="island-content">
+                  <h4 className="island-name">{island.name.split(' ').slice(1).join(' ')}</h4>
+                  <p className="island-description">{island.description}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      
+      <div className="skill-selection">
+        <h3 className="section-heading">Choose Your Skill Level</h3>
+        <div className="skills-grid">
+          {ageGroupLevels.map((level) => {
+            const isSelected = selectedAgeGroup === `${level.name} ${level.range}`;
+            
+            return (
+              <div 
+                key={level.id}
+                className={`skill-card ${isSelected ? 'selected' : ''}`}
+                onClick={() => onSelectAgeGroup(`${level.name} ${level.range}`)}
+                style={{
+                  backgroundColor: isSelected ? level.backgroundColor : '#ffffff',
+                  borderColor: isSelected ? level.color : '#e5e7eb',
+                  boxShadow: isSelected ? `0 10px 15px -3px ${level.backgroundColor}` : '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                }}
+              >
+                <div className="skill-icon" style={{ backgroundColor: level.color }}>
+                  <span>{level.icon}</span>
+                </div>
+                <div className="skill-content">
+                  <h4 className="skill-name">{level.name}</h4>
+                  <p className="skill-range">{level.range}</p>
+                  <p className="skill-description">{level.description}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      
+      <div className="progress-tracker">
+        <div className="progress-stats">
+          <div className="stat-box">
+            <span className="stat-value">{storyCount}</span>
+            <span className="stat-label">Stories Created</span>
+          </div>
+          <div className="stat-box">
+            <span className="stat-value">{selectedTheme ? 1 : 0}/5</span>
+            <span className="stat-label">Islands Explored</span>
+          </div>
+          <div className="stat-box">
+            <span className="stat-value">{selectedAgeGroup ? 1 : 0}/3</span>
+            <span className="stat-label">Skill Levels</span>
+          </div>
+        </div>
+        </div>
+    </div>
+  );
+};
+
+// Create Story Section
+const CreateStorySection = ({
+  theme,
+  characters,
+  ageGroup,
+  loading,
+  setCharacters,
+  handleGenerateStory
+}: {
+  theme: string,
+  characters: string,
+  ageGroup: string,
+  loading: boolean,
+  setCharacters: (characters: string) => void,
+  handleGenerateStory: () => void
+}) => {
+  const selectedTheme = themeIslands.find(i => i.name === theme);
+  const selectedLevel = ageGroupLevels.find(l => `${l.name} ${l.range}` === ageGroup);
+  
+  if (!selectedTheme || !selectedLevel) {
+    return (
+      <div className="character-section">
+        <h3 className="section-heading">Complete Your Selection</h3>
+        <p className="section-description">
+          Please select a story theme and skill level to continue your adventure!
+        </p>
+    </div>
+  );
+}
+
+  return (
+    <div className="character-section">
+      <div className="adventure-header">
+        <div className="adventure-badge" style={{ backgroundColor: selectedTheme.backgroundColor, color: selectedTheme.color }}>
+          {selectedTheme.icon} {selectedTheme.name.split(' ').slice(1).join(' ')}
+        </div>
+        <div className="adventure-badge" style={{ backgroundColor: selectedLevel.backgroundColor, color: selectedLevel.color }}>
+          {selectedLevel.icon} {selectedLevel.name}
+        </div>
+      </div>
+      
+      <h3 className="section-heading">Create Your Adventure Characters</h3>
+      <p className="section-description">
+        Who will join you on this adventure to {selectedTheme.name.split(' ').slice(1).join(' ')}? 
+        Add your main characters below, separated by commas.
+      </p>
+      
+      <div className="character-input-container">
+        <textarea
+          className="form-control"
+          placeholder="Enter characters for your story (e.g., 'a brave knight named Max, a friendly dragon named Sparky')"
+          value={characters}
+          onChange={(e) => setCharacters(e.target.value)}
+          rows={3}
+          style={{
+            borderColor: selectedTheme.color,
+            boxShadow: `0 0 0 2px ${selectedTheme.backgroundColor}`
+          }}
+        />
+        {characters.length === 0 && (
+          <div className="character-suggestions">
+            <div className="suggestion-title">Try these characters:</div>
+            <div className="suggestion-list">
+              {selectedTheme.id === "space" && (
+                <>
+                  <span className="suggestion-item" onClick={() => setCharacters("Captain Stella, a friendly alien named Zorp, a robot dog called Byte")}>Space Crew</span>
+                  <span className="suggestion-item" onClick={() => setCharacters("Dr. Nova, twin astronauts Tim and Tom, a mysterious space creature")}>Galaxy Explorers</span>
+                </>
+              )}
+              {selectedTheme.id === "magic" && (
+                <>
+                  <span className="suggestion-item" onClick={() => setCharacters("a brave princess, a talking cat, a wise wizard")}>Royal Magic</span>
+                  <span className="suggestion-item" onClick={() => setCharacters("Merlin the young wizard, a magical dragon egg, a forest fairy")}>Enchanted Friends</span>
+                </>
+              )}
+              {selectedTheme.id === "ocean" && (
+                <>
+                  <span className="suggestion-item" onClick={() => setCharacters("Marina the mermaid, Bubbles the dolphin, Captain Coral")}>Ocean Friends</span>
+                  <span className="suggestion-item" onClick={() => setCharacters("a curious submarine pilot, a giant friendly octopus, a lost whale")}>Deep Sea Explorers</span>
+                </>
+              )}
+              {selectedTheme.id === "jungle" && (
+                <>
+                  <span className="suggestion-item" onClick={() => setCharacters("Zara the explorer, Stripes the tiger cub, a wise old elephant")}>Jungle Team</span>
+                  <span className="suggestion-item" onClick={() => setCharacters("Dr. Leaf the botanist, a playful monkey, a colorful parrot guide")}>Rainforest Adventurers</span>
+                </>
+              )}
+              {selectedTheme.id === "dinosaur" && (
+                <>
+                  <span className="suggestion-item" onClick={() => setCharacters("a time-traveling scientist, Rex the friendly T-Rex, Pterry the pterodactyl")}>Dino Buddies</span>
+                  <span className="suggestion-item" onClick={() => setCharacters("twins Tara and Tim, a baby triceratops, Dr. Fossil")}>Prehistoric Gang</span>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+      
+      <button
+        className="adventure-button"
+        onClick={handleGenerateStory}
+        disabled={loading || !characters}
+        style={{
+          backgroundColor: selectedTheme.color,
+          color: 'white',
+          fontWeight: 'bold',
+          padding: '16px 24px',
+          width: '100%',
+          borderRadius: '8px',
+          fontSize: '1.2rem',
+          boxShadow: `0 4px 0 rgba(0, 0, 0, 0.2)`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '10px'
+        }}
+      >
+        {loading ? (
+          <>
+            <span className="loading-spinner"></span>
+            Creating Your Adventure...
+          </>
+        ) : (
+          <span>✨ Begin Your Magical Adventure ✨</span>
+        )}
+      </button>
+    </div>
+  );
+};
+
+// Main App component
 export default function App() {
   const [stories, setStories] = useState<Story[]>([]);
   const [theme, setTheme] = useState("");
@@ -673,10 +967,12 @@ export default function App() {
   };
 
   return (
-    <div style={styles.appContainer}>
-      <div style={styles.appBackground}>
-        <div style={styles.backgroundWhite}></div>
-      </div>
+    <div style={{
+      position: 'relative',
+      minHeight: '100vh',
+      background: 'linear-gradient(to bottom, #f5f3ff, #ffffff)',
+      fontFamily: 'Nunito, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, sans-serif',
+    }}>
       <Toaster position="top-center" />
       <Confetti active={showConfetti} />
       
@@ -690,90 +986,30 @@ export default function App() {
       {/* Main content */}
       <main className="content-area">
         {activeTab === 'create' && (
-          <div className="create-story-container">
-            <h2>Create Your Own Magical Story!</h2>
+          <div className="adventure-layout">
+            <AdventureMap 
+              selectedTheme={theme} 
+              onSelectTheme={setTheme}
+              selectedAgeGroup={ageGroup}
+              onSelectAgeGroup={setAgeGroup}
+              storyCount={stories.length}
+            />
             
-            <div className="form-group">
-              <label>
-                <span className="inline-block mr-2">🎭</span> Pick a Theme:
-              </label>
-              <ThemeSelector 
-                selectedTheme={theme} 
-                onSelectTheme={setTheme} 
-              />
-            </div>
-            
-            <div className="form-group">
-              <label>
-                <span className="inline-block mr-2">👨‍👩‍👧‍👦</span> Add Characters:
-              </label>
-              <div className="character-input-container">
-                <textarea
-                  className="form-control"
-                  placeholder="Enter characters for your story (e.g., 'a brave knight named Max, a friendly dragon named Sparky')"
-                  value={characters}
-                  onChange={(e) => setCharacters(e.target.value)}
-                  rows={3}
-                />
-                {characters.length === 0 && (
-                  <div className="character-suggestions">
-                    <div className="suggestion-title">Try these characters:</div>
-                    <div className="suggestion-list">
-                      <span className="suggestion-item" onClick={() => setCharacters("a brave princess, a talking cat, a wise wizard")}>Princess & Friends</span>
-                      <span className="suggestion-item" onClick={() => setCharacters("a curious alien, a friendly robot, a space explorer")}>Space Crew</span>
-                      <span className="suggestion-item" onClick={() => setCharacters("a playful puppy, a grumpy cat, a clever rabbit")}>Animal Adventures</span>
-                      <span className="suggestion-item" onClick={() => setCharacters("a magical unicorn, a tiny fairy, a friendly dragon")}>Magical Creatures</span>
-                    </div>
-                  </div>
-                )}
+            <CreateStorySection
+              theme={theme}
+              characters={characters}
+              ageGroup={ageGroup}
+              loading={loading}
+              setCharacters={setCharacters}
+              handleGenerateStory={handleGenerateStory}
+            />
               </div>
-            </div>
-            
-            <div className="form-group">
-              <label>
-                <span className="inline-block mr-2">📚</span> Choose Age Group:
-              </label>
-              <AgeGroupSelector 
-                selectedAgeGroup={ageGroup} 
-                onSelectAgeGroup={setAgeGroup} 
-              />
-            </div>
-            
-            <button
-              className="btn btn-primary btn-full mt-6"
-              onClick={handleGenerateStory}
-              disabled={loading || !theme || !characters || !ageGroup}
-              style={{ 
-                backgroundColor: '#9333ea', 
-                color: 'white', 
-                fontWeight: 'bold',
-                padding: '12px 24px',
-                width: '100%',
-                borderRadius: '8px',
-                fontSize: '1.2rem',
-                boxShadow: '0 4px 0 rgba(121, 45, 196, 0.5)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '10px'
-              }}
-            >
-              {loading ? (
-                <>
-                  <span className="loading-spinner"></span>
-                  Creating Your Story...
-                </>
-              ) : (
-                <span>✨ Create Magical Story ✨</span>
-              )}
-            </button>
-          </div>
         )}
         
         {(activeTab === 'stories' || activeTab === 'favorites') && (
           <>
-            <h2 className="text-2xl font-bold mb-4 text-center">
-              {activeTab === 'stories' ? 'All Your Magical Stories' : 'Your Favorite Stories'}
+            <h2 className="adventure-collection-title">
+              {activeTab === 'stories' ? 'Your Story Collection' : 'Your Favorite Adventures'}
             </h2>
             
             <div className="stories-grid">
@@ -783,9 +1019,9 @@ export default function App() {
                 </div>
               ) : (
                 (activeTab === 'stories' ? stories : stories.filter(s => s.isFavorite)).map(story => (
-                  <StoryCard
+                  <StoryCard 
                     key={story.id}
-                    story={story}
+                    story={story} 
                     onView={setViewStory}
                     onToggleFavorite={handleToggleFavorite}
                   />
