@@ -2,6 +2,12 @@
 
 An interactive AI-powered storytelling application that generates personalized children's stories based on themes, characters, and age groups.
 
+## Video Demo
+
+[![AI Storyteller Demo](https://img.youtube.com/vi/6-H0OcEAI7s/0.jpg)](https://youtu.be/6-H0OcEAI7s)
+
+*Click the image above to watch the demo video*
+
 ## Screenshots
 
 | ![Adventure](public/images/adventure.png) | ![Story Creation](public/images/story.png) |

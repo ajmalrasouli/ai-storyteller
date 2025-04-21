@@ -513,15 +513,40 @@ const StoryModal = ({ story, isOpen, onClose, onToggleFavorite }: StoryModalProp
   };
 
   const handleEmail = () => {
-    const subject = encodeURIComponent(`Story: ${story.title}`);
-    const body = encodeURIComponent(
-      `${story.title}\n\n` +
-      `Theme: ${story.theme}\n` +
-      `Age Group: ${story.ageGroup}\n\n` +
-      `${story.content}\n\n` +
-      `Created with AI Storyteller`
-    );
-    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    try {
+      const subject = encodeURIComponent(`Story: ${story.title}`);
+      // Limit content size to avoid issues with mailto
+      const contentPreview = story.content.length > 1500 
+        ? story.content.substring(0, 1500) + "... (Content truncated for email)"
+        : story.content;
+      
+      const body = encodeURIComponent(
+        `${story.title}\n\n` +
+        `Theme: ${story.theme}\n` +
+        `Age Group: ${story.ageGroup}\n\n` +
+        `${contentPreview}\n\n` +
+        `Created with AI Storyteller`
+      );
+      
+      // Check if body is too long
+      if (body.length > 2000) {
+        toast.error("Story is too long to send via email. Please try using the print function instead.");
+        return;
+      }
+      
+      // Create a temporary link element and trigger it
+      const mailtoLink = document.createElement('a');
+      mailtoLink.href = `mailto:?subject=${subject}&body=${body}`;
+      mailtoLink.target = '_blank';
+      document.body.appendChild(mailtoLink);
+      mailtoLink.click();
+      document.body.removeChild(mailtoLink);
+      
+      toast.success("Email client opened!");
+    } catch (error) {
+      toast.error("Could not open email client. Please try again or use another method to share.");
+      console.error("Email error:", error);
+    }
   };
 
   const handleListen = () => {
@@ -1622,10 +1647,18 @@ export default function App() {
 
   const handleToggleFavorite = async (storyId: number) => {
     try {
-      await toggleFavorite(storyId);
+      const response = await toggleFavorite(storyId);
       await fetchStories();
+      
+      // Show appropriate toast based on favorite status
+      if (response.isFavorite) {
+        toast.success("Added to favorites!");
+      } else {
+        toast.success("Removed from favorites");
+      }
     } catch (error) {
       console.error('Error toggling favorite:', error);
+      toast.error("Could not update favorite status. Please try again.");
     }
   };
 
