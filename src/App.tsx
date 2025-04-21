@@ -1266,7 +1266,7 @@ export default function App() {
     <div style={{
       position: 'relative',
       minHeight: '100vh',
-      background: 'linear-gradient(45deg, #FF9AA2, #FFB7B2, #FFDAC1, #E2F0CB, #B5EAD7, #C7CEEA)',
+      background: 'linear-gradient(45deg, #FF5757, #FFC857, #70D6FF, #7ED957, #9B5DE5, #FF70A6)',
       backgroundSize: '400% 400%',
       animation: 'gradient 15s ease infinite',
       overflow: 'hidden', // Prevent shapes from overflowing
