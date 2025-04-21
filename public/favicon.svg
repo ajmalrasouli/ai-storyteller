@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <!-- Background circle -->
+  <circle cx="32" cy="32" r="30" fill="#7c3aed" />
+  
+  <!-- Open book - enlarged by 40% -->
+  <path d="M12 21.6C12 20.0568 13.2569 18.8 14.8 18.8H49.2C50.7431 18.8 52 20.0568 52 21.6V46.4C52 47.9432 50.7431 49.2 49.2 49.2H14.8C13.2569 49.2 12 47.9432 12 46.4V21.6Z" fill="white" />
+  
+  <!-- Book spine -->
+  <path d="M31.5 18.8V49.2" stroke="#7c3aed" stroke-width="2.8" />
+  
+  <!-- Book pages - left side -->
+  <path d="M17.5 26.6H28" stroke="#a78bfa" stroke-width="2.1" stroke-linecap="round" />
+  <path d="M17.5 32H28" stroke="#a78bfa" stroke-width="2.1" stroke-linecap="round" />
+  <path d="M17.5 37.4H28" stroke="#a78bfa" stroke-width="2.1" stroke-linecap="round" />
+  <path d="M17.5 42.8H28" stroke="#a78bfa" stroke-width="2.1" stroke-linecap="round" />
+  
+  <!-- Book pages - right side -->
+  <path d="M35 26.6H47.5" stroke="#a78bfa" stroke-width="2.1" stroke-linecap="round" />
+  <path d="M35 32H47.5" stroke="#a78bfa" stroke-width="2.1" stroke-linecap="round" />
+  <path d="M35 37.4H47.5" stroke="#a78bfa" stroke-width="2.1" stroke-linecap="round" />
+  <path d="M35 42.8H47.5" stroke="#a78bfa" stroke-width="2.1" stroke-linecap="round" />
+  
+  <!-- Stars/Sparkles -->
+  <path d="M12 18L14 20L16 18L14 16L12 18Z" fill="#fef08a" />
+  <path d="M48 14L50 16L52 14L50 12L48 14Z" fill="#fef08a" />
+  <path d="M46 52L48 54L50 52L48 50L46 52Z" fill="#fef08a" />
+  <path d="M10 40L12 42L14 40L12 38L10 40Z" fill="#fef08a" />
+  
+  <!-- Larger star -->
+  <path d="M32 10L34 16H40L35 20L37 26L32 22L27 26L29 20L24 16H30L32 10Z" fill="#fef08a" />
+</svg> 

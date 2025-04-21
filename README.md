@@ -11,7 +11,13 @@ An interactive AI-powered storytelling application that generates personalized c
 - 📧 Email stories directly from the application
 - 🖨️ Print-friendly story formatting
 - 🎯 Educational focus with learning objectives
-- ✨ Modern, animated UI with visual feedback
+- ✨ Enhanced animated UI with visual feedback:
+  - 📝 Typewriter effect for story reveal
+  - 📖 Book flipping animation during story generation
+  - 💫 Magical sparkle effects and dynamic elements
+  - 🔄 Rotating loading messages during story creation
+  - ✨ Confetti celebration when stories are generated
+  - 📱 Responsive design with smooth transitions
 
 ## Tech Stack
 
@@ -59,17 +65,26 @@ An interactive AI-powered storytelling application that generates personalized c
    - Select a theme (Space Adventure, Magic Kingdom, etc.)
    - Add characters (comma-separated)
    - Choose an age group
-   - Click "Create Magical Story" to generate
+   - Click "Begin Your Magical Adventure" to generate
 
 2. **View Stories**:
    - Browse all stories in the "My Stories" tab
    - View favorite stories in the "Favorites" tab
-   - Click on a story card to view the full content
+   - Click on a story card to view the full content with animated text reveal
 
 3. **Story Actions**:
    - Add/remove stories from favorites
    - Email stories to share them with others
    - Print stories in a nicely formatted layout
+
+## Animation Features
+
+The application includes several animation features to enhance the user experience:
+
+- **Story Generation**: Animated book with flipping pages and writing lines during story creation
+- **Text Reveal**: Typewriter effect for story titles and fade-in animations for paragraphs
+- **Loading Messages**: Dynamic, changing messages during story generation to keep users engaged
+- **Visual Feedback**: Sparkle effects, confetti celebration, and floating decorative elements
 
 ## Environment Variables
 
