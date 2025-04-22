@@ -7,6 +7,10 @@ from openai import AzureOpenAI
 import os
 import random
 from dotenv import load_dotenv
+import base64
+import requests
+from io import BytesIO
+import time
 
 # Load environment variables
 load_dotenv()
@@ -198,6 +202,92 @@ The End"""
     
     return title, story
 
+# Function to generate AI illustration using DALL-E
+def generate_illustration(title, theme, characters, age_group):
+    try:
+        # Use Azure DALL-E API with format from working cURL command
+        dalle_endpoint = os.getenv("AZURE_DALLE_ENDPOINT").rstrip('/')
+        dalle_api_key = os.getenv("AZURE_DALLE_API_KEY")
+        dalle_api_version = os.getenv("AZURE_DALLE_API_VERSION")
+        
+        if not dalle_endpoint or not dalle_api_key:
+            raise ValueError("Azure DALL-E endpoint or API key not found in environment variables")
+        
+        # Create a prompt for DALL-E based on the story elements
+        prompt = f"Create a colorful, child-friendly illustration for a children's story titled '{title}'. The story is about {theme.lower()} and features these characters: {', '.join(characters)}. The illustration should be appropriate for {age_group} children, with a whimsical digital art style, vibrant colors, and no text. Ensure the illustration matches the theme and characters exactly."
+        
+        print(f"Using Azure DALL-E API with endpoint: {dalle_endpoint}")
+        print(f"Generating illustration with prompt: {prompt}")
+        
+        # Format URL based on the working cURL example
+        api_url = f"{dalle_endpoint}/openai/deployments/dall-e-3/images/generations?api-version={dalle_api_version}"
+        
+        headers = {
+            "Content-Type": "application/json",
+            "api-key": dalle_api_key
+        }
+        
+        payload = {
+            "prompt": prompt,
+            "size": "1024x1024",
+            "n": 1
+        }
+        
+        # Make the API request
+        response = requests.post(api_url, headers=headers, json=payload)
+        response.raise_for_status()
+        
+        # Parse the response to get the image URL
+        result = response.json()
+        print(f"DALL-E API response: {result}")
+        
+        # Extract the image URL from the response
+        image_url = None
+        if "data" in result and len(result["data"]) > 0 and "url" in result["data"][0]:
+            image_url = result["data"][0]["url"]
+        elif "data" in result and len(result["data"]) > 0 and "b64_json" in result["data"][0]:
+            # Handle case where image is returned as base64
+            b64_data = result["data"][0]["b64_json"]
+            # Save the base64 image to a file or handle it appropriately
+            # This is just a placeholder for handling base64 data
+            print("Received base64 image data")
+            # For now, let's fall back to placeholder
+            return get_placeholder_image(theme)
+        
+        if not image_url:
+            print("No image URL found in API response")
+            return get_placeholder_image(theme)
+            
+        print(f"Successfully generated image: {image_url[:60]}...")
+        return image_url
+        
+    except Exception as e:
+        print(f"Error with Azure DALL-E API: {str(e)}")
+        return get_placeholder_image(theme)
+
+def get_placeholder_image(theme):
+    print("Falling back to placeholder images")
+    
+    # Create theme-specific placeholder images that are more relevant to the stories
+    theme_placeholders = {
+        "Space": "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1024&h=1024&fit=crop",
+        "Magic": "https://images.unsplash.com/photo-1599252152472-040a1f74a918?w=1024&h=1024&fit=crop",
+        "Ocean": "https://images.unsplash.com/photo-1518020382113-a7e8fc38eac9?w=1024&h=1024&fit=crop",
+        "Jungle": "https://images.unsplash.com/photo-1534067783941-51c9c23ecefd?w=1024&h=1024&fit=crop",
+        "Dinosaur": "https://images.unsplash.com/photo-1519074031893-eecc8a7b89c2?w=1024&h=1024&fit=crop",
+        "Friendship": "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1024&h=1024&fit=crop",
+        "Adventure": "https://images.unsplash.com/photo-1462759353907-b2ea5ebd72e7?w=1024&h=1024&fit=crop",
+        "Animals": "https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=1024&h=1024&fit=crop"
+    }
+    
+    # Find the closest matching theme or use a default
+    for key in theme_placeholders:
+        if key in theme:
+            return theme_placeholders[key]
+    
+    # Default placeholder if no theme match
+    return "https://images.unsplash.com/photo-1511497584788-876760111969?w=1024&h=1024&fit=crop"
+
 # Models
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -219,6 +309,7 @@ class Story(db.Model):
     characters = db.Column(db.String(500), nullable=False)  # Store as JSON string
     age_group = db.Column(db.String(20), nullable=False)
     is_favorite = db.Column(db.Boolean, default=False)
+    image_url = db.Column(db.String(500), nullable=True)  # URL for the AI-generated illustration
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
@@ -240,6 +331,7 @@ def get_stories():
             'characters': [char.strip() for char in story.characters.split(',') if char.strip()],
             'ageGroup': story.age_group,
             'isFavorite': story.is_favorite,
+            'imageUrl': story.image_url,
             'createdAt': story.created_at.isoformat()
         } for story in stories])
     except Exception as e:
@@ -306,6 +398,9 @@ def create_story():
                 data['characters'],
                 data['ageGroup']
             )
+        
+        # Generate AI illustration for the story
+        illustration_url = generate_illustration(title, data['theme'], characters, data['ageGroup'])
 
         # Create new story
         story = Story(
@@ -314,6 +409,7 @@ def create_story():
             theme=data['theme'],
             characters=','.join(characters),  # Use our sanitized characters
             age_group=data['ageGroup'],
+            image_url=illustration_url,  # Add the illustration URL
             user_id=1  # Using a default user ID for now
         )
         db.session.add(story)
@@ -327,6 +423,7 @@ def create_story():
             'characters': characters,  # Return as an array directly
             'ageGroup': story.age_group,
             'isFavorite': story.is_favorite,
+            'imageUrl': story.image_url,  # Include the image URL in the response
             'createdAt': story.created_at.isoformat()
         }), 201
 
@@ -347,6 +444,46 @@ def toggle_favorite(story_id):
         return jsonify({
             'id': story.id,
             'isFavorite': story.is_favorite
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': str(e)}), 500
+
+@app.route('/stories/<int:story_id>', methods=['DELETE'])
+def delete_story(story_id):
+    try:
+        story = Story.query.get(story_id)
+        if not story:
+            return jsonify({'message': 'Story not found'}), 404
+
+        db.session.delete(story)
+        db.session.commit()
+
+        return jsonify({'message': 'Story deleted successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'message': str(e)}), 500
+
+@app.route('/stories/<int:story_id>/regenerate-illustration', methods=['POST'])
+def regenerate_illustration(story_id):
+    try:
+        story = Story.query.get(story_id)
+        if not story:
+            return jsonify({'message': 'Story not found'}), 404
+
+        # Get the characters as a list
+        characters = [char.strip() for char in story.characters.split(',') if char.strip()]
+        
+        # Regenerate the illustration
+        illustration_url = generate_illustration(story.title, story.theme, characters, story.age_group)
+        
+        # Update the story with the new illustration URL
+        story.image_url = illustration_url
+        db.session.commit()
+        
+        return jsonify({
+            'id': story.id,
+            'imageUrl': story.image_url
         })
     except Exception as e:
         db.session.rollback()

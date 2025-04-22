@@ -13,6 +13,7 @@ export interface Story {
   characters: string[];
   ageGroup: string;
   isFavorite: boolean;
+  imageUrl?: string;
   createdAt: string;
 }
 
@@ -87,4 +88,12 @@ export async function listStories(): Promise<Story[]> {
 
 export async function toggleFavorite(storyId: number): Promise<Story> {
   return fetchWithAuth(`/stories/${storyId}/favorite`, { method: "POST" });
+}
+
+export async function regenerateIllustration(storyId: number): Promise<{ id: number, imageUrl: string }> {
+  return fetchWithAuth(`/stories/${storyId}/regenerate-illustration`, { method: "POST" });
+}
+
+export async function deleteStory(storyId: number): Promise<void> {
+  return fetchWithAuth(`/stories/${storyId}`, { method: "DELETE" });
 } 

@@ -25,6 +25,12 @@ An interactive AI-powered storytelling application that generates personalized c
 ## Features
 
 - 🤖 AI-powered story generation using Azure OpenAI
+- 🎨 AI-generated illustrations using Azure DALL-E
+  - Child-friendly, whimsical digital art style
+  - Theme and character-specific illustrations
+  - Age-appropriate visual content
+  - Automatic regeneration option
+  - Fallback to curated theme-based images
 - 📚 Multiple age group support (3-5, 6-8, 9-12 years)
 - 🎨 Various story themes (Space Adventure, Magic Kingdom, Ocean Explorer, etc.)
 - ⭐ Story favoriting system
@@ -45,6 +51,7 @@ An interactive AI-powered storytelling application that generates personalized c
 - Frontend: React + TypeScript
 - Backend: Flask + SQLAlchemy
 - AI: Azure OpenAI (GPT-4 Mini)
+- Image Generation: Azure DALL-E
 - Text-to-Speech: Web Speech API with premium voice selection
 - Database: SQLite
 - Styling: CSS with inline styles for consistent rendering
@@ -63,11 +70,14 @@ An interactive AI-powered storytelling application that generates personalized c
    pip install -r requirements.txt
    ```
 
-3. Create a `.env` file in the root directory with your Azure OpenAI credentials:
+3. Create a `.env` file in the root directory with your Azure OpenAI and DALL-E credentials:
    ```
    DATABASE_URL=sqlite:///stories.db
    AZURE_OPENAI_API_KEY=your_azure_openai_api_key
    AZURE_OPENAI_ENDPOINT=your_azure_openai_endpoint
+   AZURE_DALLE_API_KEY=your_azure_dalle_api_key
+   AZURE_DALLE_ENDPOINT=your_azure_dalle_endpoint
+   AZURE_DALLE_API_VERSION=2024-02-01
    FLASK_APP=app.py
    FLASK_ENV=development
    ```
@@ -88,17 +98,20 @@ An interactive AI-powered storytelling application that generates personalized c
    - Add characters (comma-separated)
    - Choose an age group
    - Click "Begin Your Magical Adventure" to generate
+   - An AI-generated illustration will be created automatically
 
 2. **View Stories**:
    - Browse all stories in the "My Stories" tab
    - View favorite stories in the "Favorites" tab
    - Click on a story card to view the full content with animated text reveal
+   - Each story includes a unique AI-generated illustration
 
 3. **Story Actions**:
    - Add/remove stories from favorites
    - Listen to stories with natural text-to-speech narration
    - Email stories to share them with others
    - Print stories in a nicely formatted layout
+   - Regenerate illustrations if desired
 
 ## Animation Features
 
@@ -124,6 +137,9 @@ The application offers an immersive narration experience:
 - `DATABASE_URL`: SQLite database URL
 - `AZURE_OPENAI_API_KEY`: Your Azure OpenAI API key
 - `AZURE_OPENAI_ENDPOINT`: Your Azure OpenAI endpoint URL
+- `AZURE_DALLE_API_KEY`: Your Azure DALL-E API key
+- `AZURE_DALLE_ENDPOINT`: Your Azure DALL-E endpoint URL (base URL only)
+- `AZURE_DALLE_API_VERSION`: Azure DALL-E API version
 - `FLASK_APP`: Flask application entry point
 - `FLASK_ENV`: Flask environment (development/production)
 

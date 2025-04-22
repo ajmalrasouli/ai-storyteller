@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { generateStory, listStories, Story, toggleFavorite } from './lib/api';
+import { generateStory, listStories, Story, toggleFavorite, regenerateIllustration, deleteStory } from './lib/api';
 import { Toaster, toast } from 'react-hot-toast';
 import confetti from 'canvas-confetti';
 import './App.css';
@@ -378,10 +378,11 @@ const HeaderBubbles = () => {
 };
 
 // Story card component
-const StoryCard = ({ story, onView, onToggleFavorite }: { 
+const StoryCard = ({ story, onView, onToggleFavorite, onDelete }: { 
   story: Story, 
   onView: (story: Story) => void, 
-  onToggleFavorite: (storyId: number) => void 
+  onToggleFavorite: (storyId: number) => void,
+  onDelete?: (storyId: number) => void
 }) => {
   const themeIcon = getThemeIcon(story.theme);
   
@@ -389,16 +390,54 @@ const StoryCard = ({ story, onView, onToggleFavorite }: {
     <div className="story-card" onClick={() => onView(story)}>
       <div className="story-card-header">
         <div className="theme-badge">{themeIcon} {story.theme.split(' ')[1]}</div>
-        <button 
-          className="favorite-btn"
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleFavorite(story.id);
-          }}
-        >
-          <span className="text-3xl">{story.isFavorite ? '❤️' : '🤍'}</span>
-        </button>
+        <div className="story-actions">
+          <button 
+            className="favorite-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleFavorite(story.id);
+            }}
+          >
+            <span className="text-3xl">{story.isFavorite ? '❤️' : '🤍'}</span>
+          </button>
+          
+          {onDelete && (
+            <button 
+              className="delete-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (window.confirm("Are you sure you want to delete this story?")) {
+                  onDelete(story.id);
+                }
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '1.2rem',
+                padding: '5px',
+                marginLeft: '5px',
+                opacity: 0.7
+              }}
+            >
+              🗑️
+            </button>
+          )}
+        </div>
       </div>
+      
+      {/* Display AI-generated illustration if available */}
+      {story.imageUrl && (
+        <div className="story-illustration">
+          <img 
+            src={story.imageUrl} 
+            alt={`Illustration for "${story.title}"`} 
+            className="w-full h-48 object-cover rounded-lg mb-3"
+            loading="lazy"
+          />
+        </div>
+      )}
+      
       <div className="story-card-content">
         <h3>{story.title}</h3>
         <div className="story-preview">
@@ -430,12 +469,20 @@ interface StoryModalProps {
   isOpen: boolean;
   onClose: () => void;
   onToggleFavorite: (storyId: number) => void;
+  onDelete: (storyId: number) => void;
 }
 
-const StoryModal = ({ story, isOpen, onClose, onToggleFavorite }: StoryModalProps) => {
+const StoryModal = ({ story, isOpen, onClose, onToggleFavorite, onDelete }: StoryModalProps) => {
   const [showContent, setShowContent] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isRegeneratingImage, setIsRegeneratingImage] = useState(false);
+  const [storyData, setStoryData] = useState(story);
   const speechRef = useRef<SpeechSynthesisUtterance | null>(null);
+
+  useEffect(() => {
+    // Update storyData when the story prop changes
+    setStoryData(story);
+  }, [story]);
 
   useEffect(() => {
     if (isOpen) {
@@ -471,7 +518,7 @@ const StoryModal = ({ story, isOpen, onClose, onToggleFavorite }: StoryModalProp
       printWindow.document.write(`
         <html>
           <head>
-            <title>${story.title}</title>
+            <title>${storyData.title}</title>
             <style>
               body {
                 font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -493,16 +540,21 @@ const StoryModal = ({ story, isOpen, onClose, onToggleFavorite }: StoryModalProp
                 font-size: 14px;
                 margin-bottom: 20px;
               }
+              .story-illustration {
+                max-width: 100%;
+                margin-bottom: 20px;
+              }
             </style>
           </head>
           <body>
-            <h1>${story.title}</h1>
+            <h1>${storyData.title}</h1>
             <div class="story-meta">
-              <div>Theme: ${story.theme}</div>
-              <div>Age Group: ${story.ageGroup}</div>
-              <div>Date: ${new Date(story.createdAt).toLocaleDateString()}</div>
+              <div>Theme: ${storyData.theme}</div>
+              <div>Age Group: ${storyData.ageGroup}</div>
+              <div>Date: ${new Date(storyData.createdAt).toLocaleDateString()}</div>
             </div>
-            ${story.content.split("\n\n").map((paragraph: string) => `<p>${paragraph}</p>`).join('')}
+            ${storyData.imageUrl ? `<img src="${storyData.imageUrl}" alt="Story Illustration" class="story-illustration"/>` : ''}
+            ${storyData.content.split("\n\n").map((paragraph: string) => `<p>${paragraph}</p>`).join('')}
           </body>
         </html>
       `);
@@ -514,16 +566,22 @@ const StoryModal = ({ story, isOpen, onClose, onToggleFavorite }: StoryModalProp
 
   const handleEmail = () => {
     try {
-      const subject = encodeURIComponent(`Story: ${story.title}`);
+      const subject = encodeURIComponent(`Story: ${storyData.title}`);
       // Limit content size to avoid issues with mailto
-      const contentPreview = story.content.length > 1500 
-        ? story.content.substring(0, 1500) + "... (Content truncated for email)"
-        : story.content;
+      const contentPreview = storyData.content.length > 1500 
+        ? storyData.content.substring(0, 1500) + "... (Content truncated for email)"
+        : storyData.content;
+      
+      // Include the illustration URL if available
+      const illustrationText = storyData.imageUrl 
+        ? `\n\nView the story illustration here: ${storyData.imageUrl}\n\n` 
+        : '\n\n';
       
       const body = encodeURIComponent(
-        `${story.title}\n\n` +
-        `Theme: ${story.theme}\n` +
-        `Age Group: ${story.ageGroup}\n\n` +
+        `${storyData.title}\n\n` +
+        `Theme: ${storyData.theme}\n` +
+        `Age Group: ${storyData.ageGroup}\n` +
+        illustrationText +
         `${contentPreview}\n\n` +
         `Created with AI Storyteller`
       );
@@ -610,10 +668,10 @@ const StoryModal = ({ story, isOpen, onClose, onToggleFavorite }: StoryModalProp
                     (englishVoices.length > 0 ? englishVoices[0] : null);
     
     // Prepare and process the story text
-    const title = story.title;
+    const title = storyData.title;
     
     // Break content into paragraphs for more natural reading
-    const paragraphs = story.content.split("\n\n");
+    const paragraphs = storyData.content.split("\n\n");
     
     // Function to create appropriate pauses
     const createPause = (duration: number) => {
@@ -684,9 +742,40 @@ const StoryModal = ({ story, isOpen, onClose, onToggleFavorite }: StoryModalProp
     setIsSpeaking(false);
   };
 
+  // Function to regenerate the illustration
+  const handleRegenerateIllustration = async () => {
+    try {
+      setIsRegeneratingImage(true);
+      const response = await regenerateIllustration(storyData.id);
+      
+      // Update the local story data with the new image URL
+      setStoryData({
+        ...storyData,
+        imageUrl: response.imageUrl
+      });
+      
+      toast.success("Illustration regenerated successfully!");
+      // Trigger a confetti celebration
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+    } catch (error) {
+      toast.error("Failed to regenerate illustration. Please try again.");
+      console.error("Error regenerating illustration:", error);
+    } finally {
+      setIsRegeneratingImage(false);
+    }
+  };
+
+  const handleDelete = () => {
+    onDelete(storyData.id);
+  };
+
   // Split the content into paragraphs
-  const paragraphs = story.content.split("\n\n");
-  const title = story.title;
+  const paragraphs = storyData.content.split("\n\n");
+  const title = storyData.title;
 
   return (
     <div style={styles.storyModalOverlay} onClick={onClose}>
@@ -701,15 +790,70 @@ const StoryModal = ({ story, isOpen, onClose, onToggleFavorite }: StoryModalProp
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                 <path d="M2 1a1 1 0 0 0-1 1v4.586a1 1 0 0 0 .293.707l7 7a1 1 0 0 0 1.414 0l4.586-4.586a1 1 0 0 0 0-1.414l-7-7A1 1 0 0 0 6.586 1H2zm4 3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
               </svg>
-              {story.theme}
+              {storyData.theme}
             </span>
             <span className="modal-story-age">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                 <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
               </svg>
-              {story.ageGroup}
+              {storyData.ageGroup}
             </span>
           </div>
+
+          {/* Display AI-generated illustration if available */}
+          {storyData.imageUrl && (
+            <div className="modal-story-illustration" style={{ marginBottom: '20px', textAlign: 'center', position: 'relative' }}>
+              <img 
+                src={storyData.imageUrl} 
+                alt={`Illustration for "${storyData.title}"`} 
+                style={{ 
+                  maxWidth: '100%', 
+                  maxHeight: '400px', 
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  opacity: isRegeneratingImage ? 0.6 : 1,
+                  transition: 'opacity 0.3s ease'
+                }}
+              />
+              {isRegeneratingImage && (
+                <div style={{ 
+                  position: 'absolute', 
+                  top: '50%', 
+                  left: '50%', 
+                  transform: 'translate(-50%, -50%)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                  padding: '10px 20px',
+                  borderRadius: '20px',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+                }}>
+                  <div className="loading-dots">Regenerating illustration</div>
+                </div>
+              )}
+              <button 
+                onClick={handleRegenerateIllustration}
+                disabled={isRegeneratingImage}
+                style={{ 
+                  position: 'absolute', 
+                  bottom: '10px', 
+                  right: '10px',
+                  backgroundColor: isRegeneratingImage ? '#ccc' : '#6366f1',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  padding: '5px 10px',
+                  cursor: isRegeneratingImage ? 'not-allowed' : 'pointer',
+                  fontSize: '0.8rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  opacity: isRegeneratingImage ? 0.7 : 1
+                }}
+              >
+                {isRegeneratingImage ? 'Working...' : '🔄 Regenerate Illustration'}
+              </button>
+            </div>
+          )}
+
           <div className="typing-container">
             {showContent && paragraphs.map((paragraph: string, index: number) => (
               <p 
@@ -724,8 +868,8 @@ const StoryModal = ({ story, isOpen, onClose, onToggleFavorite }: StoryModalProp
         <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #eee', padding: '15px 20px' }}>
           <div style={{ display: 'flex', gap: '10px' }}>
             <button
-              className={`favorite-button ${story.isFavorite ? 'active' : ''}`}
-              onClick={() => onToggleFavorite(story.id)}
+              className={`favorite-button ${storyData.isFavorite ? 'active' : ''}`}
+              onClick={() => onToggleFavorite(storyData.id)}
               style={{ 
                 display: 'flex', 
                 alignItems: 'center', 
@@ -735,11 +879,11 @@ const StoryModal = ({ story, isOpen, onClose, onToggleFavorite }: StoryModalProp
                 padding: '8px 12px',
                 borderRadius: '4px',
                 cursor: 'pointer',
-                color: story.isFavorite ? '#ff6b6b' : '#666',
+                color: storyData.isFavorite ? '#ff6b6b' : '#666',
                 fontWeight: 'bold'
               }}
             >
-              {story.isFavorite ? '❤️' : '🤍'} {story.isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
+              {storyData.isFavorite ? '❤️' : '🤍'} {storyData.isFavorite ? 'Remove from Favorites' : 'Add to Favorites'}
             </button>
             
             <button 
@@ -795,10 +939,28 @@ const StoryModal = ({ story, isOpen, onClose, onToggleFavorite }: StoryModalProp
             >
               {isSpeaking ? '🔇 Stop' : '🔊 Listen'}
             </button>
+            
+            <button 
+              onClick={handleDelete}
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px',
+                background: 'none',
+                border: 'none',
+                padding: '8px 12px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                color: '#ff5252',
+                fontWeight: 'bold'
+              }}
+            >
+              🗑️ Delete Story
+            </button>
           </div>
           
           <span className="story-date" style={{ color: '#888', fontSize: '0.9rem' }}>
-            {new Date(story.createdAt).toLocaleDateString()}
+            {new Date(storyData.createdAt).toLocaleDateString()}
           </span>
         </div>
       </div>
@@ -1666,6 +1828,26 @@ export default function App() {
     setActiveTab('create');
   };
 
+  const handleDeleteStory = async (storyId: number) => {
+    if (window.confirm("Are you sure you want to delete this story? This action cannot be undone.")) {
+      try {
+        await deleteStory(storyId);
+        toast.success("Story deleted successfully!");
+        
+        // Close the modal if open
+        if (viewStory && viewStory.id === storyId) {
+          setViewStory(null);
+        }
+        
+        // Refresh the stories list
+        await fetchStories();
+      } catch (error) {
+        console.error('Error deleting story:', error);
+        toast.error("Could not delete the story. Please try again.");
+      }
+    }
+  };
+
   return (
     <div style={{
       position: 'relative',
@@ -1734,6 +1916,7 @@ export default function App() {
                     story={story} 
                     onView={setViewStory}
                     onToggleFavorite={handleToggleFavorite}
+                    onDelete={handleDeleteStory}
                   />
                 ))
               )}
@@ -1751,6 +1934,7 @@ export default function App() {
           isOpen={viewStory !== null}
           onClose={() => setViewStory(null)}
           onToggleFavorite={handleToggleFavorite}
+          onDelete={handleDeleteStory}
         />
       )}
     </div>
