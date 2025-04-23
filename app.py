@@ -29,9 +29,9 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 # Configure Azure OpenAI with the working configuration from Azurekeycheck.py
-endpoint = "https://ajmal-m9psmmwe-eastus2.openai.azure.com/"
-AZURE_DEPLOYMENT = "gpt-4.1-mini"
-api_version = "2024-12-01-preview"
+endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+AZURE_DEPLOYMENT = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-35-turbo")
+api_version = "2024-02-01"
 
 # Try to use the OPENAI_API_KEY first, then fall back to AZURE_OPENAI_API_KEY
 api_key = os.getenv("OPENAI_API_KEY") or os.getenv("AZURE_OPENAI_API_KEY")

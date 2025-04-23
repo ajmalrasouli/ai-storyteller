@@ -6,9 +6,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Azure-specific values
-endpoint = "https://ajmal-m9psmmwe-eastus2.openai.azure.com/"
-deployment = "gpt-4.1-mini"
-api_version = "2024-12-01-preview"
+endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-35-turbo")
+api_version = "2024-02-01"
 subscription_key = os.getenv("AZURE_OPENAI_API_KEY")
 
 # Init client
