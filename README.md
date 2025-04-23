@@ -31,6 +31,12 @@ An interactive AI-powered storytelling application that generates personalized c
   - Age-appropriate visual content
   - Automatic regeneration option
   - Fallback to curated theme-based images
+- 🗣️ High-quality text-to-speech using Azure Speech Service
+  - Natural-sounding voices with multiple language support
+  - Custom voice styles for different story characters
+  - Dynamic speech rate adjustment based on age group
+  - Background music integration for immersive storytelling
+  - Voice selection for different story themes
 - 📚 Multiple age group support (3-5, 6-8, 9-12 years)
 - 🎨 Various story themes (Space Adventure, Magic Kingdom, Ocean Explorer, etc.)
 - ⭐ Story favoriting system
@@ -52,7 +58,7 @@ An interactive AI-powered storytelling application that generates personalized c
 - Backend: Flask + SQLAlchemy
 - AI: Azure OpenAI (GPT-4 Mini)
 - Image Generation: Azure DALL-E
-- Text-to-Speech: Web Speech API with premium voice selection
+- Text-to-Speech: Azure Speech Service with premium voice selection
 - Database: SQLite
 - Styling: CSS with inline styles for consistent rendering
 
@@ -64,32 +70,149 @@ An interactive AI-powered storytelling application that generates personalized c
    cd ai-storyteller
    ```
 
-2. Install dependencies:
+2. Install Python dependencies:
    ```bash
-   npm install
    pip install -r requirements.txt
    ```
 
-3. Create a `.env` file in the root directory with your Azure OpenAI and DALL-E credentials:
+3. Install Node.js dependencies:
+   ```bash
+   npm install
    ```
-   DATABASE_URL=sqlite:///stories.db
+
+4. Create a `.env` file in the root directory with your Azure credentials:
+   ```
+   DATABASE_URL=sqlite:///instance/stories.db
    AZURE_OPENAI_API_KEY=your_azure_openai_api_key
    AZURE_OPENAI_ENDPOINT=your_azure_openai_endpoint
    AZURE_DALLE_API_KEY=your_azure_dalle_api_key
    AZURE_DALLE_ENDPOINT=your_azure_dalle_endpoint
    AZURE_DALLE_API_VERSION=2024-02-01
+   AZURE_SPEECH_KEY=your_azure_speech_key
+   AZURE_SPEECH_REGION=your_azure_speech_region
    FLASK_APP=app.py
    FLASK_ENV=development
    ```
 
-4. Start the development servers:
+5. Initialize the database:
+   ```bash
+   python migrate_db.py
+   ```
+
+6. Start the development servers:
    ```bash
    # Start the Flask backend
    python app.py
    
    # In a separate terminal, start the frontend
-   npm run dev:frontend
+   npm run dev
    ```
+
+## Project Structure
+
+```
+ai-storyteller/
+├── src/                    # Frontend React/TypeScript source
+│   ├── App.tsx            # Main application component
+│   ├── App.css            # Main styles
+│   ├── lib/               # Utility functions and components
+│   └── main.tsx           # Application entry point
+├── public/                # Static assets
+│   └── images/           # Story illustrations and UI assets
+├── instance/             # Database and instance files
+├── app.py               # Flask backend application
+├── requirements.txt     # Python dependencies
+├── package.json        # Node.js dependencies
+└── vite.config.ts      # Vite configuration
+```
+
+## System Architecture
+
+```mermaid
+graph TD
+    A[Frontend React/TypeScript] --> B[Flask Backend]
+    B --> C[SQLite Database]
+    B --> D[Azure OpenAI]
+    B --> E[Azure DALL-E]
+    B --> F[Azure Speech Service]
+    
+    subgraph Frontend
+        A --> G[Story Creation UI]
+        A --> H[Story Viewing UI]
+        A --> I[User Authentication]
+    end
+    
+    subgraph Backend Services
+        D --> J[Story Generation]
+        E --> K[Image Generation]
+        F --> L[Text-to-Speech]
+    end
+    
+    subgraph Data Storage
+        C --> M[Stories]
+        C --> N[User Data]
+        C --> O[Favorites]
+    end
+```
+
+## Component Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant Backend
+    participant AzureServices
+    participant Database
+
+    User->>Frontend: Select Story Parameters
+    Frontend->>Backend: Send Story Request
+    Backend->>AzureServices: Generate Story (OpenAI)
+    AzureServices-->>Backend: Story Content
+    Backend->>AzureServices: Generate Image (DALL-E)
+    AzureServices-->>Backend: Story Image
+    Backend->>Database: Store Story
+    Backend-->>Frontend: Story Data
+    Frontend->>User: Display Story
+    
+    User->>Frontend: Request Narration
+    Frontend->>Backend: Text-to-Speech Request
+    Backend->>AzureServices: Convert to Speech
+    AzureServices-->>Backend: Audio Stream
+    Backend-->>Frontend: Audio Data
+    Frontend->>User: Play Narration
+```
+
+## Data Flow
+
+```mermaid
+graph LR
+    A[User Input] --> B[Story Parameters]
+    B --> C[Story Generation]
+    C --> D[Story Content]
+    D --> E[Image Generation]
+    E --> F[Story Image]
+    D --> G[Speech Synthesis]
+    G --> H[Audio Narration]
+    D & F & H --> I[Story Storage]
+    I --> J[Story Retrieval]
+    J --> K[Story Display]
+```
+
+## Development
+
+- `npm run dev`: Start frontend development server
+- `python app.py`: Start backend server
+- `npm run build`: Build frontend for production
+- `python migrate_db.py`: Initialize or update database schema
+
+## Testing
+
+The project includes several test scripts:
+- `test_azure_apis.py`: Tests Azure API integrations
+- `validate_azure_services.py`: Validates Azure service configurations
+- `check_openai_key.py`: Verifies OpenAI API key
+- `Azurekeycheck.py`: Validates Azure service keys
 
 ## Using the Application
 
@@ -124,13 +247,16 @@ The application includes several animation features to enhance the user experien
 
 ## Text-to-Speech Features
 
-The application offers an immersive narration experience:
+The application offers an immersive narration experience using Azure Speech Service:
 
-- **Premium Voice Selection**: Automatically selects the highest quality voice available
-- **Natural Rhythm**: Adds appropriate pauses between sentences and paragraphs
-- **Enhanced Storytelling**: Optimized speech parameters for clarity and engagement
-- **Age-Appropriate**: Narration speed and tone suitable for children's stories
-- **Interactive Control**: Simple toggle between play and pause functionality
+- **Premium Voice Selection**: Multiple high-quality voices with different accents and styles
+- **Character Voices**: Unique voice styles for different story characters
+- **Dynamic Narration**: Adjustable speech rate and pitch based on story content
+- **Background Music**: Optional background music for enhanced storytelling
+- **Multi-language Support**: Stories can be narrated in multiple languages
+- **Interactive Control**: Advanced playback controls with pause, resume, and speed adjustment
+- **Voice Customization**: Ability to select different voices for different story themes
+- **Age-Appropriate Narration**: Optimized speech parameters for different age groups
 
 ## Environment Variables
 
@@ -140,14 +266,10 @@ The application offers an immersive narration experience:
 - `AZURE_DALLE_API_KEY`: Your Azure DALL-E API key
 - `AZURE_DALLE_ENDPOINT`: Your Azure DALL-E endpoint URL (base URL only)
 - `AZURE_DALLE_API_VERSION`: Azure DALL-E API version
+- `AZURE_SPEECH_KEY`: Your Azure Speech Service API key
+- `AZURE_SPEECH_REGION`: Your Azure Speech Service region
 - `FLASK_APP`: Flask application entry point
 - `FLASK_ENV`: Flask environment (development/production)
-
-## Development
-
-- `npm run dev:frontend`: Start frontend development server
-- `python app.py`: Start backend server
-- `npm run build`: Build frontend for production
 
 ## License
 
