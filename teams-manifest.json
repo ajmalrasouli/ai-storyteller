@@ -2,7 +2,7 @@
   "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.16/MicrosoftTeams.schema.json",
   "manifestVersion": "1.16",
   "version": "1.0.0",
-  "id": "89918609-0a4e-4fc1-9f40-975b01aa7eb7",
+  "id": "ai-storyteller-bot",
   "packageName": "com.storyteller.bot",
   "developer": {
     "name": "Storyteller Bot",
@@ -25,7 +25,7 @@
   "accentColor": "#7c3aed",
   "bots": [
     {
-      "botId": "89918609-0a4e-4fc1-9f40-975b01aa7eb7",
+      "botId": "ai-storyteller-bot",
       "scopes": [
         "personal",
         "team",
@@ -48,6 +48,28 @@
       ],
       "supportsFiles": false,
       "isNotificationOnly": false
+    }
+  ],
+  "composeExtensions": [
+    {
+      "botId": "ai-storyteller-bot",
+      "commands": [
+        {
+          "id": "generateStory",
+          "description": "Generate a story based on your prompt",
+          "title": "Generate Story",
+          "type": "action",
+          "context": ["compose", "commandBox"],
+          "parameters": [
+            {
+              "name": "prompt",
+              "title": "Story Prompt",
+              "description": "Enter your story prompt",
+              "inputType": "text"
+            }
+          ]
+        }
+      ]
     }
   ],
   "permissions": [

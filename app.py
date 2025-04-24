@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -12,12 +12,29 @@ import requests
 from io import BytesIO
 import time
 import json
+from botbuilder.core import BotFrameworkAdapter, TurnContext, BotFrameworkAdapterSettings
+from botbuilder.schema import Activity, ActivityTypes
+from botframework.connector.auth import MicrosoftAppCredentials, SimpleCredentialProvider
+import sys
+import traceback
+import logging
+from logging.handlers import RotatingFileHandler
 
 # Load environment variables
 load_dotenv()
 
 # Initialize Flask app
-app = Flask(__name__)
+app = Flask(__name__, static_folder='public')
+
+# Configure logging
+app.logger.setLevel(logging.DEBUG)
+if not app.debug:
+    # Stream handler to send logs to stderr (picked up by Azure)
+    stream_handler = logging.StreamHandler(sys.stderr)
+    stream_handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    stream_handler.setFormatter(formatter)
+    app.logger.addHandler(stream_handler)
 
 # Configure CORS
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -29,9 +46,23 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # Initialize extensions
 db = SQLAlchemy(app)
 
+# Initialize Bot Framework adapter with credentials
+APP_ID = os.getenv("MICROSOFT_APP_ID", "")
+APP_PASSWORD = os.getenv("MICROSOFT_APP_PASSWORD", "")
+
+settings = BotFrameworkAdapterSettings(APP_ID, APP_PASSWORD)
+adapter = BotFrameworkAdapter(settings)
+
+# Error handler
+async def on_error(context: TurnContext, error: Exception):
+    print(f"\n [on_turn_error]: {error}", file=sys.stderr)
+    traceback.print_exc()
+
+adapter.on_turn_error = on_error
+
 # Configure Azure OpenAI with the working configuration from Azurekeycheck.py
 endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
-AZURE_DEPLOYMENT = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-35-turbo")
+AZURE_DEPLOYMENT = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-4.1-mini")
 api_version = "2024-02-01"
 
 # Try to use the OPENAI_API_KEY first, then fall back to AZURE_OPENAI_API_KEY
@@ -365,27 +396,20 @@ def create_story():
         characters_text = ', '.join(characters)
         
         # Generate story using Azure OpenAI
-        prompt = f"""Create a children's story with the following details:
-        Theme: {data['theme']}
-        Characters: {characters_text}
-        Age Group: {data['ageGroup']} years old
-        
-        Please include:
-        - A clear title
-        - Age-appropriate vocabulary and concepts
-        - An engaging plot with beginning, middle, and end
-        - A moral or lesson related to the theme
-        - Dialogue between characters
-        - Descriptive language to paint a vivid picture
-        
-        Make it engaging, educational, and age-appropriate."""
-
         try:
+            print(f"Attempting to generate story with deployment: {AZURE_DEPLOYMENT}")
+            print(f"Azure OpenAI endpoint: {endpoint}")
+            print(f"API version: {api_version}")
+            
+            # Simplify the prompt
+            system_prompt = "You are a creative children's story writer. Write a story appropriate for the given age group, incorporating the theme and characters provided. Include a title, engaging plot, and moral lesson."
+            user_prompt = f"Write a children's story for age {data['ageGroup']} about {data['theme']} featuring these characters: {characters_text}."
+            
             response = openai_client.chat.completions.create(
                 model=AZURE_DEPLOYMENT,
                 messages=[
-                    {"role": "system", "content": "You are a creative children's story writer with expertise in creating engaging, age-appropriate stories that entertain and teach valuable lessons."},
-                    {"role": "user", "content": prompt}
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
                 ],
                 temperature=0.7,
                 max_tokens=2000
@@ -395,8 +419,14 @@ def create_story():
             title = story_content.split('\n')[0].replace('Title:', '').strip()
             
         except Exception as api_error:
-            print(f"Azure OpenAI API error: {str(api_error)}")
+            print(f"Azure OpenAI API error details:")
+            print(f"Error type: {type(api_error)}")
+            print(f"Error message: {str(api_error)}")
+            print(f"Error args: {api_error.args}")
+            print(f"Full error: {traceback.format_exc()}")
+            
             # Fallback to enhanced local story generation if Azure API fails
+            print("Falling back to local story generation...")
             title, story_content = generate_creative_story(
                 data['theme'],
                 data['characters'],
@@ -432,6 +462,10 @@ def create_story():
         }), 201
 
     except Exception as e:
+        print(f"General error in create_story:")
+        print(f"Error type: {type(e)}")
+        print(f"Error message: {str(e)}")
+        print(f"Full traceback: {traceback.format_exc()}")
         db.session.rollback()
         return jsonify({'message': str(e)}), 500
 
@@ -525,112 +559,84 @@ def get_share_link(story_id):
     except Exception as e:
         return jsonify({'message': str(e)}), 500
 
+async def process_teams_activity(activity: Activity):
+    if activity.type == ActivityTypes.message:
+        text = activity.text.lower()
+        if text.startswith("/storyteller prompt:"):
+            prompt = text.replace("/storyteller prompt:", "").strip()
+            # Generate story using existing function
+            story = generate_creative_story(
+                theme=prompt,
+                characters="",  # Let the AI decide characters
+                age_group="all"  # Default age group
+            )
+            
+            # Create response activity
+            response = Activity(
+                type=ActivityTypes.message,
+                channel_id=activity.channel_id,
+                conversation=activity.conversation,
+                text=f"Here's your story:\n\n{story['content']}"
+            )
+            return response
+    return None
+
+@app.route('/api/messages', methods=['POST'])
+async def messages():
+    if "application/json" in request.headers["Content-Type"]:
+        body = request.json
+    else:
+        return Response(status=415)
+
+    activity = Activity().deserialize(body)
+    auth_header = request.headers.get("Authorization", "")
+
+    try:
+        response = await adapter.process_activity(activity, auth_header, process_teams_activity)
+        if response:
+            return jsonify(response.serialize())
+        return Response(status=201)
+    except Exception as exception:
+        raise exception
+
 @app.route('/teams/story', methods=['POST'])
 def teams_story():
     try:
-        data = request.get_json()
+        data = request.json
+        prompt = data.get('text', '').replace('/storyteller prompt:', '').strip()
         
-        # Extract the prompt from Teams message
-        if not data or 'text' not in data:
-            return jsonify({
-                'type': 'message',
-                'text': 'Please provide a prompt in the format: /storyteller prompt: [Your Prompt]'
-            })
-        
-        # Parse the command
-        command = data['text'].strip()
-        if not command.startswith('prompt:'):
-            return jsonify({
-                'type': 'message',
-                'text': 'Invalid format. Please use: /storyteller prompt: [Your Prompt]'
-            })
-        
-        prompt = command.replace('prompt:', '').strip()
         if not prompt:
             return jsonify({
                 'type': 'message',
-                'text': 'Please provide a prompt after "prompt:"'
+                'text': 'Please provide a prompt after "/storyteller prompt:"'
             })
         
-        # Generate story using Azure OpenAI
-        try:
-            response = openai_client.chat.completions.create(
-                model=AZURE_DEPLOYMENT,
-                messages=[
-                    {"role": "system", "content": "You are a creative children's story writer with expertise in creating engaging, age-appropriate stories that entertain and teach valuable lessons."},
-                    {"role": "user", "content": f"Create a children's story based on this prompt: {prompt}. Include a title, engaging plot, and a moral lesson."}
-                ],
-                temperature=0.7,
-                max_tokens=2000
-            )
-            
-            story_content = response.choices[0].message.content
-            title = story_content.split('\n')[0].replace('Title:', '').strip()
-            
-            # Generate illustration
-            illustration_url = generate_illustration(title, "Custom", ["main character"], "5-8")
-            
-            # Format response for Teams
-            teams_response = {
-                'type': 'message',
-                'attachments': [
-                    {
-                        'contentType': 'application/vnd.microsoft.card.adaptive',
-                        'content': {
-                            'type': 'AdaptiveCard',
-                            'body': [
-                                {
-                                    'type': 'TextBlock',
-                                    'size': 'Large',
-                                    'weight': 'Bolder',
-                                    'text': title,
-                                    'wrap': True
-                                },
-                                {
-                                    'type': 'Image',
-                                    'url': illustration_url,
-                                    'altText': f'Illustration for {title}',
-                                    'size': 'Large'
-                                },
-                                {
-                                    'type': 'TextBlock',
-                                    'text': story_content,
-                                    'wrap': True
-                                }
-                            ],
-                            'actions': [
-                                {
-                                    'type': 'Action.OpenUrl',
-                                    'title': 'View Full Story',
-                                    'url': f"{request.host_url}share/{base64.b64encode(json.dumps({
-                                        'title': title,
-                                        'content': story_content,
-                                        'imageUrl': illustration_url
-                                    }).encode()).decode()}"
-                                }
-                            ],
-                            '$schema': 'http://adaptivecards.io/schemas/adaptive-card.json',
-                            'version': '1.2'
-                        }
-                    }
-                ]
-            }
-            
-            return jsonify(teams_response)
-            
-        except Exception as api_error:
-            print(f"Azure OpenAI API error: {str(api_error)}")
-            return jsonify({
-                'type': 'message',
-                'text': 'Sorry, there was an error generating the story. Please try again later.'
-            })
-            
-    except Exception as e:
-        print(f"Teams integration error: {str(e)}")
+        # Generate story using existing function
+        story = generate_creative_story(
+            theme=prompt,
+            characters="",  # Let the AI decide characters
+            age_group="all"  # Default age group
+        )
+        
         return jsonify({
             'type': 'message',
-            'text': 'An error occurred. Please try again later.'
+            'text': f"Here's your story:\n\n{story['content']}"
         })
+    except Exception as e:
+        return jsonify({
+            'type': 'message',
+            'text': f'Sorry, I encountered an error: {str(e)}'
+        }), 500
+
+# Add root route
+@app.route('/')
+def home():
+    return app.send_static_file('index.html')
+
+@app.route('/<path:path>')
+def serve_static(path):
+    return app.send_static_file(path)
 
 if __name__ == '__main__':
-    app.run(debug=True) 
+    port = int(os.environ.get('PORT', 8000))
+    app.run(host='0.0.0.0', port=port) 
