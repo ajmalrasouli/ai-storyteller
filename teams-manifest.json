@@ -1,0 +1,60 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.16/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.16",
+  "version": "1.0.0",
+  "id": "89918609-0a4e-4fc1-9f40-975b01aa7eb7",
+  "packageName": "com.storyteller.bot",
+  "developer": {
+    "name": "Storyteller Bot",
+    "websiteUrl": "https://your-app-url.azurewebsites.net",
+    "privacyUrl": "https://your-app-url.azurewebsites.net/privacy",
+    "termsOfUseUrl": "https://your-app-url.azurewebsites.net/terms"
+  },
+  "name": {
+    "short": "Storyteller",
+    "full": "AI Storyteller Bot"
+  },
+  "description": {
+    "short": "Generate creative stories with AI",
+    "full": "Create engaging children's stories using AI. Just type /storyteller prompt: [Your Prompt] to get started!"
+  },
+  "icons": {
+    "outline": "outline.png",
+    "color": "color.png"
+  },
+  "accentColor": "#7c3aed",
+  "bots": [
+    {
+      "botId": "89918609-0a4e-4fc1-9f40-975b01aa7eb7",
+      "scopes": [
+        "personal",
+        "team",
+        "groupchat"
+      ],
+      "commandLists": [
+        {
+          "scopes": [
+            "personal",
+            "team",
+            "groupchat"
+          ],
+          "commands": [
+            {
+              "title": "storyteller",
+              "description": "Generate a story based on your prompt"
+            }
+          ]
+        }
+      ],
+      "supportsFiles": false,
+      "isNotificationOnly": false
+    }
+  ],
+  "permissions": [
+    "identity",
+    "messageTeamMembers"
+  ],
+  "validDomains": [
+    "your-app-url.azurewebsites.net"
+  ]
+} 

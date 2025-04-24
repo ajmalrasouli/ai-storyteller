@@ -1682,4 +1682,148 @@ body {
 
 .story-illustration:hover::before {
   opacity: 1;
+}
+
+/* Share Dialog Styles */
+.share-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.share-dialog {
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  animation: dialogFadeIn 0.3s ease-out;
+}
+
+@keyframes dialogFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.share-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.share-dialog-header h3 {
+  margin: 0;
+  color: #4c1d95;
+  font-size: 1.5rem;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #666;
+  padding: 5px;
+}
+
+.share-url {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.share-url-input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.copy-button {
+  background-color: #4c1d95;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.copy-button:hover {
+  background-color: #3b1680;
+}
+
+.social-share-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.social-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.social-button:hover {
+  transform: translateY(-2px);
+  opacity: 0.9;
+}
+
+.social-button.twitter {
+  background-color: #1DA1F2;
+  color: white;
+}
+
+.social-button.facebook {
+  background-color: #1877F2;
+  color: white;
+}
+
+.social-button.linkedin {
+  background-color: #0077B5;
+  color: white;
+}
+
+.social-button.whatsapp {
+  background-color: #25D366;
+  color: white;
+}
+
+.social-icon {
+  font-size: 1.2rem;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
+
+.error {
+  text-align: center;
+  padding: 20px;
+  color: #ff5252;
 } 

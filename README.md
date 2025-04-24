@@ -1,276 +1,385 @@
-# AI Storyteller
+# 🌟 Free GenAI Bootcamp 2025 🌟
+## 6 Weeks Of Free Online GenAI Training And Hands-on Programming
 
-An interactive AI-powered storytelling application that generates personalized children's stories based on themes, characters, and age groups.
+<div align="center">
 
-## Video Demo
+  ***Learn, Code, Create: Transforming Language Learning with AI***
 
-[![AI Storyteller Demo](https://img.youtube.com/vi/6-H0OcEAI7s/0.jpg)](https://youtu.be/6-H0OcEAI7s)
+  ![Visitor Badge](https://visitor-badge.laobi.icu/badge?page_id=ajmalrasouli.free-genai-bootcamp-2025)
+  ![Weeks](https://img.shields.io/badge/Duration-6%20Weeks-brightgreen)
+  ![Projects](https://img.shields.io/badge/Projects-8-orange)
+  ![Focus](https://img.shields.io/badge/Focus-Persian%2FDari-blue)
+  [![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/ajmalrasouli/free-genai-bootcamp-2025?utm_source=oss&utm_medium=github&utm_campaign=ajmalrasouli%2Ffree-genai-bootcamp-2025&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)](https://coderabbit.ai/github/ajmalrasouli/free-genai-bootcamp-2025)
 
-*Click the image above to watch the demo video*
+</div>
 
-## Screenshots
+---
 
-| ![Adventure](public/images/adventure.png) | ![Story Creation](public/images/story.png) |
-|:---:|:---:|
-| *Adventure Map* | *Story Creation* |
+This repository contains projects developed during the 2025 GenAI Bootcamp [Free GenAI Bootcamp](https://genai.cloudprojectbootcamp.com/), focusing on practical applications of generative AI and language technologies, particularly for Persian/Dari language learning. All projects are designed to be run via Docker Compose from the central `Launcher` directory.
 
-| ![My Stories](public/images/mystories.png) | ![Favorites](public/images/favorites.png) |
-|:---:|:---:|
-| *My Stories* | *Favorites* |
+## 🏗️ GenAI System Architecture
 
-| ![Story Page View](public/images/storypage.png) | ![About](public/images/about.png) |
-|:---:|:---:|
-| *Story Page with Read Aloud* | *About* |
+![GenAI Architecture](genai-architecting/genai-architecture.png)
 
-## Features
+*This architecture diagram illustrates our approach to building a cost-effective, privacy-focused AI system for language learning. We've designed this solution around open-source models (like IBM Granite) that can run on dedicated AI hardware, avoiding ongoing API costs while maintaining control over student data. The system supports 300 simultaneous users and integrates our own proprietary learning materials to address copyright concerns. This self-hosted approach offers the perfect balance of performance, privacy, and long-term sustainability for language education.*
 
-- 🤖 AI-powered story generation using Azure OpenAI
-- 🎨 AI-generated illustrations using Azure DALL-E
-  - Child-friendly, whimsical digital art style
-  - Theme and character-specific illustrations
-  - Age-appropriate visual content
-  - Automatic regeneration option
-  - Fallback to curated theme-based images
-- 🗣️ High-quality text-to-speech using Azure Speech Service
-  - Natural-sounding voices with multiple language support
-  - Custom voice styles for different story characters
-  - Dynamic speech rate adjustment based on age group
-  - Background music integration for immersive storytelling
-  - Voice selection for different story themes
-- 📚 Multiple age group support (3-5, 6-8, 9-12 years)
-- 🎨 Various story themes (Space Adventure, Magic Kingdom, Ocean Explorer, etc.)
-- ⭐ Story favoriting system
-- 🔊 Text-to-speech narration with natural-sounding voices
-- 📧 Email stories directly from the application
-- 🖨️ Print-friendly story formatting
-- 🎯 Educational focus with learning objectives
-- ✨ Enhanced animated UI with visual feedback:
-  - 📝 Typewriter effect for story reveal
-  - 📖 Book flipping animation during story generation
-  - 💫 Magical sparkle effects and dynamic elements
-  - 🔄 Rotating loading messages during story creation
-  - ✨ Confetti celebration when stories are generated
-  - 📱 Responsive design with smooth transitions
 
-## Tech Stack
+## 🎬 Launcher Demo Video
+[![Watch the Launcher Demo Video on YouTube](Thumbnail.png)](https://youtu.be/X8bxv_mLoHE&ab)
 
-- Frontend: React + TypeScript
-- Backend: Flask + SQLAlchemy
-- AI: Azure OpenAI (GPT-4 Mini)
-- Image Generation: Azure DALL-E
-- Text-to-Speech: Azure Speech Service with premium voice selection
-- Database: SQLite
-- Styling: CSS with inline styles for consistent rendering
+## 📅 Weekly Development Progress
 
-## Setup
+### 🔍 Week 0: Project Architecture and Initial Setup
+- 📊 Created comprehensive architectural diagrams
+- 💬 Developed prompting strategies for multiple LLM platforms
+- 🧠 Implemented Sentence Constructor activity
+- 🧩 Designed modular architecture for study activities
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/ajmalrasouli/ai-storyteller.git
-   cd ai-storyteller
-   ```
+### 🚀 Week 1: DariMaster Language Learning App
+- 💻 Set up full-stack application with Vite, TypeScript, and Express.js
+- 🎮 Implemented core features including flashcards and matching games
+- 🎨 Created responsive UI with Tailwind CSS and Shadcn/ui
+- 🔄 Added RTL support for Dari text
 
-2. Install Python dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+### 🤖 Week 2: Persian Learning Assistant
+- 💬 Implemented Chat with Nova system with Persian language support
+- 📝 Created transcript processing and vocabulary extraction
+- 🔒 Added security enhancements and proper environment configuration
+- 🌐 Developed bilingual chat interface
 
-3. Install Node.js dependencies:
-   ```bash
-   npm install
-   ```
+### 🔊 Week 3: Text-to-Speech Microservice
+- 🐳 Implemented Docker containerization for TTS services
+- 🚀 Created FastAPI endpoints for text-to-speech conversion
+- 🎵 Integrated Coqui TTS with custom configuration
+- 🔄 Developed audio format conversion utilities
 
-4. Create a `.env` file in the root directory with your Azure credentials:
-   ```
-   DATABASE_URL=sqlite:///instance/stories.db
-   AZURE_OPENAI_API_KEY=your_azure_openai_api_key
-   AZURE_OPENAI_ENDPOINT=your_azure_openai_endpoint
-   AZURE_DALLE_API_KEY=your_azure_dalle_api_key
-   AZURE_DALLE_ENDPOINT=your_azure_dalle_endpoint
-   AZURE_DALLE_API_VERSION=2024-02-01
-   AZURE_SPEECH_KEY=your_azure_speech_key
-   AZURE_SPEECH_REGION=your_azure_speech_region
-   FLASK_APP=app.py
-   FLASK_ENV=development
-   ```
+### 🎮 Week 4: Farsi Text Adventure MUD
+- 📊 Solved critical issues with Farsi text display
+- 🔄 Implemented centralized text processing with normalize_farsi function
+- ⚙️ Created custom ArabicReshaper configuration for Farsi
+- 🔄 Improved bidirectional text support
 
-5. Initialize the database:
-   ```bash
-   python migrate_db.py
-   ```
+### 📱 Week 5: Visual Applications and Tools
+- 🎵 Developed Farsi Song Vocabulary Generator with lyric analysis
+- 🎬 Created interactive Farsi Learning Visual Novel with bilingual support
+- ✍️ Implemented Farsi Writing Practice App with OCR technology
+- 🔄 Added comprehensive RTL support across all applications
 
-6. Start the development servers:
-   ```bash
-   # Start the Flask backend
-   python app.py
-   
-   # In a separate terminal, start the frontend
-   npm run dev
-   ```
+---
 
-## Project Structure
+<div align="center">
+  
+  ## 🚀 Projects Overview
+  
+</div>
+
+### 0️⃣ GenAI Platform Launcher (launcher)
+A simple web dashboard (running on port 3000) that provides direct links to launch the various learning applications and shows their current running status (via `docker compose ps`). Note: Starting/stopping services must be done manually via `docker compose` commands on the host machine.
+
+**Technical Stack:**
+- 🐍 Python 3.10+
+- 🚀 FastAPI & Uvicorn
+- ✨ Jinja2 Templates
+- 🐳 Docker & Docker Compose
+
+### 1️⃣ Farsi Text Adventure MUD Game (fa-mud)
+A text-based adventure game that helps users learn Farsi vocabulary through an immersive MUD (Multi-User Dungeon) experience.
+
+**Key Features:**
+- 🎮 Command flow: User Input → Parser → Game Engine → Response Gen → UI
+- 🈯 Exactly one Farsi word per English sentence
+- 🔣 13 predefined commands (Look, Move, Take, Drop, Talk, Use, Give, Open, Close, Eat, Inventory, Drink, Help)
+- 🔁 RTL support for mixed LTR/RTL text rendering
+- 📦 JSON-based vocabulary system
+
+**Technical Stack:**
+- 🐍 Python 3.10+
+- 📟 Textual for terminal UI
+- 🔤 Hazm for Farsi NLP
+- 🔣 Arabic-reshaper and python-bidi for text processing
+- ⚛️ React frontend with RTL support
+
+### 2️⃣ ASL Finger Spelling Application (finger-spelling)
+An interactive application that helps users learn and practice American Sign Language (ASL) finger spelling using computer vision and machine learning.
+
+**Key Features:**
+- 👋 Real-time hand tracking and gesture recognition using MediaPipe
+- 🤟 ASL finger spelling detection and prediction
+- 🖼️ Displays reference images for predicted letters (placeholders used for D-Z currently)
+- 🏫 Interactive learning and test modes for practicing the ASL alphabet
+- 📊 Performance feedback and accuracy metrics in test mode
+- 🖥️ User-friendly web interface with webcam integration
+
+**Technical Stack:**
+- 🖐️ Hand tracking and landmark extraction using MediaPipe
+- 🧠 Custom scikit-learn model for gesture recognition (trained on collected landmarks)
+- 📷 Real-time image processing with OpenCV
+- 🌐 Gradio-based web interface
+
+*Note: For optimal performance, users should train the gesture recognition model using their own hand data by following the instructions in the `finger-spelling/README.md`.*
+
+### 3️⃣ Language Learning Portal (lang-portal)
+A comprehensive language learning platform with various activities and tools to help users learn new languages. Accessed via port 8009 when run with the launcher.
+
+**Key Features:**
+- 🏫 Interactive language learning modules (Flashcards, Matching Game)
+- 📈 Progress tracking (Dashboard, Session History)
+- 🐳 Separate Frontend (React/Vite/Nginx) and Backend (Node/Express/SQLite) services
+- 🎨 Responsive UI with Tailwind CSS and Shadcn/ui
+
+**Technical Stack:**
+- Frontend: React, Vite, TypeScript, Tailwind CSS, Shadcn/ui, Nginx (serving)
+- Backend: Node.js, Express, TypeScript, Sequelize, SQLite
+
+### 4️⃣ Persian Learning Assistant (listening-comp)
+An interactive chat system for learning Persian with transcript analysis capabilities.
+
+**Key Features:**
+- 💬 Chat with Nova Implementation
+- 📊 Structured Data Processing
+- 📝 Transcript analysis
+- 📚 Vocabulary extraction with Persian character handling
+- 📏 Grammar pattern recognition
+
+**Technical Stack:**
+- 🔤 sentence-transformers
+- 🔍 faiss-cpu
+- ⛓️ langchain
+- 🎤 Azure Speech Services
+
+### 5️⃣ Text-to-Speech (TTS) Microservice (opea-comps)
+A microservice that combines Coqui TTS with FastAPI to provide text-to-speech conversion through a REST API.
+
+**Key Features:**
+- 🔊 Text-to-speech conversion API
+- 🐳 Docker containerization
+- 🚀 FastAPI integration
+- 🔄 Audio format conversion
+
+**Technical Stack:**
+- 🐳 Docker and Docker Compose
+- 🎵 Coqui TTS service
+- 🚀 FastAPI framework
+- 🌐 RESTful API design
+
+### 6️⃣ Farsi Song Vocabulary Generator (song-vocab)
+An application that analyzes Farsi songs to extract vocabulary for language learning purposes.
+
+**Key Features:**
+- 🌐 API for song lyric analysis
+- 📚 Vocabulary extraction
+- 🔍 SERP integration for song search
+- 🧪 Interactive testing tools
+
+**Technical Stack:**
+- 🚀 Uvicorn server
+- 🤖 Ollama SDK
+- 🌐 API endpoints
+- 🧪 Testing frameworks
+
+### 7️⃣ Farsi Learning Visual Novel (visual-novel)
+A web-based visual novel for learning Farsi, featuring interactive dialogue, language switching, and audio management.
+
+**Key Features:**
+- 🌐 Bilingual Support: Switch between English and Farsi text with RTL support
+- 🔊 Audio System: Voice acting, background music, and sound effects
+- 💬 Interactive Dialogue: Choice-based dialogue system with branching paths
+- 👥 Character System: Rich cast of characters with dynamic expressions
+- 💾 Save/Load System: Multiple save slots for game progress
+
+**Technical Stack:**
+- 📜 Pure JavaScript for game logic
+- 🎨 HTML5 and CSS3 for interface
+- 🔊 Web Audio API for sound management
+- 🚀 Express.js for serving static files
+- 🔤 Google Fonts (Noto Naskh Arabic) for Farsi text
+
+### 8️⃣ Farsi Writing Practice App (writing-practice)
+An interactive application (running on port 8008) to help users practice writing in Farsi (Persian). Provides English sentence prompts, verifies handwritten uploads using Tesseract OCR, and gives feedback using the Google Gemini API.
+
+**Key Features:**
+- 🔄 Random English sentences for translation practice
+- 📤 Upload and verify handwritten Farsi text
+- 👁️ Real-time OCR processing with Tesseract
+- ✨ AI-powered translation and grading feedback (via Google Gemini)
+- 🎨 Gradio web interface
+- 🔣 Proper RTL text display
+
+**Technical Stack:**
+- 🐍 Python 3.10+
+- ✨ Gradio for web UI
+- 🧠 Google Generative AI (Gemini API)
+- 👁️ Tesseract-OCR with Persian language support
+- 🔣 Arabic-reshaper and python-bidi for text processing
+- 🐳 Docker & Docker Compose
+
+---
+
+<div align="center">
+  
+  ## 📸 Reference Images
+  
+</div>
+
+### 1. Farsi Text Adventure MUD Game (fa-mud)
+![Farsi MUD Game](fa-mud/reference_images/image1.png)![Farsi MUD Game](fa-mud/reference_images/image2.png)
+*The Farsi MUD game features a text-based interface with mixed English and Farsi text, allowing users to explore virtual environments while learning vocabulary.*
+
+### 2. ASL Finger Spelling Application (finger-spelling)
+![ASL Finger Spelling](finger-spelling/reference_images/dashboard.png)![ASL Finger Spelling](finger-spelling/reference_images/image1.png)
+![ASL Finger Spelling](finger-spelling/reference_images/image2.png)![ASL Finger Spelling](finger-spelling/reference_images/image3.png)
+![ASL Finger Spelling](finger-spelling/reference_images/image4.png)
+![ASL Finger Spelling](finger-spelling/reference_images/FingerSpelling.mp4)
+
+*The ASL application uses computer vision to recognize hand gestures and translate them into letters, with a practice mode for learning.*
+
+### 3. Language Learning Portal (lang-portal)
+![Language Portal](lang-portal/reference_images/dashboard.png)
+![Language Portal](lang-portal/reference_images/image1.png)
+![Language Portal](lang-portal/reference_images/image2.png)
+![Language Portal](lang-portal/reference_images/image3.png)
+![Language Portal](lang-portal/reference_images/image4.png)
+![Language Portal](lang-portal/reference_images/image5.png)
+![Language Portal](lang-portal/reference_images/image6.png)
+![Language Portal](lang-portal/reference_images/image7.png)
+*The language portal provides a comprehensive dashboard for tracking progress and accessing various learning activities.*
+
+### 4. Persian Learning Assistant (listening-comp)
+![Persian Learning Assistant](listening-comp/reference_images/Chat_with_Nova.png)
+![Persian Learning Assistant](listening-comp/reference_images/Interactive_Learning.png)
+![Persian Learning Assistant](listening-comp/reference_images/RAG_Implementation.png)
+![Persian Learning Assistant](listening-comp/reference_images/Raw_Transcript.png)
+![Persian Learning Assistant](listening-comp/reference_images/Structured_Data.png)
+[Visual Novel Demo Video](listening-comp/reference_images/Listening_Comp_Video.mp4) (download to view)
+### 🎬 listening-comp Demo Video
+[![Watch the listening-comp Demo Video on YouTube](Thumbnail.png)](https://youtu.be/uMh1SHP28wY)
+
+*The listening comprehension tool analyzes Persian audio and provides vocabulary extraction and grammar pattern recognition.*
+
+### 5. Text-to-Speech (TTS) Microservice (opea-comps)
+![TTS Microservice](opea-comps/reference_images/image0.png)
+![TTS Microservice](opea-comps/reference_images/image1.png)
+![TTS Microservice](opea-comps/reference_images/image2.png)
+<audio controls src="opea-comps/reference_images/thanks.wav">
+  Listen to TTS Microservice audio: <a href="opea-comps/reference_images/thanks.wav">thanks.wav</a>
+</audio>
+
+*The TTS microservice architecture demonstrates the containerized services working together to provide text-to-speech conversion.*
+
+### 6. Farsi Song Vocabulary Generator (song-vocab)
+![Song Vocabulary Generator](song-vocab/reference_images/image1.png)
+![Song Vocabulary Generator](song-vocab/reference_images/lyrics.png)
+*The song vocabulary tool searches for and analyzes Farsi lyrics to extract useful vocabulary for language learners.*
+
+### 7. Farsi Learning Visual Novel (visual-novel)
+![Visual Novel](visual-novel/reference_images/apartment.png)
+![Visual Novel](visual-novel/reference_images/cafe.png)
+![Visual Novel](visual-novel/reference_images/postoffice.png)
+![Visual Novel](visual-novel/reference_images/school_exterior.png)
+[Visual Novel Demo Video](visual-novel/reference_images/video.mp4) (download to view)
+
+*The visual novel presents interactive scenarios with characters and dialogue choices to teach Farsi in context.*
+
+### 8. Farsi Writing Practice App (writing-practice)
+![Writing Practice](writing-practice/reference_images/image0.png)
+![Writing Practice](writing-practice/reference_images/image1.png)
+![Writing Practice](writing-practice/reference_images/image2.png)
+![Writing Practice](writing-practice/reference_images/image3.png)
+![Writing Practice](writing-practice/reference_images/image4.png)
+![Writing Practice](writing-practice/reference_images/image5.png)
+![Writing Practice](writing-practice/reference_images/image6.png)
+![Writing Practice](writing-practice/reference_images/image7.png)
+
+*The writing practice app allows users to practice handwritten Farsi and checks accuracy using OCR technology.*
+
+---
+
+## Special Thanks
+
+Big thanks to Andrew Brown for providing the Free GenAI Bootcamp – an amazing resource that helped guide this project. [Free GenAI Bootcamp](https://genai.cloudprojectbootcamp.com/)
+
+---
+
+## Repository Structure
 
 ```
-ai-storyteller/
-├── src/                    # Frontend React/TypeScript source
-│   ├── App.tsx            # Main application component
-│   ├── App.css            # Main styles
-│   ├── lib/               # Utility functions and components
-│   └── main.tsx           # Application entry point
-├── public/                # Static assets
-│   └── images/           # Story illustrations and UI assets
-├── instance/             # Database and instance files
-├── app.py               # Flask backend application
-├── requirements.txt     # Python dependencies
-├── package.json        # Node.js dependencies
-└── vite.config.ts      # Vite configuration
+free-genai-bootcamp-2025/
+├── fa-mud/                   # Farsi text adventure MUD game
+│   ├── backend/              # Python backend for game logic
+│   ├── frontend/             # React frontend with RTL support
+│   └── README.md             # Project documentation
+│
+├── finger-spelling/          # ASL finger spelling recognition
+│   ├── models/               # ML models for gesture recognition
+│   ├── app.py                # Main application
+│   └── README.md             # Project documentation
+│
+├── lang-portal/              # Language learning portal
+│   ├── darimasterlan/        # Dari master language app
+│   └── README.md             # Project documentation
+│
+├── listening-comp/           # Persian learning assistant
+│   ├── backend/              # Backend services
+│   ├── structured_data.py    # Data processing utilities
+│   └── README.md             # Project documentation
+│
+├── opea-comps/               # Text-to-Speech microservice
+│   ├── mega-service/         # FastAPI service
+│   ├── models/               # TTS models
+│   └── README.md             # Project documentation
+│
+├── song-vocab/               # Farsi song vocabulary generator
+│   ├── tools/                # Utility tools
+│   ├── tests/                # Testing modules
+│   └── README.md             # Project documentation
+│
+├── visual-novel/             # Farsi learning visual novel
+│   ├── assets/               # Audio, backgrounds, characters
+│   ├── js/                   # Game engine and logic
+│   ├── styles/               # CSS styling
+│   └── README.md             # Project documentation
+│
+├── writing-practice/         # Farsi writing practice app
+│   ├── gradio_app.py         # Main application
+│   └── README.md             # Project documentation
+│
+└── README.md                 # Main repository documentation
 ```
 
-## System Architecture
+## Getting Started
 
-```mermaid
-graph TD
-    A[Frontend React/TypeScript] --> B[Flask Backend]
-    B --> C[SQLite Database]
-    B --> D[Azure OpenAI]
-    B --> E[Azure DALL-E]
-    B --> F[Azure Speech Service]
-    
-    subgraph Frontend
-        A --> G[Story Creation UI]
-        A --> H[Story Viewing UI]
-        A --> I[User Authentication]
-    end
-    
-    subgraph Backend Services
-        D --> J[Story Generation]
-        E --> K[Image Generation]
-        F --> L[Text-to-Speech]
-    end
-    
-    subgraph Data Storage
-        C --> M[Stories]
-        C --> N[User Data]
-        C --> O[Favorites]
-    end
-```
+This project uses Docker Compose to manage and run all the different services. The **Launcher service** (`http://localhost:3000`) acts as the central dashboard to view the status of and access all the other learning applications.
 
-## Component Flow
+**It is recommended to run all projects via the Launcher's Docker Compose setup.**
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant Frontend
-    participant Backend
-    participant AzureServices
-    participant Database
+1.  **Prerequisites:**
+    *   Install [Docker](https://docs.docker.com/get-docker/).
+    *   Install [Docker Compose](https://docs.docker.com/compose/install/) (often included with Docker Desktop).
+    *   Ensure you have any necessary API keys (e.g., `GOOGLE_API_KEY` for Writing Practice) and potentially accounts for services like Azure Speech (for Listening Comp).
+    *   Ability to run Python scripts locally for project-specific setup (e.g., training the ASL model in `finger-spelling` by following its README).
 
-    User->>Frontend: Select Story Parameters
-    Frontend->>Backend: Send Story Request
-    Backend->>AzureServices: Generate Story (OpenAI)
-    AzureServices-->>Backend: Story Content
-    Backend->>AzureServices: Generate Image (DALL-E)
-    AzureServices-->>Backend: Story Image
-    Backend->>Database: Store Story
-    Backend-->>Frontend: Story Data
-    Frontend->>User: Display Story
-    
-    User->>Frontend: Request Narration
-    Frontend->>Backend: Text-to-Speech Request
-    Backend->>AzureServices: Convert to Speech
-    AzureServices-->>Backend: Audio Stream
-    Backend-->>Frontend: Audio Data
-    Frontend->>User: Play Narration
-```
+2.  **Configuration:**
+    *   **Navigate to the `Launcher` directory.** This is the main directory for controlling all services.
+    *   Create a `.env` file by copying `.env.template` (`cp .env.template .env`).
+    *   Edit the `Launcher/.env` file and add your required API keys (e.g., `GOOGLE_API_KEY=YOUR_KEY_HERE`). This file provides environment variables to all services started by the compose file.
 
-## Data Flow
+3.  **Build and Run All Services:**
+    *   **From the `Launcher` directory,** run:
+        ```bash
+        docker-compose up -d
+        ```
+    *   This command will build the images for all services (which might take some time on the first run) and start them in the background.
 
-```mermaid
-graph LR
-    A[User Input] --> B[Story Parameters]
-    B --> C[Story Generation]
-    C --> D[Story Content]
-    D --> E[Image Generation]
-    E --> F[Story Image]
-    D --> G[Speech Synthesis]
-    G --> H[Audio Narration]
-    D & F & H --> I[Story Storage]
-    I --> J[Story Retrieval]
-    J --> K[Story Display]
-```
+4.  **Access the Launcher Dashboard:**
+    *   Open your web browser to `http://localhost:3000`.
+    *   This dashboard shows the status of each service and provides links to launch them.
 
-## Development
+5.  **Launch Projects:**
+    *   From the Launcher Dashboard, click the link for a project.
+    *   This will open the project's specific URL (e.g., `http://localhost:8009` for Language Learning Portal, `http://localhost:8008` for Writing Practice) in a new tab.
 
-- `npm run dev`: Start frontend development server
-- `python app.py`: Start backend server
-- `npm run build`: Build frontend for production
-- `python migrate_db.py`: Initialize or update database schema
-
-## Testing
-
-The project includes several test scripts:
-- `test_azure_apis.py`: Tests Azure API integrations
-- `validate_azure_services.py`: Validates Azure service configurations
-- `check_openai_key.py`: Verifies OpenAI API key
-- `Azurekeycheck.py`: Validates Azure service keys
-
-## Using the Application
-
-1. **Create a Story**:
-   - Select a theme (Space Adventure, Magic Kingdom, etc.)
-   - Add characters (comma-separated)
-   - Choose an age group
-   - Click "Begin Your Magical Adventure" to generate
-   - An AI-generated illustration will be created automatically
-
-2. **View Stories**:
-   - Browse all stories in the "My Stories" tab
-   - View favorite stories in the "Favorites" tab
-   - Click on a story card to view the full content with animated text reveal
-   - Each story includes a unique AI-generated illustration
-
-3. **Story Actions**:
-   - Add/remove stories from favorites
-   - Listen to stories with natural text-to-speech narration
-   - Email stories to share them with others
-   - Print stories in a nicely formatted layout
-   - Regenerate illustrations if desired
-
-## Animation Features
-
-The application includes several animation features to enhance the user experience:
-
-- **Story Generation**: Animated book with flipping pages and writing lines during story creation
-- **Text Reveal**: Typewriter effect for story titles and fade-in animations for paragraphs
-- **Loading Messages**: Dynamic, changing messages during story generation to keep users engaged
-- **Visual Feedback**: Sparkle effects, confetti celebration, and floating decorative elements
-
-## Text-to-Speech Features
-
-The application offers an immersive narration experience using Azure Speech Service:
-
-- **Premium Voice Selection**: Multiple high-quality voices with different accents and styles
-- **Character Voices**: Unique voice styles for different story characters
-- **Dynamic Narration**: Adjustable speech rate and pitch based on story content
-- **Background Music**: Optional background music for enhanced storytelling
-- **Multi-language Support**: Stories can be narrated in multiple languages
-- **Interactive Control**: Advanced playback controls with pause, resume, and speed adjustment
-- **Voice Customization**: Ability to select different voices for different story themes
-- **Age-Appropriate Narration**: Optimized speech parameters for different age groups
-
-## Environment Variables
-
-- `DATABASE_URL`: SQLite database URL
-- `AZURE_OPENAI_API_KEY`: Your Azure OpenAI API key
-- `AZURE_OPENAI_ENDPOINT`: Your Azure OpenAI endpoint URL
-- `AZURE_DALLE_API_KEY`: Your Azure DALL-E API key
-- `AZURE_DALLE_ENDPOINT`: Your Azure DALL-E endpoint URL (base URL only)
-- `AZURE_DALLE_API_VERSION`: Azure DALL-E API version
-- `AZURE_SPEECH_KEY`: Your Azure Speech Service API key
-- `AZURE_SPEECH_REGION`: Your Azure Speech Service region
-- `FLASK_APP`: Flask application entry point
-- `FLASK_ENV`: Flask environment (development/production)
-
-## License
-
-MIT
+6.  **Managing Services:**
+    *   **Use your terminal in the `Launcher` directory** to manage the services:
+    *   To stop all services: `docker-compose down`.
+    *   To start/stop individual services: `docker-compose start <service_name>` or `docker-compose stop <service_name>`.
+    *   To view logs: `docker-compose logs <service_name>`.

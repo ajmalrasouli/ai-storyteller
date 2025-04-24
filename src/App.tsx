@@ -3,6 +3,7 @@ import { generateStory, listStories, Story, toggleFavorite, regenerateIllustrati
 import { Toaster, toast } from 'react-hot-toast';
 import confetti from 'canvas-confetti';
 import './App.css';
+import ShareDialog from './components/ShareDialog';
 
 // Background patterns component
 const BackgroundPatterns: React.FC = () => {
@@ -477,6 +478,7 @@ const StoryModal = ({ story, isOpen, onClose, onToggleFavorite, onDelete }: Stor
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isRegeneratingImage, setIsRegeneratingImage] = useState(false);
   const [storyData, setStoryData] = useState(story);
+  const [showShareDialog, setShowShareDialog] = useState(false);
   const speechRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   useEffect(() => {
@@ -887,6 +889,24 @@ const StoryModal = ({ story, isOpen, onClose, onToggleFavorite, onDelete }: Stor
             </button>
             
             <button 
+              onClick={() => setShowShareDialog(true)}
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px',
+                background: 'none',
+                border: 'none',
+                padding: '8px 12px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                color: '#4c1d95',
+                fontWeight: 'bold'
+              }}
+            >
+              📤 Share Story
+            </button>
+            
+            <button 
               onClick={handleEmail}
               style={{ 
                 display: 'flex', 
@@ -964,6 +984,14 @@ const StoryModal = ({ story, isOpen, onClose, onToggleFavorite, onDelete }: Stor
           </span>
         </div>
       </div>
+
+      {showShareDialog && (
+        <ShareDialog
+          storyId={storyData.id}
+          isOpen={showShareDialog}
+          onClose={() => setShowShareDialog(false)}
+        />
+      )}
     </div>
   );
 };

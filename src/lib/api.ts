@@ -26,6 +26,18 @@ export interface ErrorResponse {
   message: string;
 }
 
+export interface ShareData {
+  shareUrl: string;
+  shareData: {
+    title: string;
+    theme: string;
+    characters: string[];
+    ageGroup: string;
+    imageUrl?: string;
+    preview: string;
+  };
+}
+
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
   const headers = {
     "Content-Type": "application/json",
@@ -96,4 +108,10 @@ export async function regenerateIllustration(storyId: number): Promise<{ id: num
 
 export async function deleteStory(storyId: number): Promise<void> {
   return fetchWithAuth(`/stories/${storyId}`, { method: "DELETE" });
+}
+
+export async function getShareLink(storyId: number): Promise<ShareData> {
+  return fetchWithAuth(`/stories/${storyId}/share`, {
+    method: "GET",
+  });
 } 

@@ -11,6 +11,7 @@ import base64
 import requests
 from io import BytesIO
 import time
+import json
 
 # Load environment variables
 load_dotenv()
@@ -36,11 +37,14 @@ api_version = "2024-02-01"
 # Try to use the OPENAI_API_KEY first, then fall back to AZURE_OPENAI_API_KEY
 api_key = os.getenv("OPENAI_API_KEY") or os.getenv("AZURE_OPENAI_API_KEY")
 
-openai_client = AzureOpenAI(
-    api_key=api_key,  
-    api_version=api_version,
-    azure_endpoint=endpoint
-)
+# Initialize Azure OpenAI client with explicit configuration
+client_config = {
+    "api_key": api_key,
+    "api_version": api_version,
+    "azure_endpoint": endpoint
+}
+
+openai_client = AzureOpenAI(**client_config)
 
 # Debug route to check Azure OpenAI configuration
 @app.route('/debug/config', methods=['GET'])
@@ -488,6 +492,145 @@ def regenerate_illustration(story_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'message': str(e)}), 500
+
+@app.route('/stories/<int:story_id>/share', methods=['GET'])
+def get_share_link(story_id):
+    try:
+        story = Story.query.get(story_id)
+        if not story:
+            return jsonify({'message': 'Story not found'}), 404
+
+        # Generate a shareable link with story metadata
+        share_data = {
+            'title': story.title,
+            'theme': story.theme,
+            'characters': story.characters.split(','),
+            'ageGroup': story.age_group,
+            'imageUrl': story.image_url,
+            'preview': story.content[:200] + '...'  # First 200 characters as preview
+        }
+
+        # Encode the share data as base64 to create a shareable link
+        share_data_json = json.dumps(share_data)
+        share_token = base64.b64encode(share_data_json.encode()).decode()
+
+        # Create the share URL
+        share_url = f"{request.host_url}share/{share_token}"
+
+        return jsonify({
+            'shareUrl': share_url,
+            'shareData': share_data
+        })
+
+    except Exception as e:
+        return jsonify({'message': str(e)}), 500
+
+@app.route('/teams/story', methods=['POST'])
+def teams_story():
+    try:
+        data = request.get_json()
+        
+        # Extract the prompt from Teams message
+        if not data or 'text' not in data:
+            return jsonify({
+                'type': 'message',
+                'text': 'Please provide a prompt in the format: /storyteller prompt: [Your Prompt]'
+            })
+        
+        # Parse the command
+        command = data['text'].strip()
+        if not command.startswith('prompt:'):
+            return jsonify({
+                'type': 'message',
+                'text': 'Invalid format. Please use: /storyteller prompt: [Your Prompt]'
+            })
+        
+        prompt = command.replace('prompt:', '').strip()
+        if not prompt:
+            return jsonify({
+                'type': 'message',
+                'text': 'Please provide a prompt after "prompt:"'
+            })
+        
+        # Generate story using Azure OpenAI
+        try:
+            response = openai_client.chat.completions.create(
+                model=AZURE_DEPLOYMENT,
+                messages=[
+                    {"role": "system", "content": "You are a creative children's story writer with expertise in creating engaging, age-appropriate stories that entertain and teach valuable lessons."},
+                    {"role": "user", "content": f"Create a children's story based on this prompt: {prompt}. Include a title, engaging plot, and a moral lesson."}
+                ],
+                temperature=0.7,
+                max_tokens=2000
+            )
+            
+            story_content = response.choices[0].message.content
+            title = story_content.split('\n')[0].replace('Title:', '').strip()
+            
+            # Generate illustration
+            illustration_url = generate_illustration(title, "Custom", ["main character"], "5-8")
+            
+            # Format response for Teams
+            teams_response = {
+                'type': 'message',
+                'attachments': [
+                    {
+                        'contentType': 'application/vnd.microsoft.card.adaptive',
+                        'content': {
+                            'type': 'AdaptiveCard',
+                            'body': [
+                                {
+                                    'type': 'TextBlock',
+                                    'size': 'Large',
+                                    'weight': 'Bolder',
+                                    'text': title,
+                                    'wrap': True
+                                },
+                                {
+                                    'type': 'Image',
+                                    'url': illustration_url,
+                                    'altText': f'Illustration for {title}',
+                                    'size': 'Large'
+                                },
+                                {
+                                    'type': 'TextBlock',
+                                    'text': story_content,
+                                    'wrap': True
+                                }
+                            ],
+                            'actions': [
+                                {
+                                    'type': 'Action.OpenUrl',
+                                    'title': 'View Full Story',
+                                    'url': f"{request.host_url}share/{base64.b64encode(json.dumps({
+                                        'title': title,
+                                        'content': story_content,
+                                        'imageUrl': illustration_url
+                                    }).encode()).decode()}"
+                                }
+                            ],
+                            '$schema': 'http://adaptivecards.io/schemas/adaptive-card.json',
+                            'version': '1.2'
+                        }
+                    }
+                ]
+            }
+            
+            return jsonify(teams_response)
+            
+        except Exception as api_error:
+            print(f"Azure OpenAI API error: {str(api_error)}")
+            return jsonify({
+                'type': 'message',
+                'text': 'Sorry, there was an error generating the story. Please try again later.'
+            })
+            
+    except Exception as e:
+        print(f"Teams integration error: {str(e)}")
+        return jsonify({
+            'type': 'message',
+            'text': 'An error occurred. Please try again later.'
+        })
 
 if __name__ == '__main__':
     app.run(debug=True) 
