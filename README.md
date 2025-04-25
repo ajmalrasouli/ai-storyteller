@@ -41,7 +41,15 @@ An interactive AI-powered storytelling application that generates personalized c
 - 🎨 Various story themes (Space Adventure, Magic Kingdom, Ocean Explorer, etc.)
 - ⭐ Story favoriting system
 - 🔊 Text-to-speech narration with natural-sounding voices
-- 📧 Email stories directly from the application
+- 📧 Email stories with smart content truncation
+  - Automatic length management for email clients
+  - Includes story metadata and illustration links
+  - Fallback to print option for long stories
+- 📱 Social sharing integration
+  - Direct sharing to Twitter, Facebook, and WhatsApp
+  - Native Web Share API support
+  - Clipboard fallback for unsupported browsers
+  - Custom sharing messages with story metadata
 - 🖨️ Print-friendly story formatting
 - 🎯 Educational focus with learning objectives
 - ✨ Enhanced animated UI with visual feedback:
@@ -232,9 +240,17 @@ The project includes several test scripts:
 3. **Story Actions**:
    - Add/remove stories from favorites
    - Listen to stories with natural text-to-speech narration
-   - Email stories to share them with others
+   - Email stories with smart content management
+   - Share stories directly to social media platforms
    - Print stories in a nicely formatted layout
    - Regenerate illustrations if desired
+
+4. **Sharing Options**:
+   - Email: Automatically formats stories for email clients
+   - Social Media: Share directly to Twitter, Facebook, or WhatsApp
+   - Web Share: Use native sharing on supported devices
+   - Print: Generate a print-friendly version
+   - Copy Link: Quick access to story URLs
 
 ## Animation Features
 

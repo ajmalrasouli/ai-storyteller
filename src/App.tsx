@@ -477,7 +477,8 @@ const StoryModal = ({ story, isOpen, onClose, onToggleFavorite, onDelete }: Stor
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isRegeneratingImage, setIsRegeneratingImage] = useState(false);
   const [storyData, setStoryData] = useState(story);
-  const speechRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     // Update storyData when the story prop changes
@@ -503,8 +504,9 @@ const StoryModal = ({ story, isOpen, onClose, onToggleFavorite, onDelete }: Stor
   // Clean up speech synthesis when component unmounts
   useEffect(() => {
     return () => {
-      if (speechRef.current) {
-        window.speechSynthesis.cancel();
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
       }
     };
   }, []);
@@ -566,180 +568,200 @@ const StoryModal = ({ story, isOpen, onClose, onToggleFavorite, onDelete }: Stor
 
   const handleEmail = () => {
     try {
-      const subject = encodeURIComponent(`Story: ${storyData.title}`);
-      // Limit content size to avoid issues with mailto
-      const contentPreview = storyData.content.length > 1500 
-        ? storyData.content.substring(0, 1500) + "... (Content truncated for email)"
-        : storyData.content;
-      
-      // Include the illustration URL if available
-      const illustrationText = storyData.imageUrl 
-        ? `\n\nView the story illustration here: ${storyData.imageUrl}\n\n` 
-        : '\n\n';
-      
-      const body = encodeURIComponent(
-        `${storyData.title}\n\n` +
-        `Theme: ${storyData.theme}\n` +
-        `Age Group: ${storyData.ageGroup}\n` +
-        illustrationText +
-        `${contentPreview}\n\n` +
-        `Created with AI Storyteller`
-      );
-      
-      // Check if body is too long
-      if (body.length > 2000) {
-        toast.error("Story is too long to send via email. Please try using the print function instead.");
-        return;
-      }
-      
-      // Create a temporary link element and trigger it
-      const mailtoLink = document.createElement('a');
-      mailtoLink.href = `mailto:?subject=${subject}&body=${body}`;
-      mailtoLink.target = '_blank';
-      document.body.appendChild(mailtoLink);
-      mailtoLink.click();
-      document.body.removeChild(mailtoLink);
-      
-      toast.success("Email client opened!");
+        const subject = encodeURIComponent(`Story: ${storyData.title}`);
+        
+        // Create a more concise version of the story for email
+        const maxEmailLength = 1500;
+        const contentPreview = storyData.content.length > maxEmailLength 
+            ? storyData.content.substring(0, maxEmailLength) + "...\n\n(Story continues in the app)"
+            : storyData.content;
+        
+        // Include the illustration URL if available
+        const illustrationText = storyData.imageUrl 
+            ? `\n\nView the story illustration here: ${storyData.imageUrl}\n\n` 
+            : '\n\n';
+        
+        const body = encodeURIComponent(
+            `${storyData.title}\n\n` +
+            `Theme: ${storyData.theme}\n` +
+            `Age Group: ${storyData.ageGroup}\n` +
+            illustrationText +
+            `${contentPreview}\n\n` +
+            `Created with AI Storyteller\n` +
+            `View the full story at: ${window.location.origin}/stories/${storyData.id}`
+        );
+        
+        // Create a temporary link element and trigger it
+        const mailtoLink = document.createElement('a');
+        mailtoLink.href = `mailto:?subject=${subject}&body=${body}`;
+        mailtoLink.target = '_blank';
+        document.body.appendChild(mailtoLink);
+        mailtoLink.click();
+        document.body.removeChild(mailtoLink);
+        
+        toast.success("Email client opened!");
     } catch (error) {
-      toast.error("Could not open email client. Please try again or use another method to share.");
-      console.error("Email error:", error);
+        toast.error("Could not open email client. Please try again or use another method to share.");
+        console.error("Email error:", error);
     }
   };
+
+  // Add new social sharing functions
+  const handleShare = async () => {
+    try {
+        if (navigator.share) {
+            const shareData = {
+                title: storyData.title,
+                text: `Check out this story: ${storyData.title}\nTheme: ${storyData.theme}\nAge Group: ${storyData.ageGroup}`,
+                url: `${window.location.origin}/stories/${storyData.id}`
+            };
+            
+            await navigator.share(shareData);
+            toast.success("Story shared successfully!");
+        } else {
+            // Fallback for browsers that don't support Web Share API
+            const shareUrl = `${window.location.origin}/stories/${storyData.id}`;
+            const shareText = `Check out this story: ${storyData.title}\nTheme: ${storyData.theme}\nAge Group: ${storyData.ageGroup}\n${shareUrl}`;
+            
+            // Copy to clipboard
+            await navigator.clipboard.writeText(shareText);
+            toast.success("Story link copied to clipboard!");
+        }
+    } catch (error) {
+        console.error("Error sharing:", error);
+        toast.error("Could not share the story. Please try again.");
+    }
+  };
+
+  // Add social media sharing buttons
+  const SocialShareButtons = () => {
+    const shareUrl = encodeURIComponent(`${window.location.origin}/stories/${storyData.id}`);
+    const shareTitle = encodeURIComponent(storyData.title);
+    const shareText = encodeURIComponent(`Check out this story: ${storyData.title}\nTheme: ${storyData.theme}\nAge Group: ${storyData.ageGroup}`);
+
+    return (
+        <div className="social-share-buttons">
+            <button 
+                onClick={() => window.open(`https://twitter.com/intent/tweet?url=${shareUrl}&text=${shareText}`, '_blank')}
+                className="social-share-button twitter"
+            >
+                <span className="social-icon">🐦</span> Twitter
+            </button>
+            <button 
+                onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`, '_blank')}
+                className="social-share-button facebook"
+            >
+                <span className="social-icon">📘</span> Facebook
+            </button>
+            <button 
+                onClick={() => window.open(`https://api.whatsapp.com/send?text=${shareText}%20${shareUrl}`, '_blank')}
+                className="social-share-button whatsapp"
+            >
+                <span className="social-icon">💬</span> WhatsApp
+            </button>
+        </div>
+    );
+  };
+
+  const startSpeaking = async (text: string) => {
+    try {
+      // Cancel any existing request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      
+      // Stop any existing playback
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        audioRef.current = null;
+      }
+      
+      setIsSpeaking(true);
+      
+      // Create new abort controller
+      abortControllerRef.current = new AbortController();
+      
+      const response = await fetch('http://localhost:5000/api/speech', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text }),
+        signal: abortControllerRef.current.signal
+      });
+      
+      if (!response.ok) {
+        throw new Error('Speech synthesis failed');
+      }
+      
+      const data = await response.json();
+      
+      // Create new audio element
+      const audio = new Audio();
+      audio.onended = () => {
+        setIsSpeaking(false);
+        audioRef.current = null;
+      };
+      audio.onerror = () => {
+        setIsSpeaking(false);
+        audioRef.current = null;
+      };
+      audio.onpause = () => {
+        setIsSpeaking(false);
+        audioRef.current = null;
+      };
+      
+      // Set the audio source
+      audio.src = `data:audio/wav;base64,${data.audio}`;
+      
+      // Store the audio reference
+      audioRef.current = audio;
+      
+      // Play the audio
+      await audio.play();
+      
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.log('Speech synthesis aborted');
+      } else {
+        console.error('Error:', error);
+      }
+      setIsSpeaking(false);
+      audioRef.current = null;
+    }
+  };
+
+  const stopSpeaking = () => {
+    // Cancel any ongoing request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    
+    // Stop any existing playback
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      audioRef.current = null;
+    }
+    
+    setIsSpeaking(false);
+  };
+
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      stopSpeaking();
+    };
+  }, []);
 
   const handleListen = () => {
     if (isSpeaking) {
       stopSpeaking();
-      return;
-    }
-
-    // Initialize speech synthesis
-    stopSpeaking(); // Cancel any previous speech
-    
-    // Get all available voices
-    let voices = window.speechSynthesis.getVoices();
-    
-    // If no voices are available yet, wait for them to load
-    if (voices.length === 0) {
-      window.speechSynthesis.onvoiceschanged = () => {
-        voices = window.speechSynthesis.getVoices();
-        startSpeaking(voices);
-      };
     } else {
-      startSpeaking(voices);
+      startSpeaking(storyData.content);
     }
-  };
-
-  const startSpeaking = (voices: SpeechSynthesisVoice[]) => {
-    // Filter for premium/high-quality voices first
-    const premiumVoices = voices.filter(voice => 
-      voice.name.includes('Premium') || 
-      voice.name.includes('Enhanced') || 
-      voice.name.includes('Neural') ||
-      voice.name.includes('Wavenet') ||
-      voice.name.includes('Polyglot')
-    );
-    
-    // Then filter for English voices
-    const englishVoices = voices.filter(voice => voice.lang.includes('en'));
-    
-    // Preferred voice order: premium english > any premium > english female > any english > default
-    let selectedVoice = null;
-    
-    // Find premium English voice
-    const premiumEnglishVoice = premiumVoices.find(voice => voice.lang.includes('en'));
-    
-    // Find female English voice (often better for storytelling)
-    const femaleEnglishVoice = englishVoices.find(voice => 
-      voice.name.includes('female') || 
-      voice.name.includes('woman') || 
-      voice.name.includes('girl') ||
-      voice.name.includes('Samantha') ||
-      voice.name.includes('Victoria') ||
-      voice.name.includes('Moira') ||
-      voice.name.includes('Karen') ||
-      voice.name.includes('Tessa')
-    );
-    
-    // Select the best available voice
-    selectedVoice = premiumEnglishVoice || 
-                    (premiumVoices.length > 0 ? premiumVoices[0] : null) || 
-                    femaleEnglishVoice || 
-                    (englishVoices.length > 0 ? englishVoices[0] : null);
-    
-    // Prepare and process the story text
-    const title = storyData.title;
-    
-    // Break content into paragraphs for more natural reading
-    const paragraphs = storyData.content.split("\n\n");
-    
-    // Function to create appropriate pauses
-    const createPause = (duration: number) => {
-      const pause = new SpeechSynthesisUtterance(" ");
-      pause.volume = 0;
-      pause.rate = 0.1;
-      pause.pitch = 0;
-      pause.lang = "en-US";
-      
-      // Longer pause = more repetitions
-      for (let i = 0; i < duration; i++) {
-        window.speechSynthesis.speak(pause);
-      }
-    };
-    
-    // Create and configure title speech
-    const titleSpeech = new SpeechSynthesisUtterance(title);
-    titleSpeech.voice = selectedVoice;
-    titleSpeech.rate = 0.9;     // Slightly slower for clarity
-    titleSpeech.pitch = 1.05;   // Slightly higher for engagement
-    titleSpeech.volume = 1;
-    
-    // Configure events for the first utterance
-    titleSpeech.onstart = () => setIsSpeaking(true);
-    
-    // Speak the title first
-    speechRef.current = titleSpeech;
-    window.speechSynthesis.speak(titleSpeech);
-    
-    // Create pause after title
-    createPause(2);
-    
-    // Read each paragraph with appropriate pauses
-    paragraphs.forEach((paragraph, index) => {
-      // Process paragraph to add slight pauses after sentences for more natural rhythm
-      const sentences = paragraph.split(/(?<=[.!?])\s+/);
-      
-      sentences.forEach((sentence, i) => {
-        const speech = new SpeechSynthesisUtterance(sentence);
-        speech.voice = selectedVoice;
-        speech.rate = 0.9;  // Slightly slower for clarity
-        speech.pitch = 1.0; // Natural pitch
-        speech.volume = 1;
-        
-        // Set onend only for the very last utterance
-        if (index === paragraphs.length - 1 && i === sentences.length - 1) {
-          speech.onend = () => setIsSpeaking(false);
-          speech.onerror = () => setIsSpeaking(false);
-        }
-        
-        window.speechSynthesis.speak(speech);
-        
-        // Add small pause after each sentence except the last one
-        if (i < sentences.length - 1) {
-          createPause(1);
-        }
-      });
-      
-      // Add longer pause between paragraphs
-      if (index < paragraphs.length - 1) {
-        createPause(3);
-      }
-    });
-  };
-
-  const stopSpeaking = () => {
-    window.speechSynthesis.cancel();
-    setIsSpeaking(false);
   };
 
   // Function to regenerate the illustration
@@ -938,6 +960,24 @@ const StoryModal = ({ story, isOpen, onClose, onToggleFavorite, onDelete }: Stor
               }}
             >
               {isSpeaking ? '🔇 Stop' : '🔊 Listen'}
+            </button>
+            
+            <button 
+              onClick={handleShare}
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '6px',
+                background: 'none',
+                border: 'none',
+                padding: '8px 12px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                color: '#4CAF50',
+                fontWeight: 'bold'
+              }}
+            >
+              📤 Share Story
             </button>
             
             <button 
@@ -1752,6 +1792,9 @@ export default function App() {
   const [viewStory, setViewStory] = useState<Story | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [activeTab, setActiveTab] = useState("create");
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     fetchStories();

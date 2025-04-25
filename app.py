@@ -11,6 +11,7 @@ import base64
 import requests
 from io import BytesIO
 import time
+from azure.cognitiveservices.speech import SpeechConfig, SpeechSynthesizer, ResultReason, CancellationReason
 
 # Load environment variables
 load_dotenv()
@@ -488,6 +489,42 @@ def regenerate_illustration(story_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'message': str(e)}), 500
+
+@app.route('/api/speech', methods=['POST'])
+def text_to_speech():
+    try:
+        data = request.get_json()
+        text = data.get('text')
+        
+        if not text:
+            return jsonify({'error': 'No text provided'}), 400
+            
+        # Initialize speech config
+        speech_config = SpeechConfig(
+            subscription=os.getenv('AZURE_SPEECH_KEY'),
+            region=os.getenv('AZURE_SPEECH_REGION')
+        )
+        speech_config.speech_synthesis_voice_name = "en-US-JennyNeural"
+        
+        # Create synthesizer
+        synthesizer = SpeechSynthesizer(speech_config=speech_config)
+        
+        # Synthesize speech
+        result = synthesizer.speak_text_async(text).get()
+        
+        if result.reason == ResultReason.SynthesizingAudioCompleted:
+            # Convert audio to base64
+            audio_data = result.audio_data
+            audio_base64 = base64.b64encode(audio_data).decode('utf-8')
+            return jsonify({'audio': audio_base64})
+        elif result.reason == ResultReason.Canceled:
+            cancellation_details = result.cancellation_details
+            return jsonify({'error': f'Speech synthesis canceled: {cancellation_details.reason}'}), 500
+        else:
+            return jsonify({'error': 'Speech synthesis failed'}), 500
+            
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True) 
