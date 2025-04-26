@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 from backend import create_app
+from flask_cors import CORS  # pip install flask-cors
 
 # Load environment variables
 load_dotenv()
@@ -14,6 +15,7 @@ print(f"AZURE_SPEECH_KEY: {'Set' if os.getenv('AZURE_SPEECH_KEY') else 'Not Set'
 print(f"AZURE_SPEECH_REGION: {'Set' if os.getenv('AZURE_SPEECH_REGION') else 'Not Set'}")
 
 app = create_app()
+CORS(app, origins=["http://localhost:5174"])  # Allow frontend dev server
 
 if __name__ == '__main__':
-    app.run(debug=True) 
+    app.run(debug=True)

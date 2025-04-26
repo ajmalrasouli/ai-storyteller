@@ -38,9 +38,9 @@ export const StoryList: React.FC = () => {
 
     const handleToggleFavorite = async (id: number) => {
         try {
-            const updatedStory = await storyApi.toggleFavorite(id);
+            const { isFavorite } = await storyApi.toggleFavorite(id);
             setStories(stories.map(story => 
-                story.id === id ? updatedStory : story
+                story.id === id ? { ...story, isFavorite } : story
             ));
         } catch (err) {
             setError('Failed to update story');
@@ -49,9 +49,9 @@ export const StoryList: React.FC = () => {
 
     const handleRegenerateIllustration = async (id: number) => {
         try {
-            const updatedStory = await storyApi.regenerateIllustration(id);
+            const { imageUrl } = await storyApi.regenerateIllustration(id);
             setStories(stories.map(story => 
-                story.id === id ? updatedStory : story
+                story.id === id ? { ...story, imageUrl } : story
             ));
         } catch (err) {
             setError('Failed to regenerate illustration');

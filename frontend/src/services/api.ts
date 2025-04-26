@@ -20,8 +20,9 @@ api.interceptors.request.use((config) => {
 });
 
 export const storyApi = {
-    getAll: async () => {
-        const response = await api.get('/stories');
+    getAll: async (userId?: number) => {
+        const url = userId ? `/stories?user_id=${userId}` : '/stories';
+        const response = await api.get(url);
         return response.data;
     },
 
@@ -30,13 +31,16 @@ export const storyApi = {
         return response.data;
     },
 
-    delete: async (id: number) => {
-        await api.delete(`/stories/${id}`);
+    delete: async (id: number): Promise<void> => {
+        const response = await api.delete(`/stories/${id}`);
+        if (response.status !== 204) {
+            throw new Error('Error deleting story');
+        }
     },
 
-    toggleFavorite: async (id: number) => {
+    toggleFavorite: async (id: number): Promise<{ isFavorite: boolean }> => {
         const response = await api.post(`/stories/${id}/favorite`);
-        return response.data;
+        return { isFavorite: response.data.isFavorite };
     },
 
     regenerateIllustration: async (id: number) => {

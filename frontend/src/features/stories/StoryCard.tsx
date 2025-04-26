@@ -44,9 +44,9 @@ export const StoryCard: React.FC<StoryCardProps> = ({
 
     return (
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            {story.image_url && (
+            {story.imageUrl && (
                 <img
-                    src={story.image_url}
+                    src={story.imageUrl}
                     alt={story.title}
                     className="w-full h-48 object-cover"
                 />
@@ -56,13 +56,13 @@ export const StoryCard: React.FC<StoryCardProps> = ({
                     <h3 className="text-lg font-semibold">{story.title}</h3>
                     <button
                         onClick={() => onToggleFavorite(story.id)}
-                        className={`text-2xl ${story.is_favorite ? 'text-yellow-500' : 'text-gray-300'}`}
+                        className={`text-2xl ${story.isFavorite ? 'text-yellow-500' : 'text-gray-300'}`}
                     >
                         ★
                     </button>
                 </div>
                 <p className="text-sm text-gray-500 mt-1">
-                    Theme: {story.theme} | Age: {story.age_group}
+                    Theme: {story.theme} | Age: {story.ageGroup}
                 </p>
                 <p className="text-sm text-gray-500 mt-1">
                     Characters: {story.characters.join(', ')}

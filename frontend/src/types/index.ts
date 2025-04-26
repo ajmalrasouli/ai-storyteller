@@ -4,11 +4,11 @@ export interface Story {
     content: string;
     theme: string;
     characters: string[];
-    age_group: string;
-    is_favorite: boolean;
-    image_url: string | null;
-    created_at: string;
-    user_id: number;
+    ageGroup: string;
+    isFavorite: boolean;
+    imageUrl: string | null;
+    createdAt: string;
+    userId: number;
 }
 
 export interface User {

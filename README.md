@@ -10,15 +10,15 @@ An interactive AI-powered storytelling application that generates personalized c
 
 ## Screenshots
 
-| ![Adventure](public/images/adventure.png) | ![Story Creation](public/images/story.png) |
+| ![Adventure](frontend/public/images/adventure.png) | ![Story Creation](frontend/public/images/story.png) |
 |:---:|:---:|
 | *Adventure Map* | *Story Creation* |
 
-| ![My Stories](public/images/mystories.png) | ![Favorites](public/images/favorites.png) |
+| ![My Stories](frontend/public/images/mystories.png) | ![Favorites](frontend/public/images/favorites.png) |
 |:---:|:---:|
 | *My Stories* | *Favorites* |
 
-| ![Story Page View](public/images/storypage.png) | ![About](public/images/about.png) |
+| ![Story Page Vi ew](frontend/public/images/storypage.png) | ![About](frontend/public/images/about.png) |
 |:---:|:---:|
 | *Story Page with Read Aloud* | *About* |
 
@@ -78,19 +78,15 @@ An interactive AI-powered storytelling application that generates personalized c
    cd ai-storyteller
    ```
 
-2. Install Python dependencies:
+2. Install backend Python dependencies:
    ```bash
+   cd backend
    pip install -r requirements.txt
    ```
 
-3. Install Node.js dependencies:
+3. Create a `.env` file in the `backend` directory with your Azure credentials and database URL:
    ```bash
-   npm install
-   ```
-
-4. Create a `.env` file in the root directory with your Azure credentials:
-   ```
-   DATABASE_URL=sqlite:///instance/stories.db
+   DATABASE_URL=sqlite:///stories.db
    AZURE_OPENAI_API_KEY=your_azure_openai_api_key
    AZURE_OPENAI_ENDPOINT=your_azure_openai_endpoint
    AZURE_DALLE_API_KEY=your_azure_dalle_api_key
@@ -98,23 +94,21 @@ An interactive AI-powered storytelling application that generates personalized c
    AZURE_DALLE_API_VERSION=2024-02-01
    AZURE_SPEECH_KEY=your_azure_speech_key
    AZURE_SPEECH_REGION=your_azure_speech_region
-   FLASK_APP=app.py
-   FLASK_ENV=development
    ```
 
-5. Initialize the database:
+4. Start the Flask backend:
    ```bash
-   python migrate_db.py
+   python -m backend.app
    ```
 
-6. Start the development servers:
+5. Open a new terminal, install frontend dependencies and start the React app:
    ```bash
-   # Start the Flask backend
-   python app.py
-   
-   # In a separate terminal, start the frontend
+   cd frontend
+   npm install
    npm run dev
    ```
+
+6. Open your browser at http://localhost:5173 to use the app.
 
 ## Project Structure
 
@@ -210,7 +204,7 @@ graph LR
 ## Development
 
 - `npm run dev`: Start frontend development server
-- `python app.py`: Start backend server
+- `python -m backend.app`: Start backend server
 - `npm run build`: Build frontend for production
 - `python migrate_db.py`: Initialize or update database schema
 
