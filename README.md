@@ -4,7 +4,7 @@ An interactive AI-powered storytelling application that generates personalized c
 
 ## Video Demo
 
-[![AI Storyteller Demo](https://img.youtube.com/vi/6-H0OcEAI7s/0.jpg)](https://youtu.be/6-H0OcEAI7s)
+[![AI Storyteller Demo](https://img.youtube.com/vi/6-H0OcEAI7s/0.jpg)](https://youtu.be/M3X0Q5n2AjA)
 
 *Click the image above to watch the demo video*
 
