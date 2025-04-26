@@ -1795,6 +1795,7 @@ export default function App() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const [title, setTitle] = useState("");
 
   useEffect(() => {
     fetchStories();
@@ -1810,37 +1811,28 @@ export default function App() {
   };
 
   const handleGenerateStory = async () => {
-    if (!theme || !characters || !ageGroup) {
+    if (!title || !theme || !characters || !ageGroup) {
       alert("Please fill in all fields to create your magical story!");
       return;
     }
-
     setLoading(true);
-    
     try {
-      // Split characters by commas and trim whitespace
       const charactersArray = characters.split(',')
         .map(char => char.trim())
-        .filter(char => char.length > 0); // Filter out empty strings
-      
+        .filter(char => char.length > 0);
       if (charactersArray.length === 0) {
         alert("Please add at least one character to your story!");
         setLoading(false);
         return;
       }
-      
-      await generateStory(theme, charactersArray, ageGroup);
+      await generateStory(title, theme, charactersArray, ageGroup);
       await fetchStories();
-      // Show confetti when a story is successfully created
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 5000);
-      
-      // Clear form
+      setTitle("");
       setTheme("");
       setCharacters("");
       setAgeGroup("");
-      
-      // Switch to the stories tab
       setActiveTab("stories");
     } catch (error) {
       console.error('Error generating story:', error);
@@ -1929,16 +1921,26 @@ export default function App() {
               onSelectAgeGroup={setAgeGroup}
               storyCount={stories.length}
             />
-            
-            <CreateStorySection
-              theme={theme}
-              characters={characters}
-              ageGroup={ageGroup}
-              loading={loading}
-              setCharacters={setCharacters}
-              handleGenerateStory={handleGenerateStory}
-            />
-              </div>
+            <div className="create-story-form">
+              <label className="block text-sm font-medium text-gray-700">Title</label>
+              <input
+                type="text"
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                required
+                className="mt-1 mb-4 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                placeholder="Enter your story title"
+              />
+              <CreateStorySection
+                theme={theme}
+                characters={characters}
+                ageGroup={ageGroup}
+                loading={loading}
+                setCharacters={setCharacters}
+                handleGenerateStory={handleGenerateStory}
+              />
+            </div>
+          </div>
         )}
         
         {(activeTab === 'stories' || activeTab === 'favorites') && (

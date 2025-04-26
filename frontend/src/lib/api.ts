@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:5000";
+const API_URL = "http://localhost:5000/api";
 
 export interface User {
   id: number;
@@ -84,18 +84,23 @@ export async function getCurrentUser(token: string): Promise<User> {
 }
 
 export async function generateStory(
+  title: string,
   theme: string,
   characters: string[],
-  ageGroup: string
+  age_group: string
 ): Promise<Story> {
   return fetchWithAuth("/stories", {
     method: "POST",
-    body: JSON.stringify({ theme, characters, ageGroup }),
+    body: JSON.stringify({ title, theme, characters, age_group }),
   });
 }
 
-export async function listStories(): Promise<Story[]> {
-  return fetchWithAuth("/stories", { method: "GET" });
+export async function listStories(userId?: number): Promise<Story[]> {
+  if (userId !== undefined) {
+    return fetchWithAuth(`/stories?user_id=${userId}`, { method: "GET" });
+  } else {
+    return fetchWithAuth(`/stories`, { method: "GET" });
+  }
 }
 
 export async function toggleFavorite(storyId: number): Promise<Story> {
