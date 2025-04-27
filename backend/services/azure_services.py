@@ -2,6 +2,7 @@ import openai
 import azure.cognitiveservices.speech as speechsdk
 import os
 from config.config import Config
+from openai import AzureOpenAI
 
 class AzureServices:
     def __init__(self):
@@ -27,11 +28,12 @@ class AzureServices:
         print("[AzureServices] AZURE_DALLE_DEPLOYMENT_NAME:", self.dalle_deployment_name)
         print("[AzureServices] AZURE_DALLE_API_VERSION:", self.dalle_api_version)
         
-        # Configure OpenAI for Azure
-        openai.api_type = "azure"
-        openai.api_key = self.openai_api_key
-        openai.api_base = self.openai_endpoint
-        openai.api_version = self.openai_api_version
+        # Initialize Azure OpenAI client for text generation
+        self.text_client = AzureOpenAI(
+            api_key=self.openai_api_key,
+            api_version=self.openai_api_version,
+            azure_endpoint=self.openai_endpoint
+        )
         
         # Speech Services configuration
         self.speech_key = os.getenv("AZURE_SPEECH_KEY")
@@ -48,8 +50,8 @@ class AzureServices:
 
     def generate_story(self, theme, characters, age_group):
         try:
-            response = openai.ChatCompletion.create(
-                engine=self.openai_deployment_name,
+            response = self.text_client.chat.completions.create(
+                model=self.openai_deployment_name,
                 messages=[
                     {"role": "system", "content": f"You are a creative children's story writer. Write a story appropriate for {age_group} age group."},
                     {"role": "user", "content": f"Write a story with theme: {theme} and characters: {characters}"}
@@ -73,19 +75,16 @@ class AzureServices:
             
             print(f"[DALLE] Using prompt: {prompt[:100]}...", file=sys.stderr)
             
-            # Use the DALL-E specific client
-            # Set Azure OpenAI config for DALL·E
-            openai.api_type = "azure"
-            openai.api_base = self.dalle_endpoint
-            openai.api_version = self.dalle_api_version
-            openai.api_key = self.dalle_api_key
-            print(f"[DALLE] openai.api_type: {openai.api_type}", file=sys.stderr)
-            print(f"[DALLE] openai.api_base: {openai.api_base}", file=sys.stderr)
-            print(f"[DALLE] openai.api_version: {openai.api_version}", file=sys.stderr)
-            print(f"[DALLE] openai.api_key: {openai.api_key[:4]}...{openai.api_key[-4:] if openai.api_key else None}", file=sys.stderr)
-            print(f"[DALLE] Using engine: {self.dalle_deployment_name}", file=sys.stderr)
-            response = openai.Image.create(
-                engine=self.dalle_deployment_name,
+            # Initialize the Azure OpenAI client
+            client = AzureOpenAI(
+                api_key=self.dalle_api_key,
+                api_version=self.dalle_api_version,
+                azure_endpoint=self.dalle_endpoint
+            )
+            
+            print(f"[DALLE] Using model: {self.dalle_deployment_name}", file=sys.stderr)
+            response = client.images.generate(
+                model=self.dalle_deployment_name,
                 prompt=prompt,
                 n=1,
                 size="1024x1024"
@@ -101,7 +100,6 @@ class AzureServices:
             print(f"[DALLE ERROR] Failed to generate illustration: {str(e)}", file=sys.stderr)
             traceback.print_exc(file=sys.stderr)
             raise Exception(f"Error generating illustration: {str(e)}")
-
 
     def text_to_speech(self, text):
         try:

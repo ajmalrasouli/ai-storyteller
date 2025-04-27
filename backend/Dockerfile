@@ -1,12 +1,31 @@
 # Use Python 3.11 slim image
-FROM python:3.10-slim
+FROM python:3.10-slim-buster
 
 # Set working directory
 WORKDIR /app
 
 # Copy requirements and install dependencies
 COPY requirements.txt .
-RUN apt-get update && apt-get install -y libssl1.1 libasound2 libffi7 || apt-get install -y libssl3 libffi8 || true
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        libssl1.1 \
+        libasound2 \
+        libffi6 \
+        libstdc++6 \
+        libgcc1 \
+        libgomp1 \
+        ca-certificates \
+        curl \
+        libcurl4 \
+        libuuid1 \
+        libtinfo6 \
+        libzstd1 \
+        libgssapi-krb5-2 \
+        libxcb1 \
+        libx11-6 \
+        libopus0 \
+        libpulse0 \
+    && rm -rf /var/lib/apt/lists/*
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application code

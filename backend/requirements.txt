@@ -3,7 +3,7 @@ flask-cors==4.0.0
 flask-sqlalchemy==3.1.1
 flask-jwt-extended==4.6.0
 python-dotenv==0.20.0
-openai==0.28
+openai>=1.12.0
 bcrypt==4.1.2
 gunicorn==21.2.0
 psycopg2-binary==2.9.9
@@ -16,3 +16,5 @@ botbuilder-integration-aiohttp==4.16.2
 PyJWT==2.8.0
 python-dateutil==2.8.2
 flask-migrate==4.0.5
+azure-identity==1.15.0
+azure-core==1.30.0
