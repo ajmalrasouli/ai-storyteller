@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from backend import create_app
+from create_app import create_app
 from flask_cors import CORS  # pip install flask-cors
 
 # Load environment variables

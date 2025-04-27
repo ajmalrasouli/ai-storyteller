@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
-from backend.models.models import Story, User
-from backend.services.azure_services import AzureServices
-from backend import db
+from models.models import Story, User
+from services.azure_services import AzureServices
+from extensions import db
 import json
 import traceback
 from flask_cors import CORS
@@ -10,19 +10,24 @@ bp = Blueprint('stories', __name__)
 CORS(bp, origins=["http://localhost:5173", "http://localhost:5174"])  # Enable CORS for frontend
 azure_services = AzureServices()
 
+def safe_json_loads(val):
+    import json
+    try:
+        if not val or val.strip() == '':
+            return []
+        return json.loads(val)
+    except Exception:
+        return []
+
 @bp.route('/stories', methods=['GET', 'OPTIONS'])
 def get_stories():
-    user_id = request.args.get('user_id')
-    if user_id:
-        stories = Story.query.filter_by(user_id=user_id).all()
-    else:
-        stories = Story.query.all()
+    stories = Story.query.all()
     return jsonify([{  
         'id': story.id,
         'title': story.title,
         'content': story.content,
         'theme': story.theme,
-        'characters': json.loads(story.characters),
+        'characters': safe_json_loads(story.characters),
         'ageGroup': story.age_group,
         'isFavorite': story.is_favorite,
         'imageUrl': story.image_url,
@@ -85,8 +90,7 @@ def create_story():
             theme=data['theme'],
             characters=json.dumps(data['characters']),
             age_group=data['age_group'],
-            image_url=image_url,
-            user_id=data.get('user_id')
+            image_url=image_url
         )
         db.session.add(story)
         db.session.commit()
@@ -95,7 +99,7 @@ def create_story():
             'title': story.title,
             'content': story.content,
             'theme': story.theme,
-            'characters': json.loads(story.characters),
+            'characters': safe_json_loads(story.characters),
             'ageGroup': story.age_group,
             'imageUrl': story.image_url,
             'createdAt': story.created_at.isoformat()

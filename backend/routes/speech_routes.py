@@ -1,5 +1,5 @@
 from flask import Blueprint, request, send_file
-from backend.services.azure_services import AzureServices
+from services.azure_services import AzureServices
 from flask_cors import CORS
 import io
 

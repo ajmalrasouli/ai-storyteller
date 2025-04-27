@@ -1,10 +1,10 @@
 from flask import Blueprint, request, jsonify
-from backend.models.models import User
-from backend import db
+from models.models import User
+from extensions import db
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 import datetime
-from backend.config.config import Config
+from config.config import Config
 
 bp = Blueprint('auth', __name__)
 
