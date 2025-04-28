@@ -28,10 +28,9 @@ jobs:
           action: "upload"
           app_location: "frontend"  # Path to your Vite project
           api_location: ""  # Leave empty if no API
-          output_location: "dist"  # Vite's default build folder
-          # For Vite projects, add these if needed:
-          app_build_command: "npm run build"
-          skip_app_build: false
+          output_location: "public"  # Must match vite.config.ts's outDir
+          app_build_command: "npm run build"  # Explicit build command
+          skip_app_build: false  # Ensure build runs
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
