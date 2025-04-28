@@ -71,6 +71,92 @@ An interactive AI-powered storytelling application that generates personalized c
 - Styling: CSS with inline styles for consistent rendering
 - Containerization: Docker
 
+## Deployment
+
+### Frontend: Azure Static Web Apps (SWA)
+
+The frontend is deployed on [Azure Static Web Apps](https://azure.microsoft.com/en-us/products/app-service/static) for a cost-effective, scalable, and Microsoft-native solution (ideal for hackathons). Deployment is automated via a GitHub Actions workflow, so every push to the `main` branch triggers a new build and deploy.
+
+#### Step-by-Step: Deploying Frontend to Azure Static Web Apps
+
+**Prerequisites:**
+- Azure account with active subscription
+- Azure CLI installed
+- GitHub account with access to the repository
+
+**1. Clone the repository:**
+```bash
+git clone https://github.com/ajmalrasouli/ai-storyteller.git
+cd ai-storyteller/frontend
+```
+
+**2. Create `staticwebapp.config.json` (if not present):**
+```json
+{
+  "routes": [
+    { "route": "/*", "serve": "/index.html", "statusCode": 200 }
+  ],
+  "platform": { "apiRuntime": "node:18" }
+}
+```
+
+**3. Login to Azure and create resources:**
+```bash
+az login
+az group create --name swa-ai-storyteller --location eastus2
+az staticwebapp create --name ai-storyteller-app --resource-group swa-ai-storyteller --location eastus2 --source https://github.com/ajmalrasouli/ai-storyteller --branch main --app-location "frontend" --output-location ".next" --login-with-github
+```
+*Note: Use an available region such as eastus2, centralus, westus2, westeurope, or eastasia.*
+
+**4. Configure environment variables:**
+- In the Azure Portal, go to your Static Web App > Configuration.
+- Add all variables from your `.env.local` (e.g. API URLs, keys) using the appropriate prefix (e.g. `VITE_` for Vite apps).
+
+**5. (Optional) Assign managed identity and enable custom domains:**
+```bash
+az staticwebapp identity assign --name ai-storyteller-app --resource-group swa-ai-storyteller
+az staticwebapp hostname set --name ai-storyteller-app --hostname yourdomain.com
+```
+
+**6. Post-deployment:**
+- Update all frontend API URLs to point to your Azure backend.
+- Verify authentication and environment variable usage.
+- Each push to GitHub triggers a new deployment via Actions workflow.
+
+**Estimated Cost:** Free for hackathon-scale usage (100,000 requests/month on free tier).
+
+---
+
+### Backend: Azure Container Apps (ACA) or Azure Functions
+
+You can deploy the backend to Azure Container Apps for maximum flexibility, or use Azure Functions for a fully serverless, cost-optimized solution (recommended for hackathons).
+
+#### Example: Deploying Backend to Azure Container Apps
+
+1. Build and push Docker image to Azure Container Registry (ACR):
+    ```bash
+    az acr create --resource-group ai-storyteller-rg --name aistorytelleracr --sku Basic
+    docker build -t ai-storyteller-backend .
+    docker tag ai-storyteller-backend aistorytelleracr.azurecr.io/ai-storyteller-backend:v1
+    docker push aistorytelleracr.azurecr.io/ai-storyteller-backend:v1
+    ```
+2. Create Container App Environment and deploy:
+    ```bash
+    az containerapp env create --name ai-storyteller-env --resource-group ai-storyteller-rg --location eastus2
+    az containerapp create --name ai-storyteller-backend --resource-group ai-storyteller-rg --environment ai-storyteller-env --image aistorytelleracr.azurecr.io/ai-storyteller-backend:v1 --target-port 8000 --ingress external --registry-server aistorytelleracr.azurecr.io
+    ```
+3. Set environment variables:
+    ```bash
+    az containerapp update --name ai-storyteller-backend --resource-group ai-storyteller-rg --set-env-vars "OPENAI_API_KEY=your_key" "MONGO_URI=your_mongo_uri" "JWT_SECRET=your_secret"
+    ```
+4. [Optional] Set up CI/CD with GitHub Actions for automated deployments.
+
+#### Cost & Simplicity Recommendation
+- For hackathons or demos, Azure Static Web Apps (frontend) + Azure Functions (backend) is the most cost-effective and simple setup (often $0 for limited usage).
+- Azure Container Apps is suitable if you need custom Docker or persistent runtime, but incurs some cost (~$20-50/month for basic usage).
+
+---
+
 ## Setup
 
 1. Clone the repository:
