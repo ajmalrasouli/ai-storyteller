@@ -32,9 +32,14 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw?
+.cursor/
 
 # Convex
 .convex/
 
 # TypeScript
 *.tsbuildinfo
+.vercel
+
+__pycache__/
+*.pyc
