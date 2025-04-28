@@ -1,0 +1,12 @@
+{
+    "routes": [
+      {
+        "route": "/*",
+        "serve": "/.next/server/pages/*.html",
+        "statusCode": 200
+      }
+    ],
+    "platform": {
+      "apiRuntime": "node:18"
+    }
+  }
