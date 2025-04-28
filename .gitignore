@@ -40,3 +40,6 @@ yarn-error.log*
 # TypeScript
 *.tsbuildinfo
 .vercel
+
+__pycache__/
+*.pyc
