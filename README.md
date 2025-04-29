@@ -21,8 +21,14 @@
 > - A beautiful, modern user experience
 
 ---
+## 🏆 Video Demo
 
-## 🏆 Why This App Wins Hackathons
+Curious how AI Storyteller works in action? Watch a quick walkthrough of the platform’s features and user experience:
+
+[![Watch the Demo](https://img.youtube.com/vi/lQT9TpDTtO8/0.jpg)](https://youtu.be/lQT9TpDTtO8)
+[Watch the Demo on YouTube](https://youtu.be/lQT9TpDTtO8)
+
+## 🏆 Hackathons Challenge
 
 - **Modern Azure-native architecture**: Scalable, secure, and cost-effective.
 - **Separation of concerns**: Frontend and backend are independently deployable and scalable.
