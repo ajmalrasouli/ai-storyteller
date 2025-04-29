@@ -19,6 +19,9 @@
 > - AI-generated illustrations (Azure DALL-E)
 > - Lifelike narration (Azure Speech Service)
 > - A beautiful, modern user experience
+---
+### View Live App
+https://proud-water-076db370f.6.azurestaticapps.net/
 
 ---
 ## 🏆 Video Demo
