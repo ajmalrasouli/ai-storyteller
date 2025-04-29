@@ -75,6 +75,60 @@ An interactive AI-powered storytelling application that generates personalized c
 
 ### Frontend: Azure Static Web Apps (SWA)
 
+---
+
+### Backend: Deploy to Azure Container Apps (ACA) via Docker Hub
+
+You can deploy the backend as a scalable containerized service on Azure using Azure Container Apps (ACA) and Docker Hub.
+
+#### **Step 1: Push Docker Image to Docker Hub**
+1. Build your Docker image locally:
+   ```sh
+   docker build -t storyteller-backend -f Dockerfile .
+   ```
+2. Tag your image for Docker Hub:
+   ```sh
+   docker tag storyteller-backend <dockerhub-username>/storyteller-backend:latest
+   ```
+3. Push the image to Docker Hub:
+   ```sh
+   docker push <dockerhub-username>/storyteller-backend:latest
+   ```
+
+#### **Step 2: Azure Setup**
+1. Log in to Azure CLI:
+   ```sh
+   az login
+   ```
+2. Create a resource group (if needed):
+   ```sh
+   az group create --name storyteller-rg --location westeurope
+   ```
+3. Create a Container Apps environment:
+   ```sh
+   az containerapp env create --name storyteller-env --resource-group storyteller-rg --location westeurope
+   ```
+
+#### **Step 3: Deploy Container to ACA**
+1. Deploy your container app (replace env vars as needed):
+   ```sh
+   az containerapp create \
+     --name storyteller-backend \
+     --resource-group storyteller-rg \
+     --environment storyteller-env \
+     --image <dockerhub-username>/storyteller-backend:latest \
+     --target-port 5000 \
+     --ingress 'external' \
+     --env-vars KEY1=VALUE1 KEY2=VALUE2
+   ```
+   - Set your environment variables (API keys, DB URL, etc.) using `--env-vars` or via the Azure Portal.
+
+2. After deployment, Azure will provide a public URL for your backend API.
+
+**Tip:** For full details, see the main documentation or ask for help with persistent storage, CORS, or CI/CD integration.
+
+---
+
 The frontend is deployed on [Azure Static Web Apps](https://azure.microsoft.com/en-us/products/app-service/static) for a cost-effective, scalable, and Microsoft-native solution (ideal for hackathons). Deployment is automated via a GitHub Actions workflow, so every push to the `main` branch triggers a new build and deploy.
 
 #### Step-by-Step: Deploying Frontend to Azure Static Web Apps
