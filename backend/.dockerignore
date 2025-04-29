@@ -1,0 +1,14 @@
+# Prevent sensitive files and unnecessary files from being copied into the Docker image
+.env
+*.env*
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+.DS_Store
+.git
+.gitignore
+.vscode/
+.idea/
+tests/
