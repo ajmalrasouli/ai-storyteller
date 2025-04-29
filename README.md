@@ -190,23 +190,6 @@ ai-storyteller/
 | `AZURE_DALLE_KEY`  | Backend/ACA        | Azure DALL-E API Key                   |
 | `AZURE_SPEECH_KEY` | Backend/ACA        | Azure Speech API Key                   |
 | ...                | ...                | ...                                    |
-
----
-
-## 📝 How to Win the Hackathon
-
-- **Show the live cloud-native demo!**
-- **Explain the architecture with the diagrams above.**
-- **Highlight Azure-native, Dockerized, and scalable features.**
-- **Emphasize accessibility, fun, and educational value for kids.**
-- **Show off the animated UI and AI-powered features!**
-
----
-
-## 📣 License
-
-MIT
-
 ---
 
 *Impress the judges with your modern, scalable, and beautiful AI-powered storytelling platform!*
