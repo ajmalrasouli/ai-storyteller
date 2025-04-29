@@ -2,7 +2,7 @@
 
 > **AI Storyteller for Children**
 >
-> 🧒📚 _This innovative AI-powered application creates personalized bedtime stories for children based on their interests, favorite characters, and educational themes._
+> 🧒📚 _This innovative AI-powered application creates personalized bedtime stories for children based on their interests, favorite characters, and educational themes. _
 >
 > By leveraging advanced natural language processing (NLP) and generative models, the AI crafts engaging, interactive stories that can teach valuable lessons such as kindness, patience, and sharing. The app adapts to each child’s preferences, ensuring a unique and enjoyable experience every time. With features like character customization and moral story adaptation, the AI Storyteller fosters imagination, learning, and positive values in an interactive way.
 
@@ -28,7 +28,7 @@ Curious how AI Storyteller works in action? Watch a quick walkthrough of the pla
 [![Watch the Demo](https://img.youtube.com/vi/lQT9TpDTtO8/0.jpg)](https://youtu.be/lQT9TpDTtO8)
 [Watch the Demo on YouTube](https://youtu.be/lQT9TpDTtO8)
 
-## 🏆 Hackathons Challenge
+## 🏆 Hackathons Challenge 🏆
 
 - **Modern Azure-native architecture**: Scalable, secure, and cost-effective.
 - **Separation of concerns**: Frontend and backend are independently deployable and scalable.
