@@ -1,0 +1,59 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/teams/v1.11/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.11",
+  "version": "1.0.0",
+  "id": "${TEAMS_APP_ID}",
+  "packageName": "com.ai-storyteller",
+  "developer": {
+    "name": "AI Storyteller",
+    "websiteUrl": "https://your-app-url.com",
+    "privacyUrl": "https://your-app-url.com/privacy",
+    "termsOfUseUrl": "https://your-app-url.com/terms"
+  },
+  "name": {
+    "short": "AI Storyteller",
+    "full": "AI Storyteller - AI-Powered Story Creation"
+  },
+  "description": {
+    "short": "Create engaging stories with AI assistance",
+    "full": "AI Storyteller is a powerful tool that helps you create engaging stories using artificial intelligence. Generate stories, add voiceovers, and share them with your team."
+  },
+  "icons": {
+    "color": "./public/images/icon-color.png",
+    "outline": "./public/images/icon-outline.png"
+  },
+  "accentColor": "#0078D4",
+  "configurableTabs": [
+    {
+      "configurationUrl": "https://your-app-url.com/config",
+      "canUpdateConfiguration": true,
+      "scopes": ["team", "groupchat"],
+      "context": ["channelTab", "privateChatTab"],
+      "staticTabs": [
+        {
+          "entityId": "home",
+          "name": "Home",
+          "contentUrl": "https://your-app-url.com",
+          "websiteUrl": "https://your-app-url.com",
+          "scopes": ["personal"],
+          "context": ["channelTab", "privateChatTab"]
+        }
+      ]
+    }
+  ],
+  "bots": [
+    {
+      "botId": "${TEAMS_BOT_ID}",
+      "scopes": ["team", "personal"],
+      "supportsFiles": true,
+      "isNotificationOnly": false
+    }
+  ],
+  "permissions": [
+    "identity",
+    "messageTeamMembers"
+  ],
+  "validDomains": [
+    "your-app-url.com"
+  ]
+}
