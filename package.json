@@ -2,6 +2,9 @@
   "dependencies": {
     "@microsoft/teamsfx": "^3.0.2",
     "@microsoft/teamsfx-api": "^0.23.5",
-    "@microsoft/teamsfx-core": "^2.1.0"
+    "@microsoft/teamsfx-core": "^2.1.0",
+    "botbuilder": "^4.23.2",
+    "cors": "^2.8.5",
+    "winston": "^3.17.0"
   }
 }

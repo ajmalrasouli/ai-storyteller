@@ -1,0 +1,41 @@
+{
+    "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.14/MicrosoftTeams.schema.json",
+    "manifestVersion": "1.14",
+    "version": "1.0.0",
+    "id": "{{BOT_ID}}",
+    "packageName": "ai.storyteller",
+    "name": {
+        "short": "AI Storyteller",
+        "full": "AI Storyteller Bot"
+    },
+    "developer": {
+        "name": "Your Company",
+        "websiteUrl": "https://proud-water-076db370f.6.azurestaticapps.net",
+        "privacyUrl": "https://proud-water-076db370f.6.azurestaticapps.net/privacy",
+        "termsOfUseUrl": "https://proud-water-076db370f.6.azurestaticapps.net/terms"
+    },
+    "permissions": [
+        "identity",
+        "messageTeamMembers",
+        "receivedMessage",
+        "sendMessage"
+    ],
+    "validDomains": [
+        "*.teams.microsoft.com",
+        "*.office.com",
+        "*.office365.com",
+        "proud-water-076db370f.6.azurestaticapps.net"
+    ],
+    "bots": [
+        {
+            "botId": "{{BOT_ID}}",
+            "scopes": [
+                "team",
+                "personal",
+                "groupchat"
+            ],
+            "supportsFiles": false,
+            "isNotificationOnly": false
+        }
+    ]
+}

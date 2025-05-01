@@ -17,7 +17,7 @@ class TeamsConfig:
     
     # Teams app URLs
     APP_ID = os.getenv("TEAMS_APP_ID")
-    WEBSITE_URL = os.getenv("WEBSITE_URL")
+    WEBSITE_URL = os.getenv("WEBSITE_URL", "https://proud-water-076db370f.6.azurestaticapps.net")
     
     # Required permissions
     REQUIRED_PERMISSIONS = [
@@ -27,8 +27,11 @@ class TeamsConfig:
         "User.ReadBasic.All"
     ]
     
-    # Redirect URIs
-    REDIRECT_URI = os.getenv("TEAMS_REDIRECT_URI", "https://your-app-url.com/auth/teams")
+    # Authentication configuration
+    OAUTH_AUTHORITY = f"https://login.microsoftonline.com/{TENANT_ID}"
+    OAUTH_SCOPE = ["https://graph.microsoft.com/.default"]
+    TOKEN_CACHE_FILE = "teams_token_cache.json"
+    REDIRECT_URI = os.getenv("TEAMS_REDIRECT_URI", f"{WEBSITE_URL}/auth/teams")
     
     # Microsoft Graph API endpoints
     GRAPH_API_BASE = "https://graph.microsoft.com/v1.0"
@@ -37,4 +40,4 @@ class TeamsConfig:
     MANIFEST_VERSION = "1.16"
     SHORT_NAME = os.getenv("TEAMS_APP_SHORT_NAME", "Storyteller")
     FULL_NAME = os.getenv("TEAMS_APP_FULL_NAME", "AI Storyteller Bot")
-    DESCRIPTION = os.getenv("TEAMS_APP_DESCRIPTION", "Create engaging children's stories using AI. Just type /storyteller prompt: [Your Prompt] to get started!")
+    DESCRIPTION = os.getenv("TEAMS_APP_DESCRIPTION", "Create engaging children's stories using AI.")
