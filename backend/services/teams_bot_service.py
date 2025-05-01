@@ -2,11 +2,52 @@ import json
 import requests
 from flask import current_app
 from .teams_config import TeamsConfig
+from botbuilder.core import BotFrameworkAdapter, TurnContext
+from botbuilder.schema import Activity
 
 class TeamsBotService:
     def __init__(self):
         self.config = TeamsConfig()
+        self.adapter = BotFrameworkAdapter({
+            "app_id": self.config.BOT_ID,
+            "app_password": self.config.BOT_PASSWORD
+        })
         
+    async def process_activity(self, request_body, request_headers):
+        """Process incoming Teams activity"""
+        activity = Activity().deserialize(request_body)
+        auth_header = request_headers.get("Authorization", "")
+        
+        async def callback(turn_context: TurnContext):
+            await self._handle_turn(turn_context)
+        
+        await self.adapter.process_activity(activity, auth_header, callback)
+        
+    async def _handle_turn(self, turn_context: TurnContext):
+        """Handle a turn of conversation"""
+        if turn_context.activity.type == "message":
+            text = turn_context.activity.text
+            
+            # Handle /storyteller command
+            if text.startswith('/storyteller'):
+                prompt = text.replace('/storyteller', '').strip()
+                await self._generate_story(turn_context, prompt)
+            else:
+                await turn_context.send_activity(
+                    "Please use the /storyteller command followed by your prompt."
+                )
+    
+    async def _generate_story(self, turn_context: TurnContext, prompt: str):
+        """Generate a story using OpenAI"""
+        try:
+            # TODO: Implement OpenAI story generation
+            story = f"Once upon a time... {prompt}"
+            await turn_context.send_activity(story)
+        except Exception as e:
+            await turn_context.send_activity(
+                "Sorry, I encountered an error generating your story. Please try again."
+            )
+    
     def send_message(self, team_id: str, channel_id: str, message: str):
         """Send a message to a Teams channel"""
         url = f"https://graph.microsoft.com/v1.0/teams/{team_id}/channels/{channel_id}/messages"

@@ -1,10 +1,8 @@
 from flask import Blueprint, request, jsonify
 from ..services.teams_bot_service import TeamsBotService
-from ..services.teams_service import TeamsService
 
 bp = Blueprint('teams_bot', __name__, url_prefix='/teams/bot')
 teams_bot_service = TeamsBotService()
-teams_service = TeamsService()
 
 @bp.route('/message', methods=['POST'])
 def send_message():
@@ -41,14 +39,17 @@ def send_card():
         return jsonify({'error': str(e)}), 500
 
 @bp.route('/activity', methods=['POST'])
-def handle_activity():
+async def handle_activity():
     """Handle incoming Teams activities"""
-    activity = request.json
-    
     try:
-        # Handle different types of activities
-        activity_type = activity.get('type')
-        
+        # Process the activity using the bot service
+        await teams_bot_service.process_activity(
+            request.get_json(),
+            request.headers
+        )
+        return jsonify({'status': 'success'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
         if activity_type == 'message':
             # Handle incoming messages
             message = activity.get('text')

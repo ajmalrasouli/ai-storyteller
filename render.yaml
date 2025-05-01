@@ -1,0 +1,47 @@
+name: ai-storyteller
+region: eu-west-1
+services:
+  - type: web
+    name: ai-storyteller-backend
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn -w 4 -b :$PORT wsgi:app"
+    env:
+      - key: DATABASE_URL
+        fromDatabase: true
+      - key: OPENAI_API_KEY
+        fromSecret: true
+      - key: BOT_ID
+        fromSecret: true
+      - key: BOT_PASSWORD
+        fromSecret: true
+      - key: TEAMS_CLIENT_ID
+        fromSecret: true
+      - key: TEAMS_CLIENT_SECRET
+        fromSecret: true
+      - key: TEAMS_TENANT_ID
+        fromSecret: true
+      - key: WEBSITE_URL
+        value: "https://ai-storyteller.render.com"
+    database:
+      provider: postgresql
+      name: ai-storyteller-db
+      size: 10GB
+    secrets:
+      - name: openai-api-key
+      - name: bot-credentials
+      - name: teams-credentials
+    healthCheckPath: /health
+    minMemory: 512MB
+    maxMemory: 1GB
+    cpu: 1
+    disk: 10GB
+    environment: production
+    autoDeploy: true
+    scale:
+      min: 1
+      max: 2
+      rules:
+        - type: cpu
+          target: 70
+        - type: memory
+          target: 70

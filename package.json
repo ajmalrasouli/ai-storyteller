@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "@microsoft/teamsfx": "^3.0.2",
+    "@microsoft/teamsfx-api": "^0.23.5",
+    "@microsoft/teamsfx-core": "^2.1.0"
+  }
+}
