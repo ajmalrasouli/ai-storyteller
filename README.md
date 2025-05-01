@@ -390,6 +390,7 @@ You can deploy the backend to Azure Container Apps for maximum flexibility, or u
     docker tag ai-storyteller-backend aistorytelleracr.azurecr.io/ai-storyteller-backend:v1
     docker push aistorytelleracr.azurecr.io/ai-storyteller-backend:v1
     ```
+    
 2. Create Container App Environment and deploy:
     ```bash
     az containerapp env create --name ai-storyteller-env --resource-group ai-storyteller-rg --location eastus2
