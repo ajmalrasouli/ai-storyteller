@@ -64,6 +64,7 @@ flowchart LR
     BE -- "DB" --> DB[("<b>SQLite</b>")]
 ```
 
+
 ---
 
 ## 🌍 Two-Server Cloud Architecture
