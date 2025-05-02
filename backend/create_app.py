@@ -25,4 +25,8 @@ def create_app():
     app.register_blueprint(auth_routes.bp, url_prefix='/api')
     app.register_blueprint(speech_routes.bp, url_prefix='/api')
     
+    # Register Teams bot blueprint
+    from routes import teams_bot_routes
+    app.register_blueprint(teams_bot_routes.bp)
+    
     return app
