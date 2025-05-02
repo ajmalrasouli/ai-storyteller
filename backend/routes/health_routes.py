@@ -9,3 +9,7 @@ def health_check():
         'status': 'healthy',
         'timestamp': datetime.utcnow().isoformat()
     })
+
+@bp.route('/test', methods=['GET'])
+def test():
+    return "ok", 200
