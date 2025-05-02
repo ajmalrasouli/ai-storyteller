@@ -20,7 +20,9 @@
     "react-hot-toast": "^2.5.2",
     "sonner": "^2.0.3",
     "tailwind-merge": "^3.1.0",
-    "zustand": "^5.0.3"
+    "zustand": "^5.0.3",
+    "@microsoft/teamsfx": "^1.0.0",
+    "@microsoft/teamsfx-core": "^1.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.11.24",

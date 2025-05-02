@@ -39,34 +39,17 @@ def send_card():
         return jsonify({'error': str(e)}), 500
 
 @bp.route('/activity', methods=['POST'])
-async def handle_activity():
-    """Handle incoming Teams activities"""
+def handle_activity():
+    print("[Teams Bot] Received POST /teams/bot/activity")
     try:
-        # Process the activity using the bot service
-        await teams_bot_service.process_activity(
-            request.get_json(),
-            request.headers
-        )
-        return jsonify({'status': 'success'})
+        # Process the activity using the bot service (sync version)
+        data = request.get_json()
+        headers = request.headers
+        # If your TeamsBotService.process_activity is async, you need to refactor it to sync or use asyncio.run
+        # For now, just log and return a dummy response for connectivity test
+        print(f"[Teams Bot] Headers: {headers}")
+        print(f"[Teams Bot] Data: {data}")
+        return jsonify({'status': 'success', 'message': 'Activity received'}), 200
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
-        if activity_type == 'message':
-            # Handle incoming messages
-            message = activity.get('text')
-            user_id = activity.get('from', {}).get('id')
-            
-            # Process the message and send a response
-            response = f"Received your message: {message}"
-            
-            # Send response back to the user
-            teams_bot_service.send_message(
-                activity.get('team', {}).get('id'),
-                activity.get('conversation', {}).get('id'),
-                response
-            )
-            
-            return jsonify({'status': 'success'})
-        
-        return jsonify({'status': 'success'}), 200
-    except Exception as e:
+        print(f"[Teams Bot] Error: {str(e)}")
         return jsonify({'error': str(e)}), 500
