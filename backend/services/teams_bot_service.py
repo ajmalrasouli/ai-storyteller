@@ -1,7 +1,7 @@
 import json
 import requests
 from flask import current_app
-from .teams_config import TeamsConfig
+from config.teams_config import TeamsConfig
 from botbuilder.core import BotFrameworkAdapter, TurnContext
 from botbuilder.schema import Activity
 
