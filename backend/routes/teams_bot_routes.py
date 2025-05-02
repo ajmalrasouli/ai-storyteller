@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from ..services.teams_bot_service import TeamsBotService
+from services.teams_bot_service import TeamsBotService
 
 bp = Blueprint('teams_bot', __name__, url_prefix='/teams/bot')
 teams_bot_service = TeamsBotService()

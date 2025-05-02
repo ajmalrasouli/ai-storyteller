@@ -25,17 +25,14 @@ class TeamsBotService:
         
     async def _handle_turn(self, turn_context: TurnContext):
         """Handle a turn of conversation"""
-        if turn_context.activity.type == "message":
-            text = turn_context.activity.text
-            
-            # Handle /storyteller command
-            if text.startswith('/storyteller'):
-                prompt = text.replace('/storyteller', '').strip()
-                await self._generate_story(turn_context, prompt)
-            else:
-                await turn_context.send_activity(
-                    "Please use the /storyteller command followed by your prompt."
-                )
+        text = turn_context.activity.text.lower() if turn_context.activity.text else ""
+        if text.startswith('/storyteller') or 'write story' in text:
+            prompt = text.replace('/storyteller', '').replace('write story', '').strip()
+            await self._generate_story(turn_context, prompt)
+        else:
+            await turn_context.send_activity(
+                "Please use the /storyteller command or type 'write story' followed by your prompt."
+            )
     
     async def _generate_story(self, turn_context: TurnContext, prompt: str):
         """Generate a story using OpenAI"""
