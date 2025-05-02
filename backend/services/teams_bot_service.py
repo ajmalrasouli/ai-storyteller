@@ -4,14 +4,16 @@ from flask import current_app
 from config.teams_config import TeamsConfig
 from botbuilder.core import BotFrameworkAdapter, TurnContext
 from botbuilder.schema import Activity
+from botframework.connector.auth import MicrosoftAppCredentials
 
 class TeamsBotService:
     def __init__(self):
         self.config = TeamsConfig()
-        self.adapter = BotFrameworkAdapter({
-            "app_id": self.config.BOT_ID,
-            "app_password": self.config.BOT_PASSWORD
-        })
+        credentials = MicrosoftAppCredentials(
+            self.config.BOT_ID,
+            self.config.BOT_PASSWORD
+        )
+        self.adapter = BotFrameworkAdapter(credentials)
         
     async def process_activity(self, request_body, request_headers):
         """Process incoming Teams activity"""
