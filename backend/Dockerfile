@@ -1,4 +1,4 @@
-# Use Python 3.10 slim image
+# Use Python 3.11 slim image
 FROM python:3.10-slim-buster
 
 # Set working directory
@@ -34,5 +34,5 @@ COPY . .
 # Expose port 5000 for Flask
 EXPOSE 5000
 
-# Start with a more verbose diagnostic mode to see all errors
-CMD ["python", "-m", "flask", "run", "--host=0.0.0.0", "--port=5000"]
+# Simple Flask app for testing Teams bot
+CMD ["python", "minimal_app.py"]
