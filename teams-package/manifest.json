@@ -48,7 +48,7 @@
           "scopes": ["team", "groupchat", "personal"],
           "commands": [
             {
-              "title": "/storyteller",
+              "title": "storyteller",
               "description": "Get a story from AI Storyteller"
             }
           ]
