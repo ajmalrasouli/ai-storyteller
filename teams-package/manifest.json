@@ -37,7 +37,27 @@
     "identity",
     "messageTeamMembers"
   ],
+  "bots": [
+    {
+      "botId": "a7d9214c-826c-4512-a3dc-9ec03b6328d7",
+      "scopes": ["personal", "team", "groupchat"],
+      "supportsFiles": false,
+      "isNotificationOnly": false,
+      "commandLists": [
+        {
+          "scopes": ["team", "groupchat", "personal"],
+          "commands": [
+            {
+              "title": "/storyteller",
+              "description": "Get a story from AI Storyteller"
+            }
+          ]
+        }
+      ]
+    }
+  ],
   "validDomains": [
-    "proud-water-076db370f.6.azurestaticapps.net"
+    "proud-water-076db370f.6.azurestaticapps.net",
+    "storyteller-backend-test.proudhill-96526a5c.westeurope.azurecontainerapps.io"
   ]
 }

@@ -2,8 +2,15 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 
-# Load environment variables from backend/.env explicitly
-load_dotenv(dotenv_path=Path(__file__).parent.parent / ".env")
+# Try to load environment variables from backend/.env, but continue if not found
+# This ensures we fall back to system environment variables in Docker
+try:
+    env_path = Path(__file__).parent.parent / ".env"
+    load_dotenv(dotenv_path=env_path)
+    print(f"Tried to load .env from {env_path}")
+except Exception as e:
+    print(f"No .env file found or error loading it: {str(e)}")
+    print("Will use system environment variables instead")
 
 class TeamsConfig:
     # Microsoft Teams configuration

@@ -3,9 +3,12 @@ import azure.cognitiveservices.speech as speechsdk
 import os
 from config.config import Config
 from openai import AzureOpenAI
+import sys
 
 class AzureServices:
     def __init__(self):
+        print("Initializing Azure Services...", file=sys.stderr)
+        
         # GPT (text) configuration
         self.openai_api_key = os.getenv("AZURE_OPENAI_API_KEY")
         self.openai_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
@@ -28,12 +31,21 @@ class AzureServices:
         print("[AzureServices] AZURE_DALLE_DEPLOYMENT_NAME:", self.dalle_deployment_name)
         print("[AzureServices] AZURE_DALLE_API_VERSION:", self.dalle_api_version)
         
-        # Initialize Azure OpenAI client for text generation
-        self.text_client = AzureOpenAI(
-            api_key=self.openai_api_key,
-            api_version=self.openai_api_version,
-            azure_endpoint=self.openai_endpoint
-        )
+        # Initialize Azure OpenAI client for text generation with error handling
+        try:
+            if not self.openai_api_key or not self.openai_endpoint:
+                print("WARNING: Missing OpenAI credentials - text generation will not work", file=sys.stderr)
+                self.text_client = None
+            else:
+                self.text_client = AzureOpenAI(
+                    api_key=self.openai_api_key,
+                    api_version=self.openai_api_version,
+                    azure_endpoint=self.openai_endpoint
+                )
+                print("Successfully initialized OpenAI client", file=sys.stderr)
+        except Exception as e:
+            print(f"ERROR initializing OpenAI client: {str(e)}", file=sys.stderr)
+            self.text_client = None
         
         # Speech Services configuration
         self.speech_key = os.getenv("AZURE_SPEECH_KEY")
@@ -41,15 +53,28 @@ class AzureServices:
         print("[AzureServices] AZURE_SPEECH_KEY:", (self.speech_key[:4] + "..." + self.speech_key[-4:]) if self.speech_key else None)
         print("[AzureServices] AZURE_SPEECH_REGION:", self.speech_region)
         
-        self.speech_config = speechsdk.SpeechConfig(
-            subscription=self.speech_key,
-            region=self.speech_region
-        )
-        # Set speech synthesis voice
-        self.speech_config.speech_synthesis_voice_name = "en-US-JennyNeural"
+        # Initialize speech config with error handling
+        try:
+            if not self.speech_key or not self.speech_region:
+                print("WARNING: Missing Speech credentials - text-to-speech will not work", file=sys.stderr)
+                self.speech_config = None
+            else:
+                self.speech_config = speechsdk.SpeechConfig(
+                    subscription=self.speech_key,
+                    region=self.speech_region
+                )
+                # Set speech synthesis voice
+                self.speech_config.speech_synthesis_voice_name = "en-US-JennyNeural"
+                print("Successfully initialized Speech client", file=sys.stderr)
+        except Exception as e:
+            print(f"ERROR initializing Speech client: {str(e)}", file=sys.stderr)
+            self.speech_config = None
 
     def generate_story(self, theme, characters, age_group):
         try:
+            if not self.text_client:
+                return "I'm sorry, I can't generate a story right now because the OpenAI service is not configured properly. Please check your Azure OpenAI settings."
+                
             response = self.text_client.chat.completions.create(
                 model=self.openai_deployment_name,
                 messages=[
@@ -59,11 +84,17 @@ class AzureServices:
             )
             return response.choices[0].message.content
         except Exception as e:
-            raise Exception(f"Error generating story: {str(e)}")
+            print(f"Error generating story: {str(e)}", file=sys.stderr)
+            return f"Error generating story: {str(e)}"
 
     def generate_illustration(self, title, theme, characters, age_group):
         import sys
         print(f"[DALLE] Starting illustration generation for title: '{title}'", file=sys.stderr)
+        
+        if not self.dalle_api_key or not self.dalle_endpoint:
+            print("WARNING: Missing DALL-E credentials - illustration generation will not work", file=sys.stderr)
+            return "/static/placeholder.png"
+            
         print(f"[DALLE] Using API key: {self.dalle_api_key[:4]}...{self.dalle_api_key[-4:] if self.dalle_api_key else None}", file=sys.stderr)
         print(f"[DALLE] Using endpoint: {self.dalle_endpoint}", file=sys.stderr)
         print(f"[DALLE] Using deployment: {self.dalle_deployment_name}", file=sys.stderr)
@@ -94,12 +125,11 @@ class AzureServices:
             image_url = response.data[0].url
             print(f"[DALLE] Successfully generated image: {image_url[:50]}...", file=sys.stderr)
             return image_url
-            
         except Exception as e:
+            print(f"[ERROR] DALL·E illustration generation failed: {str(e)}", file=sys.stderr)
             import traceback
-            print(f"[DALLE ERROR] Failed to generate illustration: {str(e)}", file=sys.stderr)
             traceback.print_exc(file=sys.stderr)
-            raise Exception(f"Error generating illustration: {str(e)}")
+            return "/static/placeholder.png"
 
     def text_to_speech(self, text):
         try:
