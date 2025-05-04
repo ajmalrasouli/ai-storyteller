@@ -35,4 +35,5 @@ COPY . .
 EXPOSE 5000
 
 # Simple Flask app for testing Teams bot
-CMD ["python", "minimal_app.py"]
+# CMD ["python", "minimal_app.py"] # Comment out or remove the old CMD
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "wsgi:app"]

@@ -5,15 +5,17 @@ from config.teams_config import TeamsConfig
 from botbuilder.core import BotFrameworkAdapter, TurnContext
 from botbuilder.schema import Activity
 from botframework.connector.auth import MicrosoftAppCredentials
+import time  # Import the time module
 
 class TeamsBotService:
     def __init__(self):
         self.config = TeamsConfig()
-        credentials = MicrosoftAppCredentials(
-            self.config.BOT_ID,
-            self.config.BOT_PASSWORD
+        self.adapter = BotFrameworkAdapter(
+            app_id=self.config.BOT_ID, 
+            app_password=self.config.BOT_PASSWORD
         )
-        self.adapter = BotFrameworkAdapter(credentials)
+        self._access_token = None
+        self._token_expiry_time = 0
         
     async def process_activity(self, request_body, request_headers):
         """Process incoming Teams activity"""
@@ -84,6 +86,13 @@ class TeamsBotService:
     
     def _get_access_token(self):
         """Get access token from cache or refresh if needed"""
+        # Check if token exists and is not expired (with a 5-minute buffer)
+        current_time = time.time()
+        if self._access_token and self._token_expiry_time > (current_time + 300):
+            print("[Teams Bot] Using cached access token.")
+            return self._access_token
+        
+        print("[Teams Bot] Requesting new access token...")
         # This should be implemented with proper token caching and refresh
         # For now, using the client credentials flow
         token_url = f"https://login.microsoftonline.com/{self.config.TENANT_ID}/oauth2/v2.0/token"
@@ -94,9 +103,27 @@ class TeamsBotService:
             'grant_type': 'client_credentials'
         }
         
-        response = requests.post(token_url, data=data)
-        response.raise_for_status()
-        return response.json()['access_token']
+        try:
+            response = requests.post(token_url, data=data)
+            response.raise_for_status()  # Raises HTTPError for bad responses (4XX, 5XX)
+            token_data = response.json()
+            
+            self._access_token = token_data['access_token']
+            # Calculate expiry time (current time + expires_in seconds)
+            self._token_expiry_time = current_time + token_data.get('expires_in', 3600) 
+            print("[Teams Bot] New access token obtained.")
+            return self._access_token
+        except requests.exceptions.RequestException as e:
+            print(f"[Teams Bot] Error requesting access token: {e}")
+            # Reset cache on error
+            self._access_token = None
+            self._token_expiry_time = 0
+            raise  # Re-raise the exception so the caller knows about the failure
+        except KeyError:
+            print("[Teams Bot] Error: 'access_token' or 'expires_in' not found in token response.")
+            self._access_token = None
+            self._token_expiry_time = 0
+            raise ValueError("Invalid token response received from Microsoft identity platform.")
     
     def create_adaptive_card(self, title: str, text: str, actions: list = None):
         """Create an adaptive card"""

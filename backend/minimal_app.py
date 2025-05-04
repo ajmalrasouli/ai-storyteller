@@ -16,19 +16,29 @@ def teams_bot():
     """Handle Teams bot activity"""
     try:
         data = request.json
-        print(f'Received Teams bot activity: {data}')
+        print(f'FULL TEAMS REQUEST: Headers: {request.headers}')
+        print(f'FULL TEAMS PAYLOAD: {data}')
         
-        # Simply acknowledge receipt
+        # Process any command text from the message
+        if data.get('type') == 'message':
+            text = data.get('text', '').strip()
+            if 'storyteller' in text:
+                return jsonify({
+                    "type": "message",
+                    "text": "Hello! I'm AI Storyteller bot. I received your command!"
+                })
+        
+        # Default response
         return jsonify({
-            'status': 'received',
-            'message': 'Bot activity received successfully'
+            "type": "message", 
+            "text": "I received your message!"
         })
     except Exception as e:
         print(f'Error processing Teams bot activity: {str(e)}')
         return jsonify({
-            'status': 'error',
-            'message': str(e)
-        }), 500
+            "type": "message",
+            "text": f"Error: {str(e)}"
+        })
 
 # Print environment info for debugging
 print("Starting minimal app...")
