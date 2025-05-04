@@ -26,3 +26,6 @@ python-dateutil==2.8.2
 flask-migrate==4.0.5
 azure-identity==1.15.0
 azure-core==1.30.0
+fastapi
+uvicorn
+pydantic
