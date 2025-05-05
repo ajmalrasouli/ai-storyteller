@@ -6,16 +6,16 @@ python-dotenv==0.20.0
 openai>=1.12.0
 bcrypt==4.1.2
 gunicorn==21.2.0
-psycopg2-binary==2.9.9 # Keep this, even if primarily using SQLite now, might be needed elsewhere/conditionally
+psycopg2-binary==2.9.9
 httpx==0.27.0
 requests==2.31.0
 azure-cognitiveservices-speech==1.34.0
 werkzeug==3.0.1
-botbuilder-core==4.16.2 # Keep - needed for bot framework features if used
-botbuilder-integration-aiohttp==4.16.2 # Keep - needed for bot framework features if used
+botbuilder-core==4.16.2
+botbuilder-integration-aiohttp==4.16.2
 PyJWT==2.8.0
 python-dateutil==2.8.2
-flask-migrate==4.0.5 # Keep - needed for database migrations
-azure-identity==1.15.0 # Keep - useful for Azure SDK authentication
-azure-core==1.30.0 # Keep - core library for Azure SDKs
-azure-storage-blob==12.19.1 # <--- Add this line (or latest compatible version)
+flask-migrate==4.0.5
+azure-identity==1.15.0
+azure-core==1.30.0
+azure-storage-blob==12.19.1

@@ -39,15 +39,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application code
 COPY . .
 
-# Create the mount point directory for the SQLite database volume
-# Ensures the directory exists within the image layer before the container starts.
-RUN mkdir /data
+# Create and configure the data directory for Azure Files mount
+# Set proper permissions and declare volume
+RUN mkdir -p /data && \
+    chmod 777 /data
+VOLUME /data
 
 # Expose port 5000 (Informational, ACA uses its own port mapping)
 EXPOSE 5000
 
 # Run the application using Gunicorn (Keep your original CMD)
-# This assumes you have a wsgi.py file containing your Flask app instance named 'app'
-# If your Flask app instance ('app = Flask(__name__)...') is in app.py,
-# you should change this to: CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "wsgi:app"]
