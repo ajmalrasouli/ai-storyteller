@@ -1,11 +1,16 @@
-# Use Python 3.11 slim image
+# backend/Dockerfile
+
+# Use Python 3.10 slim image (as per your original file)
 FROM python:3.10-slim-buster
 
 # Set working directory
 WORKDIR /app
 
-# Copy requirements and install dependencies
+# Copy requirements file first for layer caching
 COPY requirements.txt .
+
+# Install system dependencies needed by Python packages (Keep this section!)
+# Includes libraries for audio (libasound2, libopus0, libpulse0), SSL, etc.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         libssl1.1 \
@@ -25,15 +30,24 @@ RUN apt-get update && \
         libx11-6 \
         libopus0 \
         libpulse0 \
+    # Clean up apt cache to reduce image size
     && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application code
 COPY . .
 
-# Expose port 5000 for Flask
+# Create the mount point directory for the SQLite database volume
+# Ensures the directory exists within the image layer before the container starts.
+RUN mkdir /data
+
+# Expose port 5000 (Informational, ACA uses its own port mapping)
 EXPOSE 5000
 
-# Simple Flask app for testing Teams bot
-# CMD ["python", "minimal_app.py"] # Comment out or remove the old CMD
+# Run the application using Gunicorn (Keep your original CMD)
+# This assumes you have a wsgi.py file containing your Flask app instance named 'app'
+# If your Flask app instance ('app = Flask(__name__)...') is in app.py,
+# you should change this to: CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "wsgi:app"]

@@ -1,29 +1,26 @@
-# models.py
-from sqlalchemy import Column, Integer, String, Text, create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-import os
+from datetime import datetime
+from extensions import db
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///stories.db")
-# Make sure parent directory exists when using mounted path
-if DATABASE_URL.startswith("sqlite:////data/"):
-    os.makedirs("/data", exist_ok=True)
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
 
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
+    def set_password(self, password):
+        from werkzeug.security import generate_password_hash
+        self.password_hash = generate_password_hash(password)
 
-class Story(Base):
-    __tablename__ = "stories"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String, index=True)
-    prompt = Column(Text)
-    # Store blob references instead of actual content
-    story_blob_ref = Column(String)
-    image_blob_ref = Column(String)
-    audio_blob_ref = Column(String)
+    def check_password(self, password):
+        from werkzeug.security import check_password_hash
+        return check_password_hash(self.password_hash, password)
 
-# Create the tables
-Base.metadata.create_all(bind=engine)
- 
+class Story(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    theme = db.Column(db.String(50), nullable=False)
+    characters = db.Column(db.String(500), nullable=False)  # Store as JSON string
+    age_group = db.Column(db.String(20), nullable=False)
+    is_favorite = db.Column(db.Boolean, default=False)
+    image_url = db.Column(db.String(500), nullable=True)  # URL for the AI-generated illustration
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
