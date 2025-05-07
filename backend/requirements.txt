@@ -31,11 +31,6 @@ azure-core==1.30.0
 azure-storage-blob==12.19.1
 azure-storage-file-share==12.15.0
 
-# BotBuilder SDK
-botbuilder-core==4.16.2
-botbuilder-integration-aiohttp==4.16.2
-botbuilder-schema==4.16.2
-
 # Utilities
 python-dotenv==0.21.0
 python-dateutil==2.8.2
