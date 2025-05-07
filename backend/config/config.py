@@ -38,6 +38,21 @@ class Config:
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    # --- ADD SQLALCHEMY ENGINE OPTIONS for SQLite Timeout ---
+    # Only apply these options if we are actually using the SQLite fallback
+    # This prevents applying SQLite specific options if DATABASE_URL for PostgreSQL is set
+    if SQLALCHEMY_DATABASE_URI.startswith('sqlite:'):
+        SQLALCHEMY_ENGINE_OPTIONS = {
+            "connect_args": {
+                "timeout": 30  # Increase timeout to 30 seconds (default is 5)
+                }
+        }
+        print("[Config] Applying SQLite specific engine options (timeout=30).", file=sys.stderr)
+    else:
+        SQLALCHEMY_ENGINE_OPTIONS = {} # Use empty dict if not SQLite
+    # -------------------------------------------------------
+
+
     # --- Azure OpenAI (Chat/Text) ---
     AZURE_OPENAI_API_KEY = os.environ.get('AZURE_OPENAI_API_KEY')
     AZURE_OPENAI_ENDPOINT = os.environ.get('AZURE_OPENAI_ENDPOINT')
@@ -58,8 +73,8 @@ class Config:
     AZURE_STORAGE_CONNECTION_STRING = os.environ.get('AZURE_STORAGE_CONNECTION_STRING') or \
                                       os.environ.get('STORAGE_CONNECTION_STRING')
     # --- Specific Container/Share Names ---
-    AZURE_IMAGES_CONTAINER_NAME = os.environ.get('AZURE_IMAGES_CONTAINER_NAME', 'images') # Default 'images'
-    AZURE_AUDIO_CONTAINER_NAME = os.environ.get('AZURE_AUDIO_CONTAINER_NAME', 'audio')   # Default 'audio'
+    AZURE_IMAGES_CONTAINER_NAME = os.environ.get('AZURE_IMAGES_CONTAINER_NAME', 'images')
+    AZURE_AUDIO_CONTAINER_NAME = os.environ.get('AZURE_AUDIO_CONTAINER_NAME', 'audio')
     AZURE_FILE_SHARE_NAME = os.environ.get('AZURE_FILE_SHARE_NAME', 'story-audio') # Keep if file share used elsewhere
 
     # --- OpenAI (if using the direct OpenAI API as well) ---
@@ -70,11 +85,11 @@ class Config:
     EXECUTOR_MAX_WORKERS = int(os.environ.get('EXECUTOR_MAX_WORKERS', 5))
 
     # --- Log effective settings ---
-    print(f"[Config] Effective SQLALCHEMY_DATABASE_URI: {SQLALCHEMY_DATABASE_URI}", file=sys.stderr) # Show the final URI being used
+    print(f"[Config] Effective SQLALCHEMY_DATABASE_URI: {SQLALCHEMY_DATABASE_URI}", file=sys.stderr)
     print(f"[Config] AZURE_OPENAI_ENDPOINT set: {bool(AZURE_OPENAI_ENDPOINT)}", file=sys.stderr)
     print(f"[Config] AZURE_SPEECH_REGION set: {bool(AZURE_SPEECH_REGION)}", file=sys.stderr)
     print(f"[Config] AZURE_STORAGE_CONNECTION_STRING set: {bool(AZURE_STORAGE_CONNECTION_STRING)}", file=sys.stderr)
-    print(f"[Config] Using Image Container: {AZURE_IMAGES_CONTAINER_NAME}", file=sys.stderr) # Show specific container
-    print(f"[Config] Using Audio Container: {AZURE_AUDIO_CONTAINER_NAME}", file=sys.stderr)   # Show specific container
+    print(f"[Config] Using Image Container: {AZURE_IMAGES_CONTAINER_NAME}", file=sys.stderr)
+    print(f"[Config] Using Audio Container: {AZURE_AUDIO_CONTAINER_NAME}", file=sys.stderr)
     print(f"[Config] Using File Share (optional): {AZURE_FILE_SHARE_NAME}", file=sys.stderr)
     print("Config class initialized.", file=sys.stderr)
