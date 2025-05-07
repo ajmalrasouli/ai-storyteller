@@ -4,6 +4,7 @@
 >
 > 🧒📚 _This innovative AI-powered application creates personalized bedtime stories for children based on their interests, favorite characters, and educational themes. _
 >
+
 > By leveraging advanced natural language processing (NLP) and generative models, the AI crafts engaging, interactive stories that can teach valuable lessons such as kindness, patience, and sharing. The app adapts to each child’s preferences, ensuring a unique and enjoyable experience every time. With features like character customization and moral story adaptation, the AI Storyteller fosters imagination, learning, and positive values in an interactive way.
 
 [![Azure Static Web Apps](https://img.shields.io/badge/Azure%20Static%20Web%20Apps-Frontend-0078D4?logo=azure-devops&logoColor=white)](https://azure.microsoft.com/en-us/services/app-service/static/)
