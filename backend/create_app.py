@@ -6,13 +6,13 @@ from flask import Flask
 from flask_cors import CORS
 from flask_executor import Executor
 
-# --- CHANGE TO RELATIVE IMPORTS ---
-from .extensions import db, migrate
-from .services.azure_services import AzureServices
-from .routes import story_routes, auth_routes, speech_routes, health_routes
-from .config.config import Config # Import the Config class itself relatively
+# --- Use ABSOLUTE IMPORTS relative to /app ---
+from extensions import db, migrate
+from services.azure_services import AzureServices
+from routes import story_routes, auth_routes, speech_routes, health_routes
+# Assumes config.py is in /app/config/config.py
+from config.config import Config
 
-# Initialize extensions that don't need app context immediately
 executor = Executor()
 
 # Use the imported Config class as the default
@@ -26,7 +26,6 @@ def create_app(config_object=Config): # Pass the class directly
         app.logger.info("Configuration loaded successfully.")
     except Exception as e:
          app.logger.error(f"An unexpected error occurred loading config: {e}", exc_info=True)
-
 
     # --- Configure Logging ---
     log_level = logging.DEBUG if app.config.get('DEBUG') else logging.INFO
@@ -58,7 +57,6 @@ def create_app(config_object=Config): # Pass the class directly
     app.logger.info(f"AzureServices: OpenAI Client ready: {bool(app.azure_services.text_client)}")
     app.logger.info(f"AzureServices: DALL-E Client ready: {bool(app.azure_services.dalle_client)}")
     app.logger.info(f"AzureServices: Speech Config ready: {bool(app.azure_services.speech_config)}")
-    # Check specific container clients now
     app.logger.info(f"AzureServices: Image Container Client ready: {bool(app.azure_services.image_container_client)}")
     app.logger.info(f"AzureServices: Audio Container Client ready: {bool(app.azure_services.audio_container_client)}")
     app.logger.info(f"AzureServices: Share Client ready: {bool(app.azure_services.share_client)}")

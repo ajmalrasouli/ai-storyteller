@@ -1,15 +1,14 @@
 # backend/routes/auth_routes.py
 
 from flask import Blueprint, request, jsonify, current_app
-# --- CHANGE TO RELATIVE IMPORTS ---
-# from models.models import User
-from ..models.models import User
-# from extensions import db
-from ..extensions import db
-# ----------------------------------
+# --- Use ABSOLUTE IMPORTS ---
+from models.models import User
+from extensions import db
+# ---------------------------
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 import datetime
+import sys
 
 bp = Blueprint('auth', __name__)
 
@@ -26,7 +25,7 @@ def register():
 
     try:
         user = User(email=data['email'])
-        user.set_password(data['password']) # Uses generate_password_hash internally
+        user.set_password(data['password'])
 
         db.session.add(user)
         db.session.commit()
@@ -48,20 +47,20 @@ def login():
 
     user = User.query.filter_by(email=data['email']).first()
 
-    if not user or not user.check_password(data['password']): # Uses check_password_hash internally
+    if not user or not user.check_password(data['password']):
         return jsonify({'error': 'Invalid email or password'}), 401
 
-    # Generate JWT token using SECRET_KEY from app config
     try:
         secret_key = current_app.config['SECRET_KEY']
         if not secret_key:
              current_app.logger.error("JWT_SECRET_KEY is not configured!")
              return jsonify({'error': 'Authentication system configuration error'}), 500
 
-        token = jwt.encode({
+        payload = {
             'user_id': user.id,
-            'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=1) # Use timezone aware now
-        }, secret_key, algorithm='HS256')
+            'exp': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=1)
+        }
+        token = jwt.encode(payload, secret_key, algorithm='HS256')
 
         current_app.logger.info(f"User {user.email} logged in successfully.")
         return jsonify({
@@ -89,7 +88,7 @@ def verify_token():
              return jsonify({'error': 'Authentication system configuration error'}), 500
 
         payload = jwt.decode(token, secret_key, algorithms=['HS256'])
-        user = db.session.get(User, payload['user_id']) # Use newer get() method
+        user = db.session.get(User, payload['user_id'])
 
         if not user:
             return jsonify({'error': 'User not found'}), 404
