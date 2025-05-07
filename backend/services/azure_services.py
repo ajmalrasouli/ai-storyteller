@@ -1,3 +1,5 @@
+# backend/services/azure_services.py
+
 import os
 import logging
 import sys
@@ -5,38 +7,47 @@ import traceback
 import io
 
 # Use Azure SDKs
-from openai import AzureOpenAI # For DALL-E and potentially Chat if using v1+ SDK style
+from openai import AzureOpenAI # For DALL-E and Chat
 import azure.cognitiveservices.speech as speechsdk
 from azure.storage.blob import BlobServiceClient, ContentSettings
 from azure.storage.fileshare import ShareClient
-from azure.core.exceptions import ResourceExistsError, AzureError
+# Import the specific exceptions
+from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError, AzureError
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__) # Will inherit Flask app's logger config
 
 class AzureServices:
     def __init__(self, app_config):
+        """
+        Initializes all Azure service clients based on the provided Flask app config.
+        Args:
+            app_config (werkzeug.datastructures.ImmutableDict): The Flask app.config object.
+        """
         logger.info("Initializing AzureServices class...")
-        self.config = app_config # Store the config object
+        self.config = app_config # Store the config object for later use if needed
 
-        # --- Initialize Clients ---
+        # --- Initialize Clients by calling internal methods ---
         self.text_client = self._init_openai_client()
         self.dalle_client = self._init_dalle_client()
         self.speech_config = self._init_speech_config()
-        storage_clients = self._init_azure_storage()
+        storage_clients = self._init_azure_storage() # This returns a dict
         self.blob_service_client = storage_clients.get('blob_service_client')
         self.blob_container_client = storage_clients.get('blob_container_client')
         self.share_client = storage_clients.get('share_client')
 
         logger.info("AzureServices class initialization finished.")
 
+    # --- Internal Initialization Methods ---
+
     def _init_openai_client(self):
+        """Initializes the AzureOpenAI client for text/chat."""
         logger.info("Initializing Azure OpenAI Client (for Chat)...")
         api_key = self.config.get('AZURE_OPENAI_API_KEY')
         endpoint = self.config.get('AZURE_OPENAI_ENDPOINT')
-        api_version = self.config.get('AZURE_OPENAI_API_VERSION')
+        api_version = self.config.get('AZURE_OPENAI_API_VERSION') # Ensure this is set in config/env
 
         if not all([api_key, endpoint, api_version]):
-            logger.error("Missing Azure OpenAI credentials/config for Chat. Text generation will fail.")
+            logger.error("Missing Azure OpenAI credentials/config for Chat (Key, Endpoint, or Version). Text generation will fail.")
             return None
         try:
             client = AzureOpenAI(
@@ -51,15 +62,15 @@ class AzureServices:
             return None
 
     def _init_dalle_client(self):
+        """Initializes the AzureOpenAI client for DALL-E/image generation."""
         logger.info("Initializing Azure OpenAI Client (for DALL-E)...")
-        api_key = self.config.get('AZURE_DALLE_API_KEY')
-        endpoint = self.config.get('AZURE_DALLE_ENDPOINT')
-        api_version = self.config.get('AZURE_DALLE_API_VERSION')
+        # Use specific DALL-E config keys, falling back to general OpenAI keys if needed
+        api_key = self.config.get('AZURE_DALLE_API_KEY') or self.config.get('AZURE_OPENAI_API_KEY')
+        endpoint = self.config.get('AZURE_DALLE_ENDPOINT') or self.config.get('AZURE_OPENAI_ENDPOINT')
+        api_version = self.config.get('AZURE_DALLE_API_VERSION') # Needs specific version for DALL-E
 
-        # Note: DALL-E 3 via Azure OpenAI requires specific API versions (e.g., "2024-02-01")
-        # and the endpoint might be the same as the chat one.
         if not all([api_key, endpoint, api_version]):
-            logger.error("Missing Azure DALL-E credentials/config. Image generation will fail.")
+            logger.error("Missing Azure DALL-E credentials/config (Key, Endpoint, or Version). Image generation will fail.")
             return None
         try:
             # DALL-E uses the same AzureOpenAI client class
@@ -75,24 +86,28 @@ class AzureServices:
             return None
 
     def _init_speech_config(self):
+        """Initializes the Azure Speech SDK configuration."""
         logger.info("Initializing Azure Speech Config...")
         speech_key = self.config.get('AZURE_SPEECH_KEY')
         speech_region = self.config.get('AZURE_SPEECH_REGION')
 
         if not all([speech_key, speech_region]):
-            logger.error("Missing Azure Speech credentials. Text-to-speech will fail.")
+            logger.error("Missing Azure Speech credentials (Key or Region). Text-to-speech will fail.")
             return None
         try:
             speech_config_obj = speechsdk.SpeechConfig(subscription=speech_key, region=speech_region)
-            # Set a default voice (optional)
+            # Set a default voice (optional, can be overridden later)
             speech_config_obj.speech_synthesis_voice_name = "en-US-JennyNeural"
-            logger.info("Azure Speech Config initialized successfully.")
+            # Set output format to MP3 for better web compatibility
+            speech_config_obj.set_speech_synthesis_output_format(speechsdk.SpeechSynthesisOutputFormat.Audio16Khz32KBitRateMonoMp3)
+            logger.info("Azure Speech Config initialized successfully (Voice: en-US-JennyNeural, Format: MP3).")
             return speech_config_obj
         except Exception as e:
             logger.error(f"Failed to initialize Azure Speech Config: {e}", exc_info=True)
             return None
 
     def _init_azure_storage(self):
+        """Initializes Azure Blob and File Share clients."""
         clients = {'blob_service_client': None, 'blob_container_client': None, 'share_client': None}
         logger.info("Initializing Azure Storage clients...")
         conn_str = self.config.get('AZURE_STORAGE_CONNECTION_STRING')
@@ -102,40 +117,65 @@ class AzureServices:
         if not conn_str:
             logger.error("CRITICAL: AZURE_STORAGE_CONNECTION_STRING not set. Storage services unavailable.")
             return clients
+        if not blob_container_name:
+            logger.error("CRITICAL: AZURE_STORAGE_CONTAINER_NAME not set. Blob storage unavailable.")
+            # Decide if this is fatal or not
+        if not file_share_name:
+             logger.error("CRITICAL: AZURE_FILE_SHARE_NAME not set. File storage unavailable.")
+             # Decide if this is fatal or not
 
         # --- Blob Storage ---
-        try:
-            blob_service_client = BlobServiceClient.from_connection_string(conn_str)
-            clients['blob_service_client'] = blob_service_client
-            logger.info("BlobServiceClient initialized.")
-            container_client = blob_service_client.get_container_client(blob_container_name)
-            if not container_client.exists():
-                logger.info(f"Creating blob container '{blob_container_name}'...")
-                container_client.create_container()
-                logger.info(f"Blob container '{blob_container_name}' created.")
-            else:
-                 logger.info(f"Blob container '{blob_container_name}' already exists.")
-            clients['blob_container_client'] = container_client
-        except Exception as e:
-            logger.error(f"Failed to initialize Azure Blob Storage: {e}", exc_info=True)
-            clients['blob_service_client'] = None # Ensure clients are None on failure
-            clients['blob_container_client'] = None
+        if blob_container_name: # Only proceed if container name is set
+            try:
+                blob_service_client = BlobServiceClient.from_connection_string(conn_str)
+                clients['blob_service_client'] = blob_service_client
+                logger.info(f"BlobServiceClient initialized for container '{blob_container_name}'.")
+                container_client = blob_service_client.get_container_client(blob_container_name)
+                try:
+                    logger.info(f"Checking properties of blob container '{blob_container_name}'...")
+                    container_client.get_container_properties() # Check if exists by getting properties
+                    logger.info(f"Blob container '{blob_container_name}' already exists.")
+                except ResourceNotFoundError:
+                    logger.info(f"Blob container '{blob_container_name}' not found. Creating...")
+                    container_client.create_container()
+                    logger.info(f"Blob container '{blob_container_name}' created.")
+                clients['blob_container_client'] = container_client # Assign the specific container client
+            except Exception as e:
+                logger.error(f"Failed to initialize Azure Blob Storage for container '{blob_container_name}': {e}", exc_info=True)
+                clients['blob_service_client'] = None
+                clients['blob_container_client'] = None
+        else:
+             logger.warning("Skipping Blob Storage initialization because AZURE_STORAGE_CONTAINER_NAME is not set.")
+
 
         # --- File Share ---
-        try:
-            share_client = ShareClient.from_connection_string(conn_str=conn_str, share_name=file_share_name)
-            if not share_client.exists():
-                 logger.info(f"Creating file share '{file_share_name}'...")
-                 share_client.create_share()
-                 logger.info(f"File share '{file_share_name}' created.")
-            else:
-                 logger.info(f"File share '{file_share_name}' already exists.")
-            clients['share_client'] = share_client
-        except Exception as e:
-            logger.error(f"Failed to initialize Azure File Share: {e}", exc_info=True)
-            clients['share_client'] = None # Ensure client is None on failure
+        if file_share_name: # Only proceed if file share name is set
+            try:
+                share_client = ShareClient.from_connection_string(conn_str=conn_str, share_name=file_share_name)
+                logger.info(f"ShareClient created for share '{file_share_name}'. Attempting to access properties...")
+                try:
+                    share_client.get_share_properties() # Try getting properties to check existence
+                    logger.info(f"File share '{file_share_name}' already exists.")
+                except ResourceNotFoundError:
+                    logger.info(f"File share '{file_share_name}' not found. Creating...")
+                    share_client.create_share()
+                    logger.info(f"File share '{file_share_name}' created.")
 
-        logger.info(f"Finished Azure Storage initialization. Blob Client: {bool(clients['blob_container_client'])}, Share Client: {bool(clients['share_client'])}")
+                clients['share_client'] = share_client # Assign client if successful
+
+            except ResourceExistsError: # Should ideally not be hit with the check above, but keep for safety
+                 logger.info(f"File share '{file_share_name}' already exists (caught ResourceExistsError during create).")
+                 if 'share_client' not in clients or not clients['share_client']:
+                     clients['share_client'] = ShareClient.from_connection_string(conn_str=conn_str, share_name=file_share_name)
+
+            except Exception as e:
+                logger.error(f"Failed to initialize Azure File Share '{file_share_name}': {e}", exc_info=True)
+                clients['share_client'] = None # Ensure client is None on any failure
+        else:
+             logger.warning("Skipping File Share initialization because AZURE_FILE_SHARE_NAME is not set.")
+
+
+        logger.info(f"Finished Azure Storage initialization. Blob Client Ready: {bool(clients['blob_container_client'])}, Share Client Ready: {bool(clients['share_client'])}")
         return clients
 
     # --- Service Methods ---
@@ -144,14 +184,15 @@ class AzureServices:
         logger.info(f"Generating story - Theme: {theme}, Age: {age_group}")
         if not self.text_client:
             logger.error("Cannot generate story: Azure OpenAI text client not initialized.")
-            return "Error: Story generation service is not available."
+            # Provide a more user-friendly error message if possible
+            return "I'm sorry, the story generation service is currently unavailable. Please try again later."
         try:
             deployment = self.config.get('AZURE_OPENAI_DEPLOYMENT_NAME')
             if not deployment:
                  logger.error("Cannot generate story: AZURE_OPENAI_DEPLOYMENT_NAME not configured.")
-                 return "Error: Story generation model not configured."
+                 return "Error: Story generation service configuration is incomplete."
 
-            logger.info(f"Calling OpenAI with deployment: {deployment}")
+            logger.info(f"Calling OpenAI Chat API with deployment: {deployment}")
             response = self.text_client.chat.completions.create(
                 model=deployment,
                 messages=[
@@ -159,20 +200,21 @@ class AzureServices:
                     {"role": "user", "content": f"Write a short story with the theme: '{theme}'. Include the following characters: {characters}. Make sure the story has a clear beginning, middle, and a happy or satisfying ending."}
                 ],
                 temperature=0.7,
-                max_tokens=800 # Adjust as needed
+                max_tokens=800
             )
             story_content = response.choices[0].message.content
             logger.info("Story generated successfully.")
             return story_content
         except Exception as e:
-            logger.error(f"Error generating story: {e}", exc_info=True)
-            return f"Error generating story: {str(e)}"
+            logger.error(f"Error during OpenAI API call for story generation: {e}", exc_info=True)
+            # Consider more specific error handling if needed (e.g., rate limits, auth errors)
+            return f"Sorry, an error occurred while writing the story: {str(e)}"
 
     def generate_illustration(self, title, theme, characters, age_group):
         logger.info(f"Generating illustration for title: '{title}'")
         if not self.dalle_client:
             logger.error("Cannot generate illustration: Azure DALL-E client not initialized.")
-            return None # Return None or a placeholder path string
+            return None # Indicate failure clearly
 
         try:
             deployment = self.config.get('AZURE_DALLE_DEPLOYMENT_NAME')
@@ -180,16 +222,15 @@ class AzureServices:
                 logger.error("Cannot generate illustration: AZURE_DALLE_DEPLOYMENT_NAME not configured.")
                 return None
 
-            # Improved prompt for DALL-E
             prompt = f"Create a colorful and friendly cartoon illustration for a children's storybook page. The story is titled '{title}', about '{theme}' featuring '{characters}', for age group '{age_group}'. The style should be whimsical, vibrant, and suitable for young children. No text in the image."
             logger.info(f"Using DALL-E prompt (start): {prompt[:100]}...")
             logger.info(f"Using DALL-E deployment: {deployment}")
 
             response = self.dalle_client.images.generate(
-                model=deployment, # Use deployment name for Azure DALL-E 3
+                model=deployment, # For DALL-E 3 on Azure, model is the deployment name
                 prompt=prompt,
                 n=1,
-                size="1024x1024" # Ensure this size is supported by your DALL-E deployment
+                size="1024x1024" # Check if your deployment supports this size
             )
 
             image_url = response.data[0].url
@@ -197,35 +238,42 @@ class AzureServices:
             return image_url
         except Exception as e:
             logger.error(f"DALL·E illustration generation failed: {e}", exc_info=True)
+            # You might want to return a placeholder URL or None
+            # return "/static/placeholder.png"
             return None # Indicate failure
 
     def text_to_speech(self, text):
         logger.info(f"Generating speech for text length: {len(text)}")
         if not self.speech_config:
              logger.error("Cannot generate speech: Azure Speech Config not initialized.")
-             return None # Return None to indicate failure
+             return None
 
-        # Use AudioDataStream for in-memory processing
-        # Setting output format can improve compatibility
-        self.speech_config.set_speech_synthesis_output_format(speechsdk.SpeechSynthesisOutputFormat.Audio16Khz32KBitRateMonoMp3)
-        synthesizer = speechsdk.SpeechSynthesizer(speech_config=self.speech_config, audio_config=None) # Use None for in-memory stream
+        # Using audio_data_stream for in-memory synthesis
+        synthesizer = speechsdk.SpeechSynthesizer(speech_config=self.speech_config, audio_config=None) # None -> In-memory stream
 
-        if len(text) > 5000: # Basic check, Azure might have stricter limits depending on voice/tier
-            text = text[:5000]
-            logger.warning("Text truncated for speech synthesis (>5000 chars)")
+        # Basic text length check (Azure limits are more complex, depend on factors)
+        if len(text) > 5000:
+            text = text[:5000] + "..." # Truncate and indicate
+            logger.warning("Text truncated for speech synthesis (>5000 chars approx limit)")
 
-        result = synthesizer.speak_text_async(text).get()
+        try:
+            logger.info("Calling speak_text_async...")
+            result = synthesizer.speak_text_async(text).get() # Synchronously wait for result
+            logger.info(f"Speech synthesis result reason: {result.reason}")
 
-        if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-            logger.info("Speech synthesis successful.")
-            # The audio data is in result.audio_data
-            return result.audio_data
-        elif result.reason == speechsdk.ResultReason.Canceled:
-            cancellation_details = result.cancellation_details
-            logger.error(f"Speech synthesis canceled: {cancellation_details.reason}")
-            if cancellation_details.reason == speechsdk.CancellationReason.Error:
-                logger.error(f"Error details: {cancellation_details.error_details}")
-            return None
-        else:
-             logger.error(f"Speech synthesis failed with reason: {result.reason}")
+            if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
+                logger.info("Speech synthesis successful.")
+                return result.audio_data # Return the raw audio bytes
+            elif result.reason == speechsdk.ResultReason.Canceled:
+                cancellation_details = result.cancellation_details
+                logger.error(f"Speech synthesis canceled: {cancellation_details.reason}")
+                if cancellation_details.reason == speechsdk.CancellationReason.Error:
+                    logger.error(f"Cancellation Error details: {cancellation_details.error_details}")
+                return None
+            else: # Should not happen unless SDK adds new reasons
+                 logger.error(f"Speech synthesis failed with unexpected reason: {result.reason}")
+                 return None
+
+        except Exception as e:
+             logger.error(f"Exception during speech synthesis: {e}", exc_info=True)
              return None
