@@ -1,3 +1,5 @@
+# backend/config/config.py
+
 import os
 from dotenv import load_dotenv
 import sys # For printing to stderr
@@ -7,6 +9,7 @@ import sys # For printing to stderr
 backend_dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 dotenv_path = os.path.join(backend_dir, '.env')
 
+# --- .env Loading ---
 print(f"Attempting to load .env from: {dotenv_path}", file=sys.stderr)
 if os.path.exists(dotenv_path):
     loaded = load_dotenv(dotenv_path)
@@ -24,32 +27,40 @@ class Config:
     DEBUG = os.environ.get('FLASK_DEBUG', 'False').lower() in ('true', '1', 't')
 
     # --- Database ---
+    # Define a persistent storage path INSIDE the container (to be mounted)
+    SQLITE_DB_FOLDER = "/data" # Standard location for mounted data in containers
+    SQLITE_DB_PATH = os.path.join(SQLITE_DB_FOLDER, 'app.db')
+
+    # Prioritize external DB URL, fallback to persistent SQLite path inside container
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
                               os.environ.get('SQLALCHEMY_DATABASE_URI') or \
-                              f"sqlite:///{os.path.join(backend_dir, 'app.db')}" # Fallback
+                              f"sqlite:///{SQLITE_DB_PATH}" # Fallback to path inside /data mount
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # --- Azure OpenAI (Chat/Text) ---
     AZURE_OPENAI_API_KEY = os.environ.get('AZURE_OPENAI_API_KEY')
     AZURE_OPENAI_ENDPOINT = os.environ.get('AZURE_OPENAI_ENDPOINT')
     AZURE_OPENAI_DEPLOYMENT_NAME = os.environ.get('AZURE_OPENAI_DEPLOYMENT_NAME')
-    AZURE_OPENAI_API_VERSION = os.environ.get('AZURE_OPENAI_API_VERSION', "2024-02-01") # Default added
+    AZURE_OPENAI_API_VERSION = os.environ.get('AZURE_OPENAI_API_VERSION', "2024-02-01")
 
     # --- Azure OpenAI (DALL-E / Images) ---
-    AZURE_DALLE_API_KEY = os.environ.get('AZURE_DALLE_API_KEY', AZURE_OPENAI_API_KEY) # Default to same key
-    AZURE_DALLE_ENDPOINT = os.environ.get('AZURE_DALLE_ENDPOINT', AZURE_OPENAI_ENDPOINT) # Default to same endpoint
+    AZURE_DALLE_API_KEY = os.environ.get('AZURE_DALLE_API_KEY', AZURE_OPENAI_API_KEY)
+    AZURE_DALLE_ENDPOINT = os.environ.get('AZURE_DALLE_ENDPOINT', AZURE_OPENAI_ENDPOINT)
     AZURE_DALLE_DEPLOYMENT_NAME = os.environ.get('AZURE_DALLE_DEPLOYMENT_NAME')
-    AZURE_DALLE_API_VERSION = os.environ.get('AZURE_DALLE_API_VERSION') # No default, might differ
+    AZURE_DALLE_API_VERSION = os.environ.get('AZURE_DALLE_API_VERSION')
 
     # --- Azure Speech Services ---
     AZURE_SPEECH_KEY = os.environ.get('AZURE_SPEECH_KEY')
     AZURE_SPEECH_REGION = os.environ.get('AZURE_SPEECH_REGION')
 
-    # --- Azure Storage (Blob and File Share) ---
+    # --- Azure Storage ---
     AZURE_STORAGE_CONNECTION_STRING = os.environ.get('AZURE_STORAGE_CONNECTION_STRING') or \
                                       os.environ.get('STORAGE_CONNECTION_STRING')
-    AZURE_STORAGE_CONTAINER_NAME = os.environ.get('AZURE_STORAGE_CONTAINER_NAME', 'story-images')
-    AZURE_FILE_SHARE_NAME = os.environ.get('AZURE_FILE_SHARE_NAME', 'story-audio')
+    # --- Specific Container/Share Names ---
+    AZURE_IMAGES_CONTAINER_NAME = os.environ.get('AZURE_IMAGES_CONTAINER_NAME', 'images') # Default 'images'
+    AZURE_AUDIO_CONTAINER_NAME = os.environ.get('AZURE_AUDIO_CONTAINER_NAME', 'audio')   # Default 'audio'
+    AZURE_FILE_SHARE_NAME = os.environ.get('AZURE_FILE_SHARE_NAME', 'story-audio') # Keep if file share used elsewhere
 
     # --- OpenAI (if using the direct OpenAI API as well) ---
     OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
@@ -58,15 +69,12 @@ class Config:
     EXECUTOR_TYPE = 'thread'
     EXECUTOR_MAX_WORKERS = int(os.environ.get('EXECUTOR_MAX_WORKERS', 5))
 
-    # --- Teams Config (Loaded separately by teams_config.py, but useful to see if needed here) ---
-    # You might centralize these here too if preferred
-    # TEAMS_CLIENT_ID = os.getenv("TEAMS_CLIENT_ID")
-    # BOT_ID = os.getenv("BOT_ID")
-    # etc.
-
-    # Simple check to log if critical Azure vars are missing
-    print(f"[Config] SQLALCHEMY_DATABASE_URI: {SQLALCHEMY_DATABASE_URI}", file=sys.stderr)
+    # --- Log effective settings ---
+    print(f"[Config] Effective SQLALCHEMY_DATABASE_URI: {SQLALCHEMY_DATABASE_URI}", file=sys.stderr) # Show the final URI being used
     print(f"[Config] AZURE_OPENAI_ENDPOINT set: {bool(AZURE_OPENAI_ENDPOINT)}", file=sys.stderr)
     print(f"[Config] AZURE_SPEECH_REGION set: {bool(AZURE_SPEECH_REGION)}", file=sys.stderr)
     print(f"[Config] AZURE_STORAGE_CONNECTION_STRING set: {bool(AZURE_STORAGE_CONNECTION_STRING)}", file=sys.stderr)
+    print(f"[Config] Using Image Container: {AZURE_IMAGES_CONTAINER_NAME}", file=sys.stderr) # Show specific container
+    print(f"[Config] Using Audio Container: {AZURE_AUDIO_CONTAINER_NAME}", file=sys.stderr)   # Show specific container
+    print(f"[Config] Using File Share (optional): {AZURE_FILE_SHARE_NAME}", file=sys.stderr)
     print("Config class initialized.", file=sys.stderr)
