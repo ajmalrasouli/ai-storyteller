@@ -1,164 +1,231 @@
-import openai
-import azure.cognitiveservices.speech as speechsdk
 import os
-from config.config import Config
-from openai import AzureOpenAI
+import logging
 import sys
 import traceback
+import io
+
+# Use Azure SDKs
+from openai import AzureOpenAI # For DALL-E and potentially Chat if using v1+ SDK style
+import azure.cognitiveservices.speech as speechsdk
+from azure.storage.blob import BlobServiceClient, ContentSettings
+from azure.storage.fileshare import ShareClient
+from azure.core.exceptions import ResourceExistsError, AzureError
+
+logger = logging.getLogger(__name__)
 
 class AzureServices:
-    def __init__(self):
-        print("Initializing Azure Services...", file=sys.stderr)
-        self.text_client = None
-        self.speech_config = None
-        
-        # GPT (text) configuration
-        self.openai_api_key = os.getenv("AZURE_OPENAI_API_KEY")
-        self.openai_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
-        self.openai_deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
-        self.openai_api_version = getattr(Config, 'AZURE_OPENAI_API_VERSION', None) or os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-01")
-        
-        # DALL-E (image) configuration
-        self.dalle_api_key = os.getenv("AZURE_DALLE_API_KEY")
-        self.dalle_endpoint = os.getenv("AZURE_DALLE_ENDPOINT")
-        self.dalle_deployment_name = os.getenv("AZURE_DALLE_DEPLOYMENT_NAME")
-        self.dalle_api_version = os.getenv("AZURE_DALLE_API_VERSION")
-        
-        # Debug prints for env vars (mask sensitive parts)
-        print("[AzureServices] AZURE_OPENAI_API_KEY:", (self.openai_api_key[:4] + "..." + self.openai_api_key[-4:]) if self.openai_api_key else "Not Set")
-        print("[AzureServices] AZURE_OPENAI_ENDPOINT:", self.openai_endpoint or "Not Set")
-        print("[AzureServices] AZURE_OPENAI_DEPLOYMENT_NAME:", self.openai_deployment_name or "Not Set")
-        print("[AzureServices] AZURE_OPENAI_API_VERSION:", self.openai_api_version or "Not Set")
-        print("[AzureServices] AZURE_DALLE_API_KEY:", (self.dalle_api_key[:4] + "..." + self.dalle_api_key[-4:]) if self.dalle_api_key else "Not Set")
-        print("[AzureServices] AZURE_DALLE_ENDPOINT:", self.dalle_endpoint or "Not Set")
-        print("[AzureServices] AZURE_DALLE_DEPLOYMENT_NAME:", self.dalle_deployment_name or "Not Set")
-        print("[AzureServices] AZURE_DALLE_API_VERSION:", self.dalle_api_version or "Not Set")
-        
-        # Initialize Azure OpenAI client for text generation with detailed error handling
-        if not self.openai_api_key or not self.openai_endpoint or not self.openai_api_version:
-            print("WARNING: Missing OpenAI credentials/config - text generation will not work", file=sys.stderr)
-        else:
-            try:
-                print(f"Attempting to initialize AzureOpenAI client with endpoint: {self.openai_endpoint}, version: {self.openai_api_version}", file=sys.stderr)
-                self.text_client = AzureOpenAI(
-                    api_key=self.openai_api_key,
-                    api_version=self.openai_api_version,
-                    azure_endpoint=self.openai_endpoint
-                )
-                print("Successfully initialized AzureOpenAI client", file=sys.stderr)
-            except Exception as e:
-                print(f"ERROR initializing AzureOpenAI client: {str(e)}", file=sys.stderr)
-                print("Traceback:", file=sys.stderr)
-                traceback.print_exc(file=sys.stderr)
-                self.text_client = None
-        
-        # Speech Services configuration
-        self.speech_key = os.getenv("AZURE_SPEECH_KEY")
-        self.speech_region = os.getenv("AZURE_SPEECH_REGION")
-        print("[AzureServices] AZURE_SPEECH_KEY:", (self.speech_key[:4] + "..." + self.speech_key[-4:]) if self.speech_key else "Not Set")
-        print("[AzureServices] AZURE_SPEECH_REGION:", self.speech_region or "Not Set")
-        
-        # Initialize speech config with detailed error handling
-        if not self.speech_key or not self.speech_region:
-            print("WARNING: Missing Speech credentials - text-to-speech will not work", file=sys.stderr)
-        else:
-            try:
-                print(f"Attempting to initialize SpeechConfig with region: {self.speech_region}", file=sys.stderr)
-                self.speech_config = speechsdk.SpeechConfig(
-                    subscription=self.speech_key,
-                    region=self.speech_region
-                )
-                self.speech_config.speech_synthesis_voice_name = "en-US-JennyNeural"
-                print("Successfully initialized SpeechConfig", file=sys.stderr)
-            except Exception as e:
-                print(f"ERROR initializing SpeechConfig: {str(e)}", file=sys.stderr)
-                print("Traceback:", file=sys.stderr)
-                traceback.print_exc(file=sys.stderr)
-                self.speech_config = None
-                
-        print("Finished initializing Azure Services.", file=sys.stderr)
+    def __init__(self, app_config):
+        logger.info("Initializing AzureServices class...")
+        self.config = app_config # Store the config object
+
+        # --- Initialize Clients ---
+        self.text_client = self._init_openai_client()
+        self.dalle_client = self._init_dalle_client()
+        self.speech_config = self._init_speech_config()
+        storage_clients = self._init_azure_storage()
+        self.blob_service_client = storage_clients.get('blob_service_client')
+        self.blob_container_client = storage_clients.get('blob_container_client')
+        self.share_client = storage_clients.get('share_client')
+
+        logger.info("AzureServices class initialization finished.")
+
+    def _init_openai_client(self):
+        logger.info("Initializing Azure OpenAI Client (for Chat)...")
+        api_key = self.config.get('AZURE_OPENAI_API_KEY')
+        endpoint = self.config.get('AZURE_OPENAI_ENDPOINT')
+        api_version = self.config.get('AZURE_OPENAI_API_VERSION')
+
+        if not all([api_key, endpoint, api_version]):
+            logger.error("Missing Azure OpenAI credentials/config for Chat. Text generation will fail.")
+            return None
+        try:
+            client = AzureOpenAI(
+                api_key=api_key,
+                api_version=api_version,
+                azure_endpoint=endpoint
+            )
+            logger.info("Azure OpenAI Client (Chat) initialized successfully.")
+            return client
+        except Exception as e:
+            logger.error(f"Failed to initialize Azure OpenAI Client (Chat): {e}", exc_info=True)
+            return None
+
+    def _init_dalle_client(self):
+        logger.info("Initializing Azure OpenAI Client (for DALL-E)...")
+        api_key = self.config.get('AZURE_DALLE_API_KEY')
+        endpoint = self.config.get('AZURE_DALLE_ENDPOINT')
+        api_version = self.config.get('AZURE_DALLE_API_VERSION')
+
+        # Note: DALL-E 3 via Azure OpenAI requires specific API versions (e.g., "2024-02-01")
+        # and the endpoint might be the same as the chat one.
+        if not all([api_key, endpoint, api_version]):
+            logger.error("Missing Azure DALL-E credentials/config. Image generation will fail.")
+            return None
+        try:
+            # DALL-E uses the same AzureOpenAI client class
+            client = AzureOpenAI(
+                api_key=api_key,
+                api_version=api_version,
+                azure_endpoint=endpoint
+            )
+            logger.info("Azure OpenAI Client (DALL-E) initialized successfully.")
+            return client
+        except Exception as e:
+            logger.error(f"Failed to initialize Azure OpenAI Client (DALL-E): {e}", exc_info=True)
+            return None
+
+    def _init_speech_config(self):
+        logger.info("Initializing Azure Speech Config...")
+        speech_key = self.config.get('AZURE_SPEECH_KEY')
+        speech_region = self.config.get('AZURE_SPEECH_REGION')
+
+        if not all([speech_key, speech_region]):
+            logger.error("Missing Azure Speech credentials. Text-to-speech will fail.")
+            return None
+        try:
+            speech_config_obj = speechsdk.SpeechConfig(subscription=speech_key, region=speech_region)
+            # Set a default voice (optional)
+            speech_config_obj.speech_synthesis_voice_name = "en-US-JennyNeural"
+            logger.info("Azure Speech Config initialized successfully.")
+            return speech_config_obj
+        except Exception as e:
+            logger.error(f"Failed to initialize Azure Speech Config: {e}", exc_info=True)
+            return None
+
+    def _init_azure_storage(self):
+        clients = {'blob_service_client': None, 'blob_container_client': None, 'share_client': None}
+        logger.info("Initializing Azure Storage clients...")
+        conn_str = self.config.get('AZURE_STORAGE_CONNECTION_STRING')
+        blob_container_name = self.config.get('AZURE_STORAGE_CONTAINER_NAME')
+        file_share_name = self.config.get('AZURE_FILE_SHARE_NAME')
+
+        if not conn_str:
+            logger.error("CRITICAL: AZURE_STORAGE_CONNECTION_STRING not set. Storage services unavailable.")
+            return clients
+
+        # --- Blob Storage ---
+        try:
+            blob_service_client = BlobServiceClient.from_connection_string(conn_str)
+            clients['blob_service_client'] = blob_service_client
+            logger.info("BlobServiceClient initialized.")
+            container_client = blob_service_client.get_container_client(blob_container_name)
+            if not container_client.exists():
+                logger.info(f"Creating blob container '{blob_container_name}'...")
+                container_client.create_container()
+                logger.info(f"Blob container '{blob_container_name}' created.")
+            else:
+                 logger.info(f"Blob container '{blob_container_name}' already exists.")
+            clients['blob_container_client'] = container_client
+        except Exception as e:
+            logger.error(f"Failed to initialize Azure Blob Storage: {e}", exc_info=True)
+            clients['blob_service_client'] = None # Ensure clients are None on failure
+            clients['blob_container_client'] = None
+
+        # --- File Share ---
+        try:
+            share_client = ShareClient.from_connection_string(conn_str=conn_str, share_name=file_share_name)
+            if not share_client.exists():
+                 logger.info(f"Creating file share '{file_share_name}'...")
+                 share_client.create_share()
+                 logger.info(f"File share '{file_share_name}' created.")
+            else:
+                 logger.info(f"File share '{file_share_name}' already exists.")
+            clients['share_client'] = share_client
+        except Exception as e:
+            logger.error(f"Failed to initialize Azure File Share: {e}", exc_info=True)
+            clients['share_client'] = None # Ensure client is None on failure
+
+        logger.info(f"Finished Azure Storage initialization. Blob Client: {bool(clients['blob_container_client'])}, Share Client: {bool(clients['share_client'])}")
+        return clients
+
+    # --- Service Methods ---
 
     def generate_story(self, theme, characters, age_group):
+        logger.info(f"Generating story - Theme: {theme}, Age: {age_group}")
+        if not self.text_client:
+            logger.error("Cannot generate story: Azure OpenAI text client not initialized.")
+            return "Error: Story generation service is not available."
         try:
-            if not self.text_client:
-                return "I'm sorry, I can't generate a story right now because the OpenAI service is not configured properly. Please check your Azure OpenAI settings."
-                
+            deployment = self.config.get('AZURE_OPENAI_DEPLOYMENT_NAME')
+            if not deployment:
+                 logger.error("Cannot generate story: AZURE_OPENAI_DEPLOYMENT_NAME not configured.")
+                 return "Error: Story generation model not configured."
+
+            logger.info(f"Calling OpenAI with deployment: {deployment}")
             response = self.text_client.chat.completions.create(
-                model=self.openai_deployment_name,
+                model=deployment,
                 messages=[
-                    {"role": "system", "content": f"You are a creative children's story writer. Write a story appropriate for {age_group} age group."},
-                    {"role": "user", "content": f"Write a story with theme: {theme} and characters: {characters}"}
-                ]
+                    {"role": "system", "content": f"You are a creative and engaging children's story writer. Write a story appropriate for the {age_group} age group. The story should be fun, positive, and easy to understand for young children."},
+                    {"role": "user", "content": f"Write a short story with the theme: '{theme}'. Include the following characters: {characters}. Make sure the story has a clear beginning, middle, and a happy or satisfying ending."}
+                ],
+                temperature=0.7,
+                max_tokens=800 # Adjust as needed
             )
-            return response.choices[0].message.content
+            story_content = response.choices[0].message.content
+            logger.info("Story generated successfully.")
+            return story_content
         except Exception as e:
-            print(f"Error generating story: {str(e)}", file=sys.stderr)
+            logger.error(f"Error generating story: {e}", exc_info=True)
             return f"Error generating story: {str(e)}"
 
     def generate_illustration(self, title, theme, characters, age_group):
-        import sys
-        print(f"[DALLE] Starting illustration generation for title: '{title}'", file=sys.stderr)
-        
-        if not self.dalle_api_key or not self.dalle_endpoint:
-            print("WARNING: Missing DALL-E credentials - illustration generation will not work", file=sys.stderr)
-            return "/static/placeholder.png"
-            
-        print(f"[DALLE] Using API key: {self.dalle_api_key[:4]}...{self.dalle_api_key[-4:] if self.dalle_api_key else None}", file=sys.stderr)
-        print(f"[DALLE] Using endpoint: {self.dalle_endpoint}", file=sys.stderr)
-        print(f"[DALLE] Using deployment: {self.dalle_deployment_name}", file=sys.stderr)
-        print(f"[DALLE] Using API version: {self.dalle_api_version}", file=sys.stderr)
-        
+        logger.info(f"Generating illustration for title: '{title}'")
+        if not self.dalle_client:
+            logger.error("Cannot generate illustration: Azure DALL-E client not initialized.")
+            return None # Return None or a placeholder path string
+
         try:
-            # Create a more detailed, child-friendly prompt
-            prompt = f"Create a colorful, child-friendly, cartoon-style illustration for a children's story titled '{title}'. The story has theme: {theme} and features characters: {characters}. The illustration should be bright, engaging, and appropriate for {age_group} age group. Emphasize friendly interactions, no violence or scary elements; make it cute and playful for young children."
-            
-            print(f"[DALLE] Using prompt: {prompt[:100]}...", file=sys.stderr)
-            
-            # Initialize the Azure OpenAI client
-            client = AzureOpenAI(
-                api_key=self.dalle_api_key,
-                api_version=self.dalle_api_version,
-                azure_endpoint=self.dalle_endpoint
-            )
-            
-            print(f"[DALLE] Using model: {self.dalle_deployment_name}", file=sys.stderr)
-            response = client.images.generate(
-                model=self.dalle_deployment_name,
+            deployment = self.config.get('AZURE_DALLE_DEPLOYMENT_NAME')
+            if not deployment:
+                logger.error("Cannot generate illustration: AZURE_DALLE_DEPLOYMENT_NAME not configured.")
+                return None
+
+            # Improved prompt for DALL-E
+            prompt = f"Create a colorful and friendly cartoon illustration for a children's storybook page. The story is titled '{title}', about '{theme}' featuring '{characters}', for age group '{age_group}'. The style should be whimsical, vibrant, and suitable for young children. No text in the image."
+            logger.info(f"Using DALL-E prompt (start): {prompt[:100]}...")
+            logger.info(f"Using DALL-E deployment: {deployment}")
+
+            response = self.dalle_client.images.generate(
+                model=deployment, # Use deployment name for Azure DALL-E 3
                 prompt=prompt,
                 n=1,
-                size="1024x1024"
+                size="1024x1024" # Ensure this size is supported by your DALL-E deployment
             )
-            
-            # Get the image URL
+
             image_url = response.data[0].url
-            print(f"[DALLE] Successfully generated image: {image_url[:50]}...", file=sys.stderr)
+            logger.info(f"Illustration generated successfully: {image_url[:60]}...")
             return image_url
         except Exception as e:
-            print(f"[ERROR] DALL·E illustration generation failed: {str(e)}", file=sys.stderr)
-            traceback.print_exc(file=sys.stderr)
-            return "/static/placeholder.png"
+            logger.error(f"DALL·E illustration generation failed: {e}", exc_info=True)
+            return None # Indicate failure
 
     def text_to_speech(self, text):
-        try:
-            print(f"[AzureServices] Generating speech for text of length: {len(text)}")
-            # Create a speech synthesizer using the configured speech config
-            synthesizer = speechsdk.SpeechSynthesizer(speech_config=self.speech_config)
-            
-            # Limit text length if needed (Azure has limits)
-            if len(text) > 5000:
-                text = text[:5000] + "..."
-                print("[AzureServices] Text truncated for speech synthesis (>5000 chars)")
-            
-            # Generate speech
-            result = synthesizer.speak_text_async(text).get()
-            
-            if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-                print("[AzureServices] Speech synthesis successful")
-                return result.audio_data
-            else:
-                print(f"[AzureServices] Speech synthesis failed with reason: {result.reason}")
-                raise Exception(f"Speech synthesis failed with reason: {result.reason}")
-        except Exception as e:
-            print(f"[AzureServices] Error in text_to_speech: {str(e)}")
-            raise Exception(f"Error converting text to speech: {str(e)}")
- 
+        logger.info(f"Generating speech for text length: {len(text)}")
+        if not self.speech_config:
+             logger.error("Cannot generate speech: Azure Speech Config not initialized.")
+             return None # Return None to indicate failure
+
+        # Use AudioDataStream for in-memory processing
+        # Setting output format can improve compatibility
+        self.speech_config.set_speech_synthesis_output_format(speechsdk.SpeechSynthesisOutputFormat.Audio16Khz32KBitRateMonoMp3)
+        synthesizer = speechsdk.SpeechSynthesizer(speech_config=self.speech_config, audio_config=None) # Use None for in-memory stream
+
+        if len(text) > 5000: # Basic check, Azure might have stricter limits depending on voice/tier
+            text = text[:5000]
+            logger.warning("Text truncated for speech synthesis (>5000 chars)")
+
+        result = synthesizer.speak_text_async(text).get()
+
+        if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
+            logger.info("Speech synthesis successful.")
+            # The audio data is in result.audio_data
+            return result.audio_data
+        elif result.reason == speechsdk.ResultReason.Canceled:
+            cancellation_details = result.cancellation_details
+            logger.error(f"Speech synthesis canceled: {cancellation_details.reason}")
+            if cancellation_details.reason == speechsdk.CancellationReason.Error:
+                logger.error(f"Error details: {cancellation_details.error_details}")
+            return None
+        else:
+             logger.error(f"Speech synthesis failed with reason: {result.reason}")
+             return None

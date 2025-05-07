@@ -1,5 +1,8 @@
 from datetime import datetime
+# Use absolute import
 from extensions import db
+# Import security functions directly where needed or define wrappers
+from werkzeug.security import generate_password_hash, check_password_hash
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -7,11 +10,9 @@ class User(db.Model):
     password_hash = db.Column(db.String(128), nullable=False)
 
     def set_password(self, password):
-        from werkzeug.security import generate_password_hash
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
-        from werkzeug.security import check_password_hash
         return check_password_hash(self.password_hash, password)
 
 class Story(db.Model):
@@ -22,5 +23,5 @@ class Story(db.Model):
     characters = db.Column(db.String(500), nullable=False)  # Store as JSON string
     age_group = db.Column(db.String(20), nullable=False)
     is_favorite = db.Column(db.Boolean, default=False)
-    image_url = db.Column(db.String(500), nullable=True)  # URL for the AI-generated illustration
+    image_url = db.Column(db.String(500), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

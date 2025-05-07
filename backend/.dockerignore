@@ -11,4 +11,8 @@ __pycache__/
 .gitignore
 .vscode/
 .idea/
+
+# Test files (optional)
 tests/
+pytest.ini
+.pytest_cache/

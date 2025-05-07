@@ -1,42 +1,49 @@
-from flask import Blueprint, request, send_file
-from services.azure_services import AzureServices
+from flask import Blueprint, request, send_file, current_app, make_response # Import current_app, make_response
 from flask_cors import CORS
 import io
 
 bp = Blueprint('speech', __name__)
-# Enable CORS for the speech blueprint
-CORS(bp, origins=["http://localhost:5173", "http://localhost:5174"])
-azure_services = AzureServices()
+# CORS handled globally in create_app for /api/*, or keep specific here if needed
+# CORS(bp, origins=["http://localhost:5173", "http://localhost:5174"])
 
-@bp.route('/speech', methods=['POST', 'OPTIONS'])
+@bp.route('/speech', methods=['POST']) # OPTIONS handled by Flask-CORS globally
 def text_to_speech():
-    # Handle OPTIONS request for CORS preflight
-    if request.method == 'OPTIONS':
-        return {'success': True}, 200
-        
+    current_app.logger.info("POST /api/speech")
     data = request.json
-    print(f"[Speech API] Received request with data: {data}")
-    
+    current_app.logger.debug(f"Incoming data: {data}")
+
     if not data or not data.get('text'):
-        print("[Speech API] Error: Text is required")
-        return {'error': 'Text is required'}, 400
-    
+        current_app.logger.error("Text field is missing from request")
+        return jsonify({'error': 'Text is required'}), 400
+
+    text_to_convert = data['text']
+    azure_services = current_app.azure_services # Access via current_app
+
     try:
-        print(f"[Speech API] Converting text to speech, length: {len(data['text'])}")
-        audio_data = azure_services.text_to_speech(data['text'])
-        
-        # Create a BytesIO object to send the audio data
+        current_app.logger.info(f"Converting text to speech (length: {len(text_to_convert)})...")
+        audio_data = azure_services.text_to_speech(text_to_convert)
+
+        if audio_data is None:
+             current_app.logger.error("Text-to-speech conversion failed (returned None)")
+             return jsonify({'error': 'Speech synthesis failed'}), 500
+
         audio_stream = io.BytesIO(audio_data)
-        audio_stream.seek(0)
-        
-        print("[Speech API] Successfully generated speech, sending response")
-        return send_file(
+        # Don't need seek(0) for send_file with BytesIO
+
+        current_app.logger.info("Speech generated successfully, sending audio file.")
+        # Use make_response for better header control if needed, or send_file directly
+        response = make_response(send_file(
             audio_stream,
-            mimetype='audio/wav',
-            as_attachment=True,
-            download_name='speech.wav'
-        )
-        
+            mimetype='audio/mpeg', # Use mpeg for mp3 format set in AzureServices
+            as_attachment=False, # Set to True if you want download prompt
+            download_name='speech.mp3' # Use .mp3 extension
+        ))
+        # Add cache control headers to prevent caching if desired
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
+
     except Exception as e:
-        print(f"[Speech API] Error: {str(e)}")
-        return {'error': str(e)}, 500
+        current_app.logger.error(f"Error during text-to-speech: {e}", exc_info=True)
+        return jsonify({'error': 'An internal server error occurred during speech synthesis.'}), 500
