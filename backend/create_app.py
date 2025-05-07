@@ -1,34 +1,32 @@
+# backend/create_app.py
 import os
-import sys # Added for sys.stdout
+import sys
 import logging
 from flask import Flask
 from flask_cors import CORS
 from flask_executor import Executor
 
-# Use absolute imports from the 'backend' (app) root
-from extensions import db, migrate
-from services.azure_services import AzureServices # Corrected path based on class usage
-
-# --- REMOVE TEAMS IMPORTS ---
-# from routes import story_routes, auth_routes, speech_routes, teams_bot_routes, health_routes
-# --- USE THIS INSTEAD ---
-from routes import story_routes, auth_routes, speech_routes, health_routes # Removed teams_bot_routes
+# --- CHANGE TO RELATIVE IMPORTS ---
+from .extensions import db, migrate
+from .services.azure_services import AzureServices
+from .routes import story_routes, auth_routes, speech_routes, health_routes
+from .config.config import Config # Import the Config class itself relatively
 
 # Initialize extensions that don't need app context immediately
 executor = Executor()
 
-def create_app(config_object_path='config.config.Config'):
+# Use the imported Config class as the default
+def create_app(config_object=Config): # Pass the class directly
     """Flask application factory."""
     app = Flask(__name__)
-    app.logger.info(f"Attempting to load config from: {config_object_path}")
+    # Use the config_object passed (defaults to the imported Config)
+    app.logger.info(f"Attempting to load config from object: {config_object.__name__}")
     try:
-        app.config.from_object(config_object_path)
+        app.config.from_object(config_object) # Load config from the object
         app.logger.info("Configuration loaded successfully.")
-    except ImportError as e:
-        app.logger.error(f"Failed to import configuration object at '{config_object_path}': {e}")
-        app.logger.error("Ensure config/config.py exists and the Config class is defined.")
     except Exception as e:
          app.logger.error(f"An unexpected error occurred loading config: {e}", exc_info=True)
+
 
     # --- Configure Logging ---
     log_level = logging.DEBUG if app.config.get('DEBUG') else logging.INFO
@@ -52,6 +50,7 @@ def create_app(config_object_path='config.config.Config'):
 
     # --- Initialize Azure Services and store instance on app ---
     app.logger.info("Initializing AzureServices...")
+    # Pass the Flask app's config dictionary
     app.azure_services = AzureServices(app.config)
     app.logger.info("AzureServices instance created and attached to app.")
 
@@ -59,7 +58,9 @@ def create_app(config_object_path='config.config.Config'):
     app.logger.info(f"AzureServices: OpenAI Client ready: {bool(app.azure_services.text_client)}")
     app.logger.info(f"AzureServices: DALL-E Client ready: {bool(app.azure_services.dalle_client)}")
     app.logger.info(f"AzureServices: Speech Config ready: {bool(app.azure_services.speech_config)}")
-    app.logger.info(f"AzureServices: Blob Client ready: {bool(app.azure_services.blob_container_client)}")
+    # Check specific container clients now
+    app.logger.info(f"AzureServices: Image Container Client ready: {bool(app.azure_services.image_container_client)}")
+    app.logger.info(f"AzureServices: Audio Container Client ready: {bool(app.azure_services.audio_container_client)}")
     app.logger.info(f"AzureServices: Share Client ready: {bool(app.azure_services.share_client)}")
 
     # --- Register blueprints ---
@@ -67,8 +68,6 @@ def create_app(config_object_path='config.config.Config'):
     app.register_blueprint(auth_routes.bp, url_prefix='/api')
     app.register_blueprint(speech_routes.bp, url_prefix='/api')
     app.register_blueprint(health_routes.bp)
-    # --- REMOVED TEAMS BLUEPRINT REGISTRATION ---
-    # app.register_blueprint(teams_bot_routes.bp)
 
     app.logger.info("Blueprints registered.")
     app.logger.info("Flask app creation completed.")

@@ -1,12 +1,19 @@
-from flask import Blueprint, request, jsonify, current_app # Import current_app
-from models.models import Story, User # Absolute import
-from extensions import db # Absolute import
+# backend/routes/story_routes.py
+
+from flask import Blueprint, request, jsonify, current_app
+# --- CHANGE TO RELATIVE IMPORT ---
+# from models.models import Story, User
+from ..models.models import Story, User # Go up one level (.) to backend/, then down to models/
+# from extensions import db
+from ..extensions import db # Go up one level (.) to backend/, then find extensions.py
+# ----------------------------------
 import json
 import traceback
 import sys
-from flask_cors import CORS
+import uuid
 
 bp = Blueprint('stories', __name__)
+# CORS handled globally
 # CORS handled globally in create_app for /api/*, or keep specific here if needed
 # CORS(bp, origins=["http://localhost:5173", "http://localhost:5174"])
 

@@ -1,11 +1,15 @@
-from flask import Blueprint, request, jsonify, current_app # Import current_app
-from models.models import User # Absolute import
-from extensions import db # Absolute import
-from werkzeug.security import generate_password_hash, check_password_hash # Keep these
+# backend/routes/auth_routes.py
+
+from flask import Blueprint, request, jsonify, current_app
+# --- CHANGE TO RELATIVE IMPORTS ---
+# from models.models import User
+from ..models.models import User
+# from extensions import db
+from ..extensions import db
+# ----------------------------------
+from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 import datetime
-# Config is accessed via current_app.config now
-# from config.config import Config # No longer need direct import
 
 bp = Blueprint('auth', __name__)
 

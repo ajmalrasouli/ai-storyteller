@@ -5,11 +5,13 @@ import logging
 import sys
 import traceback
 import io
+import requests # For downloading DALL-E image
+import uuid     # For unique blob names
 
 # Use Azure SDKs
 from openai import AzureOpenAI # For DALL-E and Chat
 import azure.cognitiveservices.speech as speechsdk
-from azure.storage.blob import BlobServiceClient, ContentSettings
+from azure.storage.blob import BlobServiceClient, ContentSettings # Added ContentSettings
 from azure.storage.fileshare import ShareClient
 # Import the specific exceptions
 from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError, AzureError
@@ -30,12 +32,17 @@ class AzureServices:
         self.text_client = self._init_openai_client()
         self.dalle_client = self._init_dalle_client()
         self.speech_config = self._init_speech_config()
-        storage_clients = self._init_azure_storage() # This returns a dict
-        self.blob_service_client = storage_clients.get('blob_service_client')
-        self.blob_container_client = storage_clients.get('blob_container_client')
-        self.share_client = storage_clients.get('share_client')
+
+        # --- Initialize storage clients and set instance attributes ---
+        # The following attributes will be set by _init_azure_storage:
+        self.blob_service_client = None
+        self.image_container_client = None
+        self.audio_container_client = None
+        self.share_client = None # Keep if you still need file share access
+        self._init_azure_storage() # This method now sets instance attributes
 
         logger.info("AzureServices class initialization finished.")
+        # Logging client status now happens in create_app after initialization
 
     # --- Internal Initialization Methods ---
 
@@ -64,16 +71,14 @@ class AzureServices:
     def _init_dalle_client(self):
         """Initializes the AzureOpenAI client for DALL-E/image generation."""
         logger.info("Initializing Azure OpenAI Client (for DALL-E)...")
-        # Use specific DALL-E config keys, falling back to general OpenAI keys if needed
         api_key = self.config.get('AZURE_DALLE_API_KEY') or self.config.get('AZURE_OPENAI_API_KEY')
         endpoint = self.config.get('AZURE_DALLE_ENDPOINT') or self.config.get('AZURE_OPENAI_ENDPOINT')
-        api_version = self.config.get('AZURE_DALLE_API_VERSION') # Needs specific version for DALL-E
+        api_version = self.config.get('AZURE_DALLE_API_VERSION')
 
         if not all([api_key, endpoint, api_version]):
             logger.error("Missing Azure DALL-E credentials/config (Key, Endpoint, or Version). Image generation will fail.")
             return None
         try:
-            # DALL-E uses the same AzureOpenAI client class
             client = AzureOpenAI(
                 api_key=api_key,
                 api_version=api_version,
@@ -96,9 +101,7 @@ class AzureServices:
             return None
         try:
             speech_config_obj = speechsdk.SpeechConfig(subscription=speech_key, region=speech_region)
-            # Set a default voice (optional, can be overridden later)
             speech_config_obj.speech_synthesis_voice_name = "en-US-JennyNeural"
-            # Set output format to MP3 for better web compatibility
             speech_config_obj.set_speech_synthesis_output_format(speechsdk.SpeechSynthesisOutputFormat.Audio16Khz32KBitRateMonoMp3)
             logger.info("Azure Speech Config initialized successfully (Voice: en-US-JennyNeural, Format: MP3).")
             return speech_config_obj
@@ -106,85 +109,94 @@ class AzureServices:
             logger.error(f"Failed to initialize Azure Speech Config: {e}", exc_info=True)
             return None
 
-    def _init_azure_storage(self):
-        """Initializes Azure Blob and File Share clients."""
-        clients = {'blob_service_client': None, 'blob_container_client': None, 'share_client': None}
-        logger.info("Initializing Azure Storage clients...")
-        conn_str = self.config.get('AZURE_STORAGE_CONNECTION_STRING')
-        blob_container_name = self.config.get('AZURE_STORAGE_CONTAINER_NAME')
-        file_share_name = self.config.get('AZURE_FILE_SHARE_NAME')
+    def _init_container(self, blob_service_client, container_name):
+        """Helper to initialize a single blob container client."""
+        if not blob_service_client:
+            logger.error(f"Cannot initialize container '{container_name}': BlobServiceClient is not available.")
+            return None
+        if not container_name:
+            logger.warning(f"Container name is not set, skipping initialization.")
+            return None
 
+        logger.info(f"Initializing blob container client for '{container_name}'...")
+        try:
+            container_client = blob_service_client.get_container_client(container_name)
+            try:
+                logger.info(f"Checking properties of blob container '{container_name}'...")
+                container_client.get_container_properties()
+                logger.info(f"Blob container '{container_name}' already exists.")
+            except ResourceNotFoundError:
+                logger.info(f"Creating blob container '{container_name}'...")
+                container_client.create_container()
+                logger.info(f"Blob container '{container_name}' created.")
+            return container_client
+        except Exception as e:
+                logger.error(f"Failed to initialize blob container '{container_name}': {e}", exc_info=True)
+                return None
+
+    def _init_azure_storage(self):
+        """Initializes Azure Blob and File Share clients and stores them as instance attributes."""
+        logger.info("Initializing Azure Storage clients...")
+        # Attributes are already initialized to None in __init__ or will be set here
+
+        conn_str = self.config.get('AZURE_STORAGE_CONNECTION_STRING')
         if not conn_str:
             logger.error("CRITICAL: AZURE_STORAGE_CONNECTION_STRING not set. Storage services unavailable.")
-            return clients
-        if not blob_container_name:
-            logger.error("CRITICAL: AZURE_STORAGE_CONTAINER_NAME not set. Blob storage unavailable.")
-            # Decide if this is fatal or not
-        if not file_share_name:
-             logger.error("CRITICAL: AZURE_FILE_SHARE_NAME not set. File storage unavailable.")
-             # Decide if this is fatal or not
+            return # Stop initialization
 
-        # --- Blob Storage ---
-        if blob_container_name: # Only proceed if container name is set
-            try:
-                blob_service_client = BlobServiceClient.from_connection_string(conn_str)
-                clients['blob_service_client'] = blob_service_client
-                logger.info(f"BlobServiceClient initialized for container '{blob_container_name}'.")
-                container_client = blob_service_client.get_container_client(blob_container_name)
-                try:
-                    logger.info(f"Checking properties of blob container '{blob_container_name}'...")
-                    container_client.get_container_properties() # Check if exists by getting properties
-                    logger.info(f"Blob container '{blob_container_name}' already exists.")
-                except ResourceNotFoundError:
-                    logger.info(f"Blob container '{blob_container_name}' not found. Creating...")
-                    container_client.create_container()
-                    logger.info(f"Blob container '{blob_container_name}' created.")
-                clients['blob_container_client'] = container_client # Assign the specific container client
-            except Exception as e:
-                logger.error(f"Failed to initialize Azure Blob Storage for container '{blob_container_name}': {e}", exc_info=True)
-                clients['blob_service_client'] = None
-                clients['blob_container_client'] = None
+        # --- Blob Service Client ---
+        try:
+            # Store directly on self
+            self.blob_service_client = BlobServiceClient.from_connection_string(conn_str)
+            logger.info("BlobServiceClient initialized.")
+        except Exception as e:
+             logger.error(f"Failed to initialize BlobServiceClient: {e}", exc_info=True)
+             return # Stop if service client fails
+
+        # --- Specific Container Clients ---
+        if self.blob_service_client:
+            image_container_name = self.config.get('AZURE_IMAGES_CONTAINER_NAME', 'images')
+            audio_container_name = self.config.get('AZURE_AUDIO_CONTAINER_NAME', 'audio')
+
+            # Store results of helper directly on self
+            self.image_container_client = self._init_container(self.blob_service_client, image_container_name)
+            self.audio_container_client = self._init_container(self.blob_service_client, audio_container_name)
         else:
-             logger.warning("Skipping Blob Storage initialization because AZURE_STORAGE_CONTAINER_NAME is not set.")
+             logger.error("Cannot initialize container clients because BlobServiceClient failed.")
 
 
-        # --- File Share ---
-        if file_share_name: # Only proceed if file share name is set
+        # --- File Share Client (Optional) ---
+        file_share_name = self.config.get('AZURE_FILE_SHARE_NAME', 'story-audio')
+        if file_share_name:
             try:
-                share_client = ShareClient.from_connection_string(conn_str=conn_str, share_name=file_share_name)
-                logger.info(f"ShareClient created for share '{file_share_name}'. Attempting to access properties...")
+                share_client_instance = ShareClient.from_connection_string(conn_str=conn_str, share_name=file_share_name)
+                logger.info(f"ShareClient created for share '{file_share_name}'. Checking existence...")
                 try:
-                    share_client.get_share_properties() # Try getting properties to check existence
+                    share_client_instance.get_share_properties()
                     logger.info(f"File share '{file_share_name}' already exists.")
                 except ResourceNotFoundError:
                     logger.info(f"File share '{file_share_name}' not found. Creating...")
-                    share_client.create_share()
+                    share_client_instance.create_share()
                     logger.info(f"File share '{file_share_name}' created.")
-
-                clients['share_client'] = share_client # Assign client if successful
-
-            except ResourceExistsError: # Should ideally not be hit with the check above, but keep for safety
-                 logger.info(f"File share '{file_share_name}' already exists (caught ResourceExistsError during create).")
-                 if 'share_client' not in clients or not clients['share_client']:
-                     clients['share_client'] = ShareClient.from_connection_string(conn_str=conn_str, share_name=file_share_name)
-
+                # Store directly on self
+                self.share_client = share_client_instance
             except Exception as e:
                 logger.error(f"Failed to initialize Azure File Share '{file_share_name}': {e}", exc_info=True)
-                clients['share_client'] = None # Ensure client is None on any failure
+                self.share_client = None # Ensure it's None on failure
         else:
              logger.warning("Skipping File Share initialization because AZURE_FILE_SHARE_NAME is not set.")
 
-
-        logger.info(f"Finished Azure Storage initialization. Blob Client Ready: {bool(clients['blob_container_client'])}, Share Client Ready: {bool(clients['share_client'])}")
-        return clients
+        # Logging moved to create_app after this method finishes
+        logger.info("Finished Azure Storage initialization method.")
+        # No return needed
 
     # --- Service Methods ---
 
     def generate_story(self, theme, characters, age_group):
+        # ... (no changes needed in this method's logic) ...
         logger.info(f"Generating story - Theme: {theme}, Age: {age_group}")
         if not self.text_client:
             logger.error("Cannot generate story: Azure OpenAI text client not initialized.")
-            # Provide a more user-friendly error message if possible
             return "I'm sorry, the story generation service is currently unavailable. Please try again later."
         try:
             deployment = self.config.get('AZURE_OPENAI_DEPLOYMENT_NAME')
@@ -207,14 +219,15 @@ class AzureServices:
             return story_content
         except Exception as e:
             logger.error(f"Error during OpenAI API call for story generation: {e}", exc_info=True)
-            # Consider more specific error handling if needed (e.g., rate limits, auth errors)
             return f"Sorry, an error occurred while writing the story: {str(e)}"
 
+
     def generate_illustration(self, title, theme, characters, age_group):
+        # ... (no changes needed in this method's logic) ...
         logger.info(f"Generating illustration for title: '{title}'")
         if not self.dalle_client:
             logger.error("Cannot generate illustration: Azure DALL-E client not initialized.")
-            return None # Indicate failure clearly
+            return None
 
         try:
             deployment = self.config.get('AZURE_DALLE_DEPLOYMENT_NAME')
@@ -227,53 +240,100 @@ class AzureServices:
             logger.info(f"Using DALL-E deployment: {deployment}")
 
             response = self.dalle_client.images.generate(
-                model=deployment, # For DALL-E 3 on Azure, model is the deployment name
+                model=deployment,
                 prompt=prompt,
                 n=1,
-                size="1024x1024" # Check if your deployment supports this size
+                size="1024x1024"
             )
 
             image_url = response.data[0].url
-            logger.info(f"Illustration generated successfully: {image_url[:60]}...")
-            return image_url
+            logger.info(f"Illustration generated successfully (temp URL): {image_url[:60]}...")
+            return image_url # Return the temporary URL
         except Exception as e:
             logger.error(f"DALL·E illustration generation failed: {e}", exc_info=True)
-            # You might want to return a placeholder URL or None
-            # return "/static/placeholder.png"
-            return None # Indicate failure
+            return None
+
 
     def text_to_speech(self, text):
+        # ... (no changes needed in this method's logic) ...
         logger.info(f"Generating speech for text length: {len(text)}")
         if not self.speech_config:
              logger.error("Cannot generate speech: Azure Speech Config not initialized.")
              return None
 
-        # Using audio_data_stream for in-memory synthesis
-        synthesizer = speechsdk.SpeechSynthesizer(speech_config=self.speech_config, audio_config=None) # None -> In-memory stream
+        synthesizer = speechsdk.SpeechSynthesizer(speech_config=self.speech_config, audio_config=None)
 
-        # Basic text length check (Azure limits are more complex, depend on factors)
         if len(text) > 5000:
-            text = text[:5000] + "..." # Truncate and indicate
+            text = text[:5000] + "..."
             logger.warning("Text truncated for speech synthesis (>5000 chars approx limit)")
 
         try:
             logger.info("Calling speak_text_async...")
-            result = synthesizer.speak_text_async(text).get() # Synchronously wait for result
+            result = synthesizer.speak_text_async(text).get()
             logger.info(f"Speech synthesis result reason: {result.reason}")
 
             if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
                 logger.info("Speech synthesis successful.")
-                return result.audio_data # Return the raw audio bytes
+                return result.audio_data
             elif result.reason == speechsdk.ResultReason.Canceled:
                 cancellation_details = result.cancellation_details
                 logger.error(f"Speech synthesis canceled: {cancellation_details.reason}")
                 if cancellation_details.reason == speechsdk.CancellationReason.Error:
                     logger.error(f"Cancellation Error details: {cancellation_details.error_details}")
                 return None
-            else: # Should not happen unless SDK adds new reasons
+            else:
                  logger.error(f"Speech synthesis failed with unexpected reason: {result.reason}")
                  return None
 
         except Exception as e:
              logger.error(f"Exception during speech synthesis: {e}", exc_info=True)
              return None
+
+
+    # --- Blob Upload Helper Methods ---
+    def upload_blob_from_url(self, container_client, blob_name, source_url):
+        """Downloads content from a URL and uploads it as a blob."""
+        if not container_client:
+            logger.error(f"Cannot upload blob '{blob_name}', container client is not available.")
+            return None
+        logger.info(f"Downloading from {source_url[:50]}... to upload as {blob_name} in container '{container_client.container_name}'")
+        try:
+            response = requests.get(source_url, stream=True, timeout=30)
+            response.raise_for_status()
+
+            content_type = response.headers.get('content-type', 'application/octet-stream')
+            logger.info(f"Detected content type: {content_type}")
+
+            blob_client = container_client.get_blob_client(blob_name)
+            blob_client.upload_blob(
+                response.raw,
+                overwrite=True,
+                content_settings=ContentSettings(content_type=content_type)
+            )
+            logger.info(f"Successfully uploaded {blob_name} to container {container_client.container_name}.")
+            return blob_client.url
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Failed to download from URL {source_url}: {e}", exc_info=True)
+            return None
+        except Exception as e:
+            logger.error(f"Failed to upload blob {blob_name} from URL: {e}", exc_info=True)
+            return None
+
+    def upload_blob_data(self, container_client, blob_name, data, content_type):
+        """Uploads byte data as a blob."""
+        if not container_client:
+             logger.error(f"Cannot upload blob '{blob_name}', container client is not available.")
+             return None
+        logger.info(f"Uploading data as blob '{blob_name}' (size: {len(data)} bytes) to container {container_client.container_name}")
+        try:
+            blob_client = container_client.get_blob_client(blob_name)
+            blob_client.upload_blob(
+                data,
+                overwrite=True,
+                content_settings=ContentSettings(content_type=content_type)
+                )
+            logger.info(f"Successfully uploaded {blob_name} to container {container_client.container_name}.")
+            return blob_client.url
+        except Exception as e:
+            logger.error(f"Failed to upload blob data {blob_name}: {e}", exc_info=True)
+            return None
