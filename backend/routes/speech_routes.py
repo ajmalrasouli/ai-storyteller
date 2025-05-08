@@ -1,6 +1,7 @@
 from flask import Blueprint, request, send_file, current_app, make_response # Import current_app, make_response
 from flask_cors import CORS
 import io
+from backend.services.azure_services import AzureServices
 
 bp = Blueprint('speech', __name__)
 # CORS handled globally in create_app for /api/*, or keep specific here if needed

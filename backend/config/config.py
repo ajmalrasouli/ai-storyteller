@@ -3,6 +3,7 @@
 import os
 from dotenv import load_dotenv
 import sys # For printing to stderr
+from backend.extensions import db
 
 # Determine the base directory of the 'backend' folder
 backend_dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))

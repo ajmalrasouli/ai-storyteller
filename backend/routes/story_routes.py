@@ -1,9 +1,9 @@
 # backend/routes/story_routes.py
 
 from flask import Blueprint, request, jsonify, current_app
-# --- Use ABSOLUTE IMPORTS ---
-from models.models import Story, User
-from extensions import db
+# --- Use ABSOLUTE IMPORTS relative to /app ---
+from backend.models.models import Story, User
+from backend.extensions import db
 # ---------------------------
 import json
 import traceback

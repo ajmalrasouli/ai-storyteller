@@ -2,8 +2,8 @@
 
 from flask import Blueprint, request, jsonify, current_app
 # --- Use ABSOLUTE IMPORTS ---
-from models.models import User
-from extensions import db
+from backend.models.models import User
+from backend.extensions import db
 # ---------------------------
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt

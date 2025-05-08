@@ -7,12 +7,11 @@ from flask_cors import CORS
 from flask_executor import Executor
 
 # --- Use ABSOLUTE IMPORTS relative to /app ---
-from extensions import db, migrate
-from services.azure_services import AzureServices
-from routes import story_routes, auth_routes, speech_routes, health_routes
-# Assumes config.py is in /app/config/config.py
-from config.config import Config
-
+from backend.extensions import db, migrate
+from backend.services.azure_services import AzureServices
+from backend.routes import story_routes, auth_routes, speech_routes, health_routes
+from backend.models.models import Story, User
+from backend.config.config import Config
 executor = Executor()
 
 # Use the imported Config class as the default
