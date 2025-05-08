@@ -7,13 +7,6 @@ Create Date: 2025-04-27
 from alembic import op
 import sqlalchemy as sa
 
-# Edit the initial migration file
-echo "revision = '237d19008a5f'" | tee -a /app/migrations/versions/237d19008a5f_initial_migration.py
-echo "down_revision = None" | tee -a /app/migrations/versions/237d19008a5f_initial_migration.py
-echo "branch_labels = None" | tee -a /app/migrations/versions/237d19008a5f_initial_migration.py
-echo "depends_on = None" | tee -a /app/migrations/versions/237d19008a5f_initial_migration.py
-
-
 def upgrade():
     with op.batch_alter_table('story', schema=None) as batch_op:
         batch_op.drop_column('user_id')
