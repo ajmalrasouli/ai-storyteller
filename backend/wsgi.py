@@ -3,7 +3,7 @@ import os
 import sys
 
 # Absolute import is correct here when run by Gunicorn in /app
-from create_app import create_app
+from .create_app import create_app
 
 print("wsgi.py: Calling create_app()...", file=sys.stderr)
 app = create_app()

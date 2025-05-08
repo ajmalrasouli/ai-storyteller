@@ -6,8 +6,9 @@ from flask import Flask
 from flask_cors import CORS
 from flask_executor import Executor
 
-# --- Use ABSOLUTE IMPORTS relative to /app ---
+# --- Use RELATIVE IMPORTS relative to /app ---
 from backend.extensions import db, migrate
+from backend.config.config import Config
 from backend.services.azure_services import AzureServices
 from backend.routes import story_routes, auth_routes, speech_routes, health_routes
 from backend.models.models import Story, User
@@ -18,6 +19,10 @@ executor = Executor()
 def create_app(config_object=Config): # Pass the class directly
     """Flask application factory."""
     app = Flask(__name__)
+    # Set database configuration before initializing extensions
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    
     # Use the config_object passed (defaults to the imported Config)
     app.logger.info(f"Attempting to load config from object: {config_object.__name__}")
     try:
@@ -25,6 +30,10 @@ def create_app(config_object=Config): # Pass the class directly
         app.logger.info("Configuration loaded successfully.")
     except Exception as e:
          app.logger.error(f"An unexpected error occurred loading config: {e}", exc_info=True)
+
+    # Set port configuration
+    app.config['PORT'] = os.getenv('FLASK_RUN_PORT', 5000)
+    app.config['HOST'] = os.getenv('FLASK_RUN_HOST', '0.0.0.0')
 
     # --- Configure Logging ---
     log_level = logging.DEBUG if app.config.get('DEBUG') else logging.INFO
@@ -69,3 +78,7 @@ def create_app(config_object=Config): # Pass the class directly
     app.logger.info("Blueprints registered.")
     app.logger.info("Flask app creation completed.")
     return app
+
+if __name__ == '__main__':
+    app = create_app()
+    app.run(host=app.config['HOST'], port=app.config['PORT'], debug=True)

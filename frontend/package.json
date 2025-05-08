@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "npm-run-all --parallel dev:frontend dev:backend",
     "dev:frontend": "vite --open",
-    "dev:backend": "cd .. && python backend/app.py",
+    "dev:backend": "cd .. && python -m backend.create_app",
     "build": "tsc && vite build",
     "lint": "tsc -noEmit --pretty false && vite build"
   },
