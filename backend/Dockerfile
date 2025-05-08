@@ -49,4 +49,5 @@ VOLUME /data
 EXPOSE 5000
 
 # Run the application using Gunicorn (Keep your original CMD)
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "wsgi:app"]
+#CMD ["gunicorn", "--bind", "0.0.0.0:5000", "wsgi:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--timeout", "120", "wsgi:app"]
