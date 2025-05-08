@@ -39,7 +39,7 @@ Curious how AI Storyteller works in action? Watch a quick walkthrough of the pla
 - **DevOps best practices**: CI/CD, Dockerized backend, cloud-native deployment.
 - **Engaging, accessible, and educational for kids.**
 
----
+----
 
 ## 🎨 Colorful Architecture Overview
 
