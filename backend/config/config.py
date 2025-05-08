@@ -32,9 +32,10 @@ class Config:
     SQLITE_DB_PATH = os.path.join(SQLITE_DB_FOLDER, 'app.db')
 
     # Prioritize external DB URL, fallback to persistent SQLite path inside container
+    # USE explicit absolute path for SQLite within container file system
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
                               os.environ.get('SQLALCHEMY_DATABASE_URI') or \
-                              f"sqlite:///{SQLITE_DB_PATH}" # Fallback to path inside /data mount
+                              f"sqlite:////{SQLITE_DB_PATH}" # Use //// for absolute path
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
@@ -46,12 +47,13 @@ class Config:
             "connect_args": {
                 "timeout": 30  # Increase timeout to 30 seconds (default is 5)
                 }
+            # Potentially add WAL mode - uncomment if timeout alone isn't enough
+            # "execution_options": {"sqlite_journal_mode": "WAL"} # May require app changes too
         }
         print("[Config] Applying SQLite specific engine options (timeout=30).", file=sys.stderr)
     else:
         SQLALCHEMY_ENGINE_OPTIONS = {} # Use empty dict if not SQLite
     # -------------------------------------------------------
-
 
     # --- Azure OpenAI (Chat/Text) ---
     AZURE_OPENAI_API_KEY = os.environ.get('AZURE_OPENAI_API_KEY')
