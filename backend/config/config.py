@@ -5,11 +5,11 @@ from dotenv import load_dotenv
 import sys # For printing to stderr
 
 # Determine the base directory of the 'backend' folder
-# __file__ is config/config.py -> dirname is config/ -> parent is backend/
 backend_dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
 dotenv_path = os.path.join(backend_dir, '.env')
 
 # --- .env Loading ---
+# This still runs, useful for local development where .env might define DATABASE_URL
 print(f"Attempting to load .env from: {dotenv_path}", file=sys.stderr)
 if os.path.exists(dotenv_path):
     loaded = load_dotenv(dotenv_path)
@@ -23,37 +23,24 @@ else:
 class Config:
     print("Initializing Config class...", file=sys.stderr)
     # --- General Flask Settings ---
-    SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or 'a_very_strong_default_secret_key_for_dev_only'
+    SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or 'a_very_strong_default_secret_key_for_dev_only' # Use strong secret in production env var
     DEBUG = os.environ.get('FLASK_DEBUG', 'False').lower() in ('true', '1', 't')
 
     # --- Database ---
-    # Define a persistent storage path INSIDE the container (to be mounted)
-    SQLITE_DB_FOLDER = "/data" # Standard location for mounted data in containers
-    SQLITE_DB_PATH = os.path.join(SQLITE_DB_FOLDER, 'app.db')
-
-    # Prioritize external DB URL, fallback to persistent SQLite path inside container
-    # USE explicit absolute path for SQLite within container file system
+    # ONLY look for external DATABASE_URL or SQLALCHEMY_DATABASE_URI set in the environment
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-                              os.environ.get('SQLALCHEMY_DATABASE_URI') or \
-                              f"sqlite:////{SQLITE_DB_PATH}" # Use //// for absolute path
+                              os.environ.get('SQLALCHEMY_DATABASE_URI')
+
+    # CRITICAL: Ensure one of the above is set in the deployment environment (ACA)
+    if not SQLALCHEMY_DATABASE_URI:
+        print("FATAL ERROR: DATABASE_URL or SQLALCHEMY_DATABASE_URI not set in environment!", file=sys.stderr)
+        # In a real app, you might want to raise an error here to prevent startup without a DB
+        # raise ValueError("Database connection string not configured in environment.")
+        # For now, we'll let it potentially fail later if code tries to use db without URI
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-
-    # --- ADD SQLALCHEMY ENGINE OPTIONS for SQLite Timeout ---
-    # Only apply these options if we are actually using the SQLite fallback
-    # This prevents applying SQLite specific options if DATABASE_URL for PostgreSQL is set
-    if SQLALCHEMY_DATABASE_URI.startswith('sqlite:'):
-        SQLALCHEMY_ENGINE_OPTIONS = {
-            "connect_args": {
-                "timeout": 30  # Increase timeout to 30 seconds (default is 5)
-                }
-            # Potentially add WAL mode - uncomment if timeout alone isn't enough
-            # "execution_options": {"sqlite_journal_mode": "WAL"} # May require app changes too
-        }
-        print("[Config] Applying SQLite specific engine options (timeout=30).", file=sys.stderr)
-    else:
-        SQLALCHEMY_ENGINE_OPTIONS = {} # Use empty dict if not SQLite
-    # -------------------------------------------------------
+    # No specific engine options needed for PostgreSQL via Railway by default
+    SQLALCHEMY_ENGINE_OPTIONS = {}
 
     # --- Azure OpenAI (Chat/Text) ---
     AZURE_OPENAI_API_KEY = os.environ.get('AZURE_OPENAI_API_KEY')
@@ -77,17 +64,20 @@ class Config:
     # --- Specific Container/Share Names ---
     AZURE_IMAGES_CONTAINER_NAME = os.environ.get('AZURE_IMAGES_CONTAINER_NAME', 'images')
     AZURE_AUDIO_CONTAINER_NAME = os.environ.get('AZURE_AUDIO_CONTAINER_NAME', 'audio')
-    AZURE_FILE_SHARE_NAME = os.environ.get('AZURE_FILE_SHARE_NAME', 'story-audio') # Keep if file share used elsewhere
+    AZURE_FILE_SHARE_NAME = os.environ.get('AZURE_FILE_SHARE_NAME', 'story-audio') # Keep if used
 
     # --- OpenAI (if using the direct OpenAI API as well) ---
     OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
 
-    # Executor settings (if you use Flask-Executor)
+    # Executor settings
     EXECUTOR_TYPE = 'thread'
     EXECUTOR_MAX_WORKERS = int(os.environ.get('EXECUTOR_MAX_WORKERS', 5))
 
     # --- Log effective settings ---
-    print(f"[Config] Effective SQLALCHEMY_DATABASE_URI: {SQLALCHEMY_DATABASE_URI}", file=sys.stderr)
+    # Changed log for database URI
+    print(f"[Config] DATABASE_URL set in environment: {bool(os.environ.get('DATABASE_URL'))}", file=sys.stderr)
+    print(f"[Config] SQLALCHEMY_DATABASE_URI set in environment: {bool(os.environ.get('SQLALCHEMY_DATABASE_URI'))}", file=sys.stderr)
+    print(f"[Config] Effective DB URI will be used by SQLAlchemy: {bool(SQLALCHEMY_DATABASE_URI)}", file=sys.stderr)
     print(f"[Config] AZURE_OPENAI_ENDPOINT set: {bool(AZURE_OPENAI_ENDPOINT)}", file=sys.stderr)
     print(f"[Config] AZURE_SPEECH_REGION set: {bool(AZURE_SPEECH_REGION)}", file=sys.stderr)
     print(f"[Config] AZURE_STORAGE_CONNECTION_STRING set: {bool(AZURE_STORAGE_CONNECTION_STRING)}", file=sys.stderr)
