@@ -55,19 +55,23 @@ flowchart LR
     end
     subgraph Docker Hub
         style DH fill:#e3f2fd,stroke:#2496ED,stroke-width:2px
-        DH[("<b>Docker Image</b><br/>🐳")]
+        DH["(<b>Docker Image</b><br/>🐳)"]
+    end
+    subgraph Railway
+        style DB fill:#f5f5f5,stroke:#000000,stroke-width:2px
+        DB["<b>PostgreSQL</b>"]
     end
     FE -- "<b style='color:#0078D4;'>API Requests<br/>(VITE_API_URL)</b>" --> BE
     BE -- "<b style='color:#2496ED;'>Pulls Image</b>" --> DH
     BE -- "AI/Media APIs" --> OA["<b>Azure OpenAI<br/>🎓</b>"]
     BE -- "Image Gen" --> DALLE["<b>Azure DALL-E<br/>🎨</b>"]
     BE -- "Speech" --> SPEECH["<b>Azure Speech<br/>🗣️</b>"]
-    BE -- "DB" --> DB[("<b>SQLite</b>")]
+    BE -- "DB" --> DB
 ```
 
 ---
 
-## 🌍 Two-Server Cloud Architecture
+## Two-Server Cloud Architecture
 
 | Layer     | Service                        | Description                                                                                   |
 |-----------|-------------------------------|-----------------------------------------------------------------------------------------------|
@@ -75,7 +79,7 @@ flowchart LR
 | <span style="color:#008272">Backend</span>   | **Azure Container Apps (ACA)** | Flask REST API, scalable, pulls Docker image from Docker Hub                                  |
 | <span style="color:#2496ED">Image</span>     | **Docker Hub**                 | Stores and delivers the backend container image                                               |
 | <span style="color:#10a37f">AI/Media</span>  | **Azure OpenAI, DALL-E, Speech** | Power story generation, illustration, and narration                                           |
-| <span style="color:#6D4C41">Database</span>  | **SQLite (in ACA)**            | Stores stories, users, favorites                                                              |
+| <span style="color:#6D4C41">Database</span>  | **Railway PostgreSQL**            | Stores stories, users, favorites, and preferences in a scalable cloud database                                                              |
 
 ---
 
@@ -84,7 +88,7 @@ flowchart LR
 - **Frontend** (Azure SWA) calls **Backend API** (ACA) using the `VITE_API_URL` environment variable.
 - **Backend** (ACA) is deployed as a Docker container, image managed on **Docker Hub**.
 - **Backend** calls Azure AI services for story content, images, and narration.
-- **Backend** stores persistent data in SQLite.
+- **Backend** stores persistent data in Railway PostgreSQL.
 
 ---
 
@@ -125,7 +129,7 @@ sequenceDiagram
     participant Backend as Azure ACA (Docker)
     participant DockerHub
     participant AzureAI as Azure AI Services
-    participant DB as SQLite
+    participant DB as Railway PostgreSQL
 
     User->>Frontend: Use App (UI)
     Frontend->>Backend: API Requests (Stories, Images, Speech)
@@ -259,11 +263,11 @@ ai-storyteller/
 ## Tech Stack
 
 - Frontend: React + TypeScript
-- Backend: Flask + SQLAlchemy
+- Backend: Flask + SQLAlchemy (with Railway PostgreSQL)
 - AI: Azure OpenAI (GPT-4)
 - Image Generation: Azure DALL-E 3
 - Text-to-Speech: Azure Speech Service with premium voice selection
-- Database: SQLite
+- Database: Railway PostgreSQL
 - Styling: CSS with inline styles for consistent rendering
 - Containerization: Docker
 
@@ -423,7 +427,7 @@ You can deploy the backend to Azure Container Apps for maximum flexibility, or u
 
 3. Create a `.env` file in the `backend` directory with your Azure credentials and database URL:
    ```bash
-   DATABASE_URL=sqlite:///stories.db
+   DATABASE_URL=postgresql://postgres:usYTCpwQbAcyTGoEyOGAefePDrpsyZdF@turntable.proxy.rlwy.net:14718/railway
    AZURE_OPENAI_API_KEY=your_azure_openai_api_key
    AZURE_OPENAI_ENDPOINT=your_azure_openai_endpoint
    AZURE_OPENAI_DEPLOYMENT_NAME=your_azure_openai_deployment_name
@@ -580,7 +584,7 @@ The project includes several test scripts:
 
 ## Environment Variables
 
-- `DATABASE_URL`: SQLite database URL
+- `DATABASE_URL`: Railway PostgreSQL database URL
 - `AZURE_OPENAI_API_KEY`: Your Azure OpenAI API key
 - `AZURE_OPENAI_ENDPOINT`: Your Azure OpenAI endpoint URL
 - `AZURE_OPENAI_DEPLOYMENT_NAME`: Your Azure OpenAI deployment name
