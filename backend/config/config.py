@@ -40,8 +40,17 @@ class Config:
         # For now, we'll let it potentially fail later if code tries to use db without URI
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    # No specific engine options needed for PostgreSQL via Railway by default
-    SQLALCHEMY_ENGINE_OPTIONS = {}
+    # Configure connection timeout settings for PostgreSQL
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'connect_args': {
+            'connect_timeout': 30,  # Increased to 30 seconds
+            'options': '-c statement_timeout=30000 -c tcp_keepalives_idle=60 -c tcp_keepalives_interval=10 -c tcp_keepalives_count=5'
+        },
+        'pool_size': 5,
+        'max_overflow': 10,
+        'pool_timeout': 30,
+        'pool_recycle': 3600
+    }
 
     # --- Azure OpenAI (Chat/Text) ---
     AZURE_OPENAI_API_KEY = os.environ.get('AZURE_OPENAI_API_KEY')

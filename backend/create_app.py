@@ -20,7 +20,13 @@ def create_app(config_object=Config): # Pass the class directly
     """Flask application factory."""
     app = Flask(__name__)
     # Set database configuration before initializing extensions
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+    # Update the connection string to use the correct port (5432)
+    db_url = os.getenv('DATABASE_URL', 'postgresql://postgres:usYTCpwQbAcyTGoEyOGAefePDrpsyZdF@turntable.proxy.rlwy.net:14718/railway')
+    if db_url:
+        # Replace the port number if it's not already 5432
+        if ':14718/' in db_url:
+            db_url = db_url.replace(':14718/', ':5432/')
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_url
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
     # Use the config_object passed (defaults to the imported Config)

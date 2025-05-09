@@ -11,7 +11,16 @@ import uuid     # For unique blob names
 # Use Azure SDKs
 from openai import AzureOpenAI # For DALL-E and Chat
 import azure.cognitiveservices.speech as speechsdk
-from azure.storage.blob import BlobServiceClient, ContentSettings # Added ContentSettings
+from azure.storage.blob import (
+    BlobServiceClient,
+    ContainerClient,
+    ContentSettings,
+    generate_container_sas,
+    ContainerSasPermissions,
+    generate_blob_sas,
+    BlobSasPermissions,
+)
+from datetime import datetime, timedelta # Added ContentSettings
 from azure.storage.fileshare import ShareClient
 # Import the specific exceptions
 from azure.core.exceptions import ResourceExistsError, ResourceNotFoundError, AzureError
@@ -125,14 +134,32 @@ class AzureServices:
                 logger.info(f"Checking properties of blob container '{container_name}'...")
                 container_client.get_container_properties()
                 logger.info(f"Blob container '{container_name}' already exists.")
+                
+                # Generate SAS token for container access
+                logger.info(f"Generating SAS token for container '{container_name}'")
+                try:
+                    sas_token = generate_container_sas(
+                        account_name=self.blob_service_client.account_name,
+                        container_name=container_name,
+                        account_key=self.blob_service_client.credential.account_key,
+                        permission=ContainerSasPermissions(read=True, list=True),
+                        expiry=datetime.utcnow() + timedelta(hours=24)
+                    )
+                    logger.info(f"SAS token generated for container '{container_name}'")
+                except Exception as e:
+                    logger.error(f"Failed to generate SAS token for container '{container_name}': {e}", exc_info=True)
+                    raise
             except ResourceNotFoundError:
                 logger.info(f"Creating blob container '{container_name}'...")
                 container_client.create_container()
                 logger.info(f"Blob container '{container_name}' created.")
+            except Exception as e:
+                logger.error(f"Failed to set container '{container_name}' access policy: {e}", exc_info=True)
+            
             return container_client
         except Exception as e:
-                logger.error(f"Failed to initialize blob container '{container_name}': {e}", exc_info=True)
-                return None
+            logger.error(f"Failed to initialize blob container '{container_name}': {e}", exc_info=True)
+            return None
 
     def _init_azure_storage(self):
         """Initializes Azure Blob and File Share clients and stores them as instance attributes."""
@@ -301,17 +328,35 @@ class AzureServices:
             response = requests.get(source_url, stream=True, timeout=30)
             response.raise_for_status()
 
-            content_type = response.headers.get('content-type', 'application/octet-stream')
+            content_type = response.headers.get('content-type', 'image/png')
             logger.info(f"Detected content type: {content_type}")
 
+            # Read the content into memory
+            image_data = response.content
+            
             blob_client = container_client.get_blob_client(blob_name)
             blob_client.upload_blob(
-                response.raw,
+                image_data,
                 overwrite=True,
                 content_settings=ContentSettings(content_type=content_type)
             )
-            logger.info(f"Successfully uploaded {blob_name} to container {container_client.container_name}.")
-            return blob_client.url
+            
+            # Generate SAS token for the blob that lasts for 24 hours
+            try:
+                sas_token = generate_blob_sas(
+                    account_name=self.blob_service_client.account_name,
+                    container_name=container_client.container_name,
+                    blob_name=blob_name,
+                    account_key=self.blob_service_client.credential.account_key,
+                    permission=BlobSasPermissions(read=True),
+                    expiry=datetime.utcnow() + timedelta(hours=24)
+                )
+            except Exception as e:
+                logger.error(f"Failed to generate SAS token for blob {blob_name}: {e}", exc_info=True)
+                return None
+            
+            # Return the URL with the SAS token
+            return f"https://{self.blob_service_client.account_name}.blob.core.windows.net/{container_client.container_name}/{blob_name}?{sas_token}"
         except requests.exceptions.RequestException as e:
             logger.error(f"Failed to download from URL {source_url}: {e}", exc_info=True)
             return None

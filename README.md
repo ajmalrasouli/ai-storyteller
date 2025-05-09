@@ -199,6 +199,24 @@ ai-storyteller/
 | Variable           | Where              | Purpose                                |
 |--------------------|--------------------|----------------------------------------|
 | `VITE_API_URL`     | Azure SWA, Frontend| URL of backend API                     |
+| `DATABASE_URL`     | Backend            | PostgreSQL connection string           |
+| `AZURE_OPENAI_KEY` | Backend            | Azure OpenAI API key                   |
+| `AZURE_SPEECH_KEY` | Backend            | Azure Speech Service API key           |
+| `AZURE_STORAGE_KEY`| Backend            | Azure Storage Account key              |
+| `AZURE_STORAGE_CONN`| Backend           | Azure Storage connection string        |
+
+### Database Configuration
+- **Host**: turntable.proxy.rlwy.net
+- **Port**: 5432
+- **Database**: railway
+- **Connection Pooling**: Enabled with 5 connections
+- **Timeout Settings**: 30s connect timeout, 30s statement timeout
+- **Keepalive Settings**: Enabled with 60s idle, 10s interval, 5 retries
+
+### Azure Blob Storage
+- **Access**: Uses SAS tokens for secure blob access
+- **Permissions**: Proper BlobSasPermissions enum usage
+- **Security**: No public access, SAS token-based access only
 | `DATABASE_URL`     | Backend/ACA        | SQLite DB connection                   |
 | `AZURE_OPENAI_KEY` | Backend/ACA        | Azure OpenAI API Key                   |
 | `AZURE_DALLE_KEY`  | Backend/ACA        | Azure DALL-E API Key                   |
