@@ -101,6 +101,14 @@ def create_story():
             data['age_group']
         )
 
+        # 4. Generate audio for the story
+        current_app.logger.info("Generating audio for the story...")
+        audio_url = azure_services.text_to_speech(story_content, None)  # Pass None since story doesn't exist yet
+        if audio_url:
+            current_app.logger.info(f"Audio generated and uploaded successfully: {audio_url}")
+        else:
+            current_app.logger.warning("Failed to generate or upload audio")
+
         # 4. Download image and upload to Blob Storage
         if temp_image_url:
             if azure_services.image_container_client:
@@ -129,6 +137,7 @@ def create_story():
             characters=json.dumps(data['characters']),
             age_group=data['age_group'],
             image_url=persistent_image_url,
+            audio_url=audio_url,
             is_favorite=data.get('isFavorite', False)
         )
         db.session.add(story)

@@ -191,6 +191,14 @@ class AzureServices:
         else:
              logger.error("Cannot initialize container clients because BlobServiceClient failed.")
 
+        # Create containers if they don't exist
+        for container_name in ['images', 'audio']:
+            try:
+                container_client = self.blob_service_client.get_container_client(container_name)
+                if not container_client.exists():
+                    container_client.create_container()
+            except Exception as e:
+                logger.error(f"Error creating container {container_name}: {str(e)}")
 
         # --- File Share Client (Optional) ---
         file_share_name = self.config.get('AZURE_FILE_SHARE_NAME', 'story-audio')
@@ -281,12 +289,16 @@ class AzureServices:
             return None
 
 
-    def text_to_speech(self, text):
-        # ... (no changes needed in this method's logic) ...
+    def text_to_speech(self, text, story_id):
+        """Convert text to speech and upload the audio to Azure Blob Storage."""
         logger.info(f"Generating speech for text length: {len(text)}")
         if not self.speech_config:
              logger.error("Cannot generate speech: Azure Speech Config not initialized.")
              return None
+
+        # If story_id is None, generate a temporary UUID
+        if story_id is None:
+            story_id = str(uuid.uuid4())
 
         synthesizer = speechsdk.SpeechSynthesizer(speech_config=self.speech_config, audio_config=None)
 
@@ -301,7 +313,8 @@ class AzureServices:
 
             if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
                 logger.info("Speech synthesis successful.")
-                return result.audio_data
+                # Upload audio to Azure Blob Storage
+                return self.upload_audio(result.audio_data, story_id)
             elif result.reason == speechsdk.ResultReason.Canceled:
                 cancellation_details = result.cancellation_details
                 logger.error(f"Speech synthesis canceled: {cancellation_details.reason}")
@@ -365,7 +378,7 @@ class AzureServices:
             return None
 
     def upload_blob_data(self, container_client, blob_name, data, content_type):
-        """Uploads byte data as a blob."""
+        """Uploads byte data as a blob and returns URL with SAS token."""
         if not container_client:
              logger.error(f"Cannot upload blob '{blob_name}', container client is not available.")
              return None
@@ -376,9 +389,43 @@ class AzureServices:
                 data,
                 overwrite=True,
                 content_settings=ContentSettings(content_type=content_type)
-                )
-            logger.info(f"Successfully uploaded {blob_name} to container {container_client.container_name}.")
-            return blob_client.url
+            )
+            
+            # Generate SAS token for the blob that lasts for 24 hours
+            sas_token = generate_blob_sas(
+                account_name=self.blob_service_client.account_name,
+                container_name=container_client.container_name,
+                blob_name=blob_name,
+                account_key=self.blob_service_client.credential.account_key,
+                permission=BlobSasPermissions(read=True),
+                expiry=datetime.utcnow() + timedelta(hours=24)
+            )
+            
+            # Return the URL with the SAS token
+            return f"https://{self.blob_service_client.account_name}.blob.core.windows.net/{container_client.container_name}/{blob_name}?{sas_token}"
+            
         except Exception as e:
             logger.error(f"Failed to upload blob data {blob_name}: {e}", exc_info=True)
+            return None
+
+    def upload_audio(self, audio_data, story_id):
+        """Upload audio data to Azure Blob Storage."""
+        if not self.audio_container_client:
+            logger.error("Cannot upload audio: Audio container client not initialized.")
+            return None
+            
+        try:
+            # Create unique blob name with story_id prefix
+            blob_name = f"{story_id}/{uuid.uuid4()}.mp3"
+            
+            # Upload audio data
+            return self.upload_blob_data(
+                self.audio_container_client,
+                blob_name,
+                audio_data,
+                'audio/mpeg'
+            )
+            
+        except Exception as e:
+            logger.error(f"Error uploading audio: {str(e)}")
             return None
