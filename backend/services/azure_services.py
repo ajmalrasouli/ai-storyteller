@@ -7,6 +7,7 @@ import traceback
 import io
 import requests # For downloading DALL-E image
 import uuid     # For unique blob names
+import json     # For JSON serialization
 
 # Use Azure SDKs
 from openai import AzureOpenAI # For DALL-E and Chat
@@ -49,6 +50,16 @@ class AzureServices:
         self.audio_container_client = None
         self.share_client = None # Keep if you still need file share access
         self._init_azure_storage() # This method now sets instance attributes
+
+        # Create stories container if it doesn't exist
+        try:
+            stories_container = self.blob_service_client.get_container_client('stories')
+            stories_container.create_container()
+            logger.info("Stories container created successfully")
+        except ResourceExistsError:
+            logger.info("Stories container already exists")
+        except Exception as e:
+            logger.error(f"Failed to create stories container: {e}", exc_info=True)
 
         logger.info("AzureServices class initialization finished.")
         # Logging client status now happens in create_app after initialization
@@ -406,6 +417,46 @@ class AzureServices:
             
         except Exception as e:
             logger.error(f"Failed to upload blob data {blob_name}: {e}", exc_info=True)
+            return None
+
+    def store_story(self, story_data):
+        """Store a story in Azure Blob Storage."""
+        try:
+            # Create a unique blob name for the story
+            story_id = str(uuid.uuid4())
+            blob_name = f"stories/{story_id}.json"
+            
+            # Get the blob client for the stories container
+            stories_container_client = self.blob_service_client.get_container_client('stories')
+            
+            # Convert story data to JSON and upload
+            story_json = json.dumps(story_data)
+            blob_client = stories_container_client.get_blob_client(blob_name)
+            
+            blob_client.upload_blob(
+                story_json,
+                overwrite=True,
+                content_settings=ContentSettings(content_type='application/json')
+            )
+            
+            # Generate SAS token for the story blob
+            sas_token = generate_blob_sas(
+                account_name=self.blob_service_client.account_name,
+                container_name='stories',
+                blob_name=blob_name,
+                account_key=self.blob_service_client.credential.account_key,
+                permission=BlobSasPermissions(read=True),
+                expiry=datetime.utcnow() + timedelta(hours=24)
+            )
+            
+            # Return the story ID and URL
+            return {
+                'id': story_id,
+                'url': f"https://{self.blob_service_client.account_name}.blob.core.windows.net/stories/{blob_name}?{sas_token}"
+            }
+            
+        except Exception as e:
+            logger.error(f"Error storing story in blob storage: {e}", exc_info=True)
             return None
 
     def upload_audio(self, audio_data, story_id):

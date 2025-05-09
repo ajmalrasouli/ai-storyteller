@@ -7,7 +7,7 @@ FROM python:3.10-slim-buster
 WORKDIR /app
 
 # Copy requirements file first for layer caching
-COPY requirements.txt .
+COPY backend/requirements.txt .
 
 # Install system dependencies needed by Python packages (Keep this section!)
 # Includes libraries for audio (libasound2, libopus0, libpulse0), SSL, etc.
@@ -50,4 +50,4 @@ EXPOSE 5000
 
 # Run the application using Gunicorn (Keep your original CMD)
 #CMD ["gunicorn", "--bind", "0.0.0.0:5000", "wsgi:app"]
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--timeout", "120", "wsgi:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--timeout", "120", "backend.wsgi:app"]

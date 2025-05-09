@@ -61,15 +61,44 @@ flowchart LR
         style DB fill:#f5f5f5,stroke:#000000,stroke-width:2px
         DB["<b>PostgreSQL</b>"]
     end
+    subgraph Azure Blob Storage
+        style ABS fill:#f3e5f5,stroke:#512DA8,stroke-width:2px
+        IMAGES["<b>Images</b><br/>🎨"]
+        AUDIO["<b>Audio</b><br/>🗣️"]
+        STORIES["<b>Stories</b><br/>📚"]
+    end
     FE -- "<b style='color:#0078D4;'>API Requests<br/>(VITE_API_URL)</b>" --> BE
     BE -- "<b style='color:#2496ED;'>Pulls Image</b>" --> DH
     BE -- "AI/Media APIs" --> OA["<b>Azure OpenAI<br/>🎓</b>"]
     BE -- "Image Gen" --> DALLE["<b>Azure DALL-E<br/>🎨</b>"]
     BE -- "Speech" --> SPEECH["<b>Azure Speech<br/>🗣️</b>"]
+    BE -- "Stores Data" --> ABS
     BE -- "DB" --> DB
 ```
 
 ---
+
+## 📚 Storage Implementation
+
+The application uses Azure Blob Storage for all data persistence:
+
+1. **Images** (`/images/illustrations/`)
+   - Generated illustrations from Azure DALL-E
+   - Stored with unique UUID filenames
+   - Accessible via SAS tokens for secure viewing
+
+2. **Audio** (`/audio/`)
+   - Generated speech from Azure Speech Service
+   - Stored with story-specific prefixes
+   - Accessible via SAS tokens for playback
+
+3. **Stories** (`/stories/`)
+   - Story metadata and content
+   - Stored as JSON files
+   - Each story has a unique UUID identifier
+   - Contains references to associated image and audio URLs
+
+All data is stored with proper content types and SAS tokens for secure access, ensuring scalability and reliability.
 
 ## Two-Server Cloud Architecture
 

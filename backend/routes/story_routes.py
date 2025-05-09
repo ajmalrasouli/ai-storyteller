@@ -9,6 +9,7 @@ import json
 import traceback
 import sys
 import uuid
+from datetime import datetime
 
 bp = Blueprint('stories', __name__)
 # CORS handled globally
@@ -30,19 +31,32 @@ def safe_json_loads(val):
 def get_stories():
     current_app.logger.info("GET /api/stories requested")
     try:
-        stories = Story.query.order_by(Story.created_at.desc()).all()
-        return jsonify([{
-            'id': story.id,
-            'title': story.title,
-            'content': story.content,
-            'theme': story.theme,
-            'characters': safe_json_loads(story.characters),
-            'ageGroup': story.age_group,
-            'isFavorite': story.is_favorite,
-            'imageUrl': story.image_url,
-            'audioUrl': story.audio_url,
-            'createdAt': story.created_at.isoformat() if story.created_at else None
-        } for story in stories])
+        # Get the stories container client
+        stories_container = current_app.azure_services.blob_service_client.get_container_client('stories')
+        
+        # List all blobs in the stories container
+        stories = []
+        for blob in stories_container.list_blobs():
+            # Download the story JSON
+            blob_client = stories_container.get_blob_client(blob.name)
+            story_json = blob_client.download_blob().readall().decode('utf-8')
+            story_data = json.loads(story_json)
+            
+            stories.append({
+                'id': blob.name.split('/')[-1].split('.')[0],  # Extract UUID from filename
+                'title': story_data['title'],
+                'content': story_data['content'],
+                'theme': story_data['theme'],
+                'characters': story_data['characters'],
+                'ageGroup': story_data['age_group'],
+                'isFavorite': story_data['is_favorite'],
+                'imageUrl': story_data['image_url'],
+                'audioUrl': story_data['audio_url'],
+                'createdAt': story_data['created_at']
+            })
+            
+        return jsonify(stories)
+        
     except Exception as e:
         current_app.logger.error(f"Error fetching stories: {e}", exc_info=True)
         return jsonify({'error': 'Failed to retrieve stories'}), 500
@@ -129,33 +143,38 @@ def create_story():
         else:
             current_app.logger.warning("Illustration generation failed or returned no URL.")
 
-        # 5. Create and save story to DB
-        story = Story(
-            title=title,
-            content=story_content,
-            theme=data['theme'],
-            characters=json.dumps(data['characters']),
-            age_group=data['age_group'],
-            image_url=persistent_image_url,
-            audio_url=audio_url,
-            is_favorite=data.get('isFavorite', False)
-        )
-        db.session.add(story)
-        db.session.commit()
-        current_app.logger.info(f"Story created successfully with ID: {story.id}")
+        # 5. Store story in Azure Blob Storage
+        story_data = {
+            'title': title,
+            'content': story_content,
+            'theme': data['theme'],
+            'characters': data['characters'],
+            'age_group': data['age_group'],
+            'image_url': persistent_image_url,
+            'audio_url': audio_url,
+            'created_at': datetime.utcnow().isoformat(),
+            'is_favorite': data.get('isFavorite', False)
+        }
+        
+        stored_story = azure_services.store_story(story_data)
+        if not stored_story:
+            current_app.logger.error("Failed to store story in blob storage")
+            return jsonify({'error': 'Failed to store story'}), 500
+            
+        current_app.logger.info(f"Story stored successfully with ID: {stored_story['id']}")
 
         # 6. Return response
         return jsonify({
-            'id': story.id,
-            'title': story.title,
-            'content': story.content,
-            'theme': story.theme,
-            'characters': safe_json_loads(story.characters),
-            'ageGroup': story.age_group,
-            'isFavorite': story.is_favorite,
-            'imageUrl': story.image_url,
-            'audioUrl': story.audio_url,
-            'createdAt': story.created_at.isoformat() if story.created_at else None
+            'id': stored_story['id'],
+            'title': title,
+            'content': story_content,
+            'theme': data['theme'],
+            'characters': data['characters'],
+            'ageGroup': data['age_group'],
+            'isFavorite': data.get('isFavorite', False),
+            'imageUrl': persistent_image_url,
+            'audioUrl': audio_url,
+            'createdAt': datetime.utcnow().isoformat()
         }), 201
 
     except Exception as e:
