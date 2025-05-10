@@ -70,8 +70,31 @@ class AzureServices:
         print(f"[DALLE] Using API version: {self.dalle_api_version}", file=sys.stderr)
         
         try:
-            # Create a more detailed, child-friendly prompt
-            prompt = f"Create a colorful, child-friendly, cartoon-style illustration for a children's story titled '{title}'. The story has theme: {theme} and features characters: {characters}. The illustration should be bright, engaging, and appropriate for {age_group} age group. Emphasize friendly interactions, no violence or scary elements; make it cute and playful for young children."
+            # Create a more detailed, child-friendly prompt with explicit safety instructions
+            prompt = f"""
+            Create a colorful, cartoon-style illustration for a children's story titled '{title}'. 
+            Theme: {theme}
+            Characters: {characters}
+            Age Group: {age_group}
+            
+            Important Instructions:
+            1. This is for a children's story - make it cute and friendly
+            2. No scary, violent, or mature content
+            3. Use bright, cheerful colors
+            4. Show characters in a friendly, non-threatening way
+            5. Focus on positive interactions and happy moments
+            6. No weapons, blood, or scary elements
+            7. Keep it simple and easy for children to understand
+            8. Make it appropriate for {age_group} age group
+            
+            The illustration should be:
+            - Safe for children
+            - Non-violent
+            - Friendly and welcoming
+            - Bright and cheerful
+            - Easy to understand
+            - Age-appropriate
+            """
             
             print(f"[DALLE] Using prompt: {prompt[:100]}...", file=sys.stderr)
             
