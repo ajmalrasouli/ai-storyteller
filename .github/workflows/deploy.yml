@@ -1,0 +1,83 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - test/azure-storage-persistence
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        environment: [production, test]
+        
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt
+      
+      - name: Configure environment
+        run: |
+          echo "AZURE_STORAGE_CONNECTION_STRING=${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}" > .env
+          echo "AZURE_OPENAI_API_KEY=${{ secrets.AZURE_OPENAI_API_KEY }}" >> .env
+          echo "AZURE_OPENAI_API_BASE=${{ secrets.AZURE_OPENAI_API_BASE }}" >> .env
+          echo "AZURE_SPEECH_KEY=${{ secrets.AZURE_SPEECH_KEY }}" >> .env
+          echo "AZURE_SPEECH_REGION=${{ secrets.AZURE_SPEECH_REGION }}" >> .env
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+          echo "FLASK_ENV=${{ matrix.environment == 'production' && 'production' || 'development' }}" >> .env
+          echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env
+      
+      - name: Build Docker image
+        run: |
+          cd backend
+          docker build -t storyteller-backend:${{ matrix.environment }} .
+      
+      - name: Deploy to Azure Container Apps
+        if: matrix.environment == 'production'
+        uses: azure/containers-action@v1
+        with:
+          registry: ${{ secrets.AZURE_CONTAINER_REGISTRY }}
+          repository: storyteller-backend
+          tag: production
+          service: storyteller-backend
+          region: westeurope
+          resourceGroup: your-production-rg
+          credentials: ${{ secrets.AZURE_CREDENTIALS }}
+      
+      - name: Deploy to Test Environment
+        if: matrix.environment == 'test'
+        uses: azure/containers-action@v1
+        with:
+          registry: ${{ secrets.AZURE_CONTAINER_REGISTRY }}
+          repository: storyteller-backend
+          tag: test
+          service: storyteller-backend-test
+          region: eastus
+          resourceGroup: your-test-rg
+          credentials: ${{ secrets.AZURE_CREDENTIALS }}
+      
+      - name: Update Azure Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          app_location: "frontend"
+          api_location: "backend"
+          app_artifact_location: "build"
+          skip_app_build: true
+          skip_api_build: true

@@ -1,0 +1,46 @@
+{
+  "environments": {
+    "production": {
+      "backend": {
+        "url": "https://storyteller-backend.proudhill-96526a5c.westeurope.azurecontainerapps.io",
+        "region": "westeurope",
+        "resourceGroup": "your-production-rg",
+        "containerName": "storyteller-backend",
+        "containerImage": "${{ secrets.AZURE_CONTAINER_REGISTRY }}/storyteller-backend:production"
+      },
+      "frontend": {
+        "url": "https://proud-water-076db370f.6.azurestaticapps.net",
+        "apiEndpoint": "https://storyteller-backend.proudhill-96526a5c.westeurope.azurecontainerapps.io/api"
+      },
+      "storage": {
+        "accountName": "${{ secrets.AZURE_STORAGE_ACCOUNT }}",
+        "containers": {
+          "images": "images",
+          "audio": "audio",
+          "stories": "stories"
+        }
+      }
+    },
+    "test": {
+      "backend": {
+        "url": "https://storyteller-backend-test.bravesand-36f7311e.eastus.azurecontainerapps.io",
+        "region": "eastus",
+        "resourceGroup": "your-test-rg",
+        "containerName": "storyteller-backend-test",
+        "containerImage": "${{ secrets.AZURE_CONTAINER_REGISTRY }}/storyteller-backend:test"
+      },
+      "frontend": {
+        "url": "https://proud-water-076db370f.6.azurestaticapps.net",
+        "apiEndpoint": "https://storyteller-backend-test.bravesand-36f7311e.eastus.azurecontainerapps.io/api"
+      },
+      "storage": {
+        "accountName": "${{ secrets.AZURE_STORAGE_ACCOUNT_TEST }}",
+        "containers": {
+          "images": "images-test",
+          "audio": "audio-test",
+          "stories": "stories-test"
+        }
+      }
+    }
+  }
+}
