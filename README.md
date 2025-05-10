@@ -20,6 +20,10 @@
 > - Lifelike narration (Azure Speech Service)
 > - A beautiful, modern user experience
 ---
+<<<<<<< HEAD
+=======
+---
+>>>>>>> de3ad2ae3996eb6a8c030040f702dc775ab70467
 ### View Live App
 https://proud-water-076db370f.6.azurestaticapps.net/
 
@@ -38,8 +42,6 @@ Curious how AI Storyteller works in action? Watch a quick walkthrough of the pla
 - **DevOps best practices**: CI/CD, Dockerized backend, cloud-native deployment.
 - **Engaging, accessible, and educational for kids.**
 
----
-
 ## 🎨 Colorful Architecture Overview
 
 ```mermaid
@@ -56,8 +58,13 @@ flowchart LR
         style DH fill:#e3f2fd,stroke:#2496ED,stroke-width:2px
         DH[("<b>Docker Image</b><br/>🐳")]
     end
+    subgraph Azure Storage
+        style AS fill:#f3e5f5,stroke:#512da8,stroke-width:2px
+        AS[("<b>Azure Blob Storage</b><br/>📦")]
+    end
     FE -- "<b style='color:#0078D4;'>API Requests<br/>(VITE_API_URL)</b>" --> BE
     BE -- "<b style='color:#2496ED;'>Pulls Image</b>" --> DH
+    BE -- "Storage" --> AS
     BE -- "AI/Media APIs" --> OA["<b>Azure OpenAI<br/>🎓</b>"]
     BE -- "Image Gen" --> DALLE["<b>Azure DALL-E<br/>🎨</b>"]
     BE -- "Speech" --> SPEECH["<b>Azure Speech<br/>🗣️</b>"]
