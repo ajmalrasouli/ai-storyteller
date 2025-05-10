@@ -1,14 +1,15 @@
 from flask import Blueprint, request, send_file
 from services.azure_services import AzureServices
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 import io
 
 bp = Blueprint('speech', __name__)
 # Enable CORS for the speech blueprint
-CORS(bp, origins=["http://localhost:5173", "http://localhost:5174"])
+CORS(bp, origins=["http://localhost:5173", "http://localhost:5174", "https://proud-water-076db370f.6.azurestaticapps.net"])
 azure_services = AzureServices()
 
 @bp.route('/speech', methods=['POST', 'OPTIONS'])
+@cross_origin(origins=['http://localhost:5173', 'http://localhost:5174', 'https://proud-water-076db370f.6.azurestaticapps.net'], methods=['POST', 'OPTIONS'])
 def text_to_speech():
     # Handle OPTIONS request for CORS preflight
     if request.method == 'OPTIONS':

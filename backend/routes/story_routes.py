@@ -3,8 +3,8 @@ from models.models import Story, User
 from services.azure_services import AzureServices
 from extensions import db
 import json
-import traceback
-from flask_cors import CORS
+import traceback as tb
+from flask_cors import CORS, cross_origin
 
 bp = Blueprint('stories', __name__)
 CORS(bp, origins=["http://localhost:5173", "http://localhost:5174"])  # Enable CORS for frontend
@@ -20,6 +20,7 @@ def safe_json_loads(val):
         return []
 
 @bp.route('/stories', methods=['GET', 'OPTIONS'])
+@cross_origin(origins=['https://proud-water-076db370f.6.azurestaticapps.net'], methods=['GET', 'OPTIONS'])
 def get_stories():
     stories = Story.query.all()
     return jsonify([{  
@@ -35,6 +36,7 @@ def get_stories():
     } for story in stories])
 
 @bp.route('/stories', methods=['POST', 'OPTIONS'])
+@cross_origin(origins=['https://proud-water-076db370f.6.azurestaticapps.net'], methods=['POST', 'OPTIONS'])
 def create_story():
     import sys
     import logging
@@ -111,13 +113,18 @@ def create_story():
         return jsonify({'error': str(e), 'traceback': tb.format_exc()}), 500
 
 @bp.route('/stories/<int:story_id>/favorite', methods=['POST', 'OPTIONS'])
+@cross_origin(origins=['https://proud-water-076db370f.6.azurestaticapps.net'], methods=['POST', 'OPTIONS'])
 def toggle_favorite(story_id):
+    if request.method == 'OPTIONS':
+        return {'success': True}, 200
+    
     story = Story.query.get_or_404(story_id)
     story.is_favorite = not story.is_favorite
     db.session.commit()
     return jsonify({'isFavorite': story.is_favorite})
 
 @bp.route('/stories/<int:story_id>', methods=['DELETE', 'OPTIONS'])
+@cross_origin(origins=['https://proud-water-076db370f.6.azurestaticapps.net'], methods=['DELETE', 'OPTIONS'])
 def delete_story(story_id):
     # Handle OPTIONS request for CORS preflight
     if request.method == 'OPTIONS':
@@ -143,7 +150,11 @@ def delete_story(story_id):
         return jsonify({'error': str(e)}), 500
 
 @bp.route('/stories/<int:story_id>/regenerate-illustration', methods=['POST', 'OPTIONS'])
+@cross_origin(origins=['https://proud-water-076db370f.6.azurestaticapps.net'], methods=['POST', 'OPTIONS'])
 def regenerate_illustration(story_id):
+    if request.method == 'OPTIONS':
+        return {'success': True}, 200
+    
     story = Story.query.get_or_404(story_id)
     
     try:
