@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL || 'https://storyteller-backend.proudhill-96526a5c.westeurope.azurecontainerapps.io/api';
 console.log("[DEBUG] API_URL in production:", API_URL);
 
 export interface User {
