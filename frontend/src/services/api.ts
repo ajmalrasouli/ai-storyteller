@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Story, StoryFormData } from '../types';
 
-const API_URL = 'https://storyteller-backend-test.bravesand-36f7311e.eastus.azurecontainerapps.io/api';
+const API_URL = 'https://storyteller-backend.proudhill-96526a5c.westeurope.azurecontainerapps.io/api';
 
 const api = axios.create({
     baseURL: API_URL,
