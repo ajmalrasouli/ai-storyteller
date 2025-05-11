@@ -13,6 +13,8 @@
 [![DALL-E](https://img.shields.io/badge/Azure%20DALL--E-Image%20Gen-7FBA00?logo=microsoftazure&logoColor=white)](https://azure.microsoft.com/en-us/products/cognitive-services/dall-e/)
 [![Speech](https://img.shields.io/badge/Azure%20Speech-Text--to--Speech-FFB900?logo=microsoftazure&logoColor=white)](https://azure.microsoft.com/en-us/products/cognitive-services/speech-services/)
 [![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Railway](https://img.shields.io/badge/Railway-PostgreSQL-000000?logo=railway&logoColor=white)](https://railway.app)
+[![Azure Blob Storage](https://img.shields.io/badge/Azure%20Blob%20Storage-Containers-0089D6?logo=microsoftazure&logoColor=white)](https://azure.microsoft.com/en-us/products/storage/blobs/)
 
 > **AI Storyteller** is an interactive, AI-powered storytelling platform for children, featuring:
 > - Personalized story generation (Azure OpenAI)
@@ -20,10 +22,6 @@
 > - Lifelike narration (Azure Speech Service)
 > - A beautiful, modern user experience
 ---
-<<<<<<< HEAD
-=======
----
->>>>>>> de3ad2ae3996eb6a8c030040f702dc775ab70467
 ### View Live App
 https://proud-water-076db370f.6.azurestaticapps.net/
 
@@ -60,7 +58,11 @@ flowchart LR
     end
     subgraph Azure Storage
         style AS fill:#f3e5f5,stroke:#512da8,stroke-width:2px
-        AS[("<b>Azure Blob Storage</b><br/>📦")]
+        AS["<b>Azure Blob Storage</b><br/>📦<br/>Images, Audio, Stories"]
+    end
+    subgraph Database
+        style DB fill:#e8f5e9,stroke:#4CAF50,stroke-width:2px
+        DB[("<b>PostgreSQL</b><br/>Hosted on Railway")]
     end
     FE -- "<b style='color:#0078D4;'>API Requests<br/>(VITE_API_URL)</b>" --> BE
     BE -- "<b style='color:#2496ED;'>Pulls Image</b>" --> DH
@@ -68,13 +70,30 @@ flowchart LR
     BE -- "AI/Media APIs" --> OA["<b>Azure OpenAI<br/>🎓</b>"]
     BE -- "Image Gen" --> DALLE["<b>Azure DALL-E<br/>🎨</b>"]
     BE -- "Speech" --> SPEECH["<b>Azure Speech<br/>🗣️</b>"]
-    BE -- "DB" --> DB[("<b>SQLite</b>")]
+    BE -- "DB" --> DB
 ```
 
+## 📦 Storage Infrastructure
+
+### Azure Blob Storage
+![Azure Storage](frontend/public/images/azurestorage.png)
+
+- Stores all generated images from DALL-E
+- Stores audio files from text-to-speech
+- Stores story content and metadata
+- Secure, scalable, and globally accessible
+
+### Railway PostgreSQL Database
+![Railway Database](frontend/public/images/railwaydatabase.png)
+
+- Hosted PostgreSQL database on Railway
+- Stores user data, stories, and favorites
+- Secure and scalable database service
+- Easy to manage and monitor
 
 ---
 
-## 🌍 Two-Server Cloud Architecture
+## Two-Server Cloud Architecture
 
 | Layer     | Service                        | Description                                                                                   |
 |-----------|-------------------------------|-----------------------------------------------------------------------------------------------|
@@ -82,7 +101,7 @@ flowchart LR
 | <span style="color:#008272">Backend</span>   | **Azure Container Apps (ACA)** | Flask REST API, scalable, pulls Docker image from Docker Hub                                  |
 | <span style="color:#2496ED">Image</span>     | **Docker Hub**                 | Stores and delivers the backend container image                                               |
 | <span style="color:#10a37f">AI/Media</span>  | **Azure OpenAI, DALL-E, Speech** | Power story generation, illustration, and narration                                           |
-| <span style="color:#6D4C41">Database</span>  | **SQLite (in ACA)**            | Stores stories, users, favorites                                                              |
+| <span style="color:#4CAF50">Database</span>  | **PostgreSQL (Railway)**      | Stores stories, users, favorites, hosted on Railway                                          |
 
 ---
 
@@ -91,7 +110,11 @@ flowchart LR
 - **Frontend** (Azure SWA) calls **Backend API** (ACA) using the `VITE_API_URL` environment variable.
 - **Backend** (ACA) is deployed as a Docker container, image managed on **Docker Hub**.
 - **Backend** calls Azure AI services for story content, images, and narration.
-- **Backend** stores persistent data in SQLite.
+- **Backend** stores persistent data in PostgreSQL (hosted on Railway).
+- **Backend** uses Azure Blob Storage for storing:
+  - Generated images from DALL-E
+  - Audio files from text-to-speech
+  - Story content and metadata
 
 ---
 
@@ -224,6 +247,8 @@ ai-storyteller/
 | ![Story Page View](frontend/public/images/storypage.png) | ![About](frontend/public/images/about.png) |
 |:---:|:---:|
 | *Story Page with Read Aloud* | *About* |
+
+
 
 ## Features
 
