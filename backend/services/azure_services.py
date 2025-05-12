@@ -59,6 +59,27 @@ class AzureServices:
         print("[AzureServices] AZURE_SPEECH_KEY:", (self.speech_key[:4] + "..." + self.speech_key[-4:]) if self.speech_key else None)
         print("[AzureServices] AZURE_SPEECH_REGION:", self.speech_region)
 
+    def generate_story(self, theme, characters, age_group):
+        """
+        Generate a story using GPT based on the provided theme, characters, and age group.
+        """
+        try:
+            prompt = f"Write a children's story for the following theme: {theme}. Characters: {', '.join(characters)}. Age group: {age_group}. Make it fun, imaginative, and age-appropriate."
+            print(f"[GPT] Generating story with prompt: {prompt}")
+            response = self.text_client.chat.completions.create(
+                model=self.openai_deployment_name,
+                messages=[{"role": "system", "content": "You are a creative children's storyteller."},
+                          {"role": "user", "content": prompt}],
+                max_tokens=600,
+                temperature=0.8
+            )
+            story_content = response.choices[0].message.content
+            print(f"[GPT] Story generated successfully.")
+            return story_content
+        except Exception as e:
+            print(f"[GPT ERROR] Failed to generate story: {str(e)}")
+            raise Exception(f"Error generating story: {str(e)}")
+
     def generate_illustration(self, title, theme, characters, age_group):
         """
         Generate an illustration using DALL-E
