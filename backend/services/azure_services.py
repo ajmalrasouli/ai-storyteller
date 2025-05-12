@@ -4,6 +4,7 @@ import os
 from config.config import Config
 from openai import AzureOpenAI
 from services.blob_storage import BlobStorageService
+from datetime import datetime
 
 class AzureServices:
     def __init__(self):
@@ -46,6 +47,7 @@ class AzureServices:
         self.dalle_endpoint = os.getenv("AZURE_DALLE_ENDPOINT")
         self.dalle_deployment_name = os.getenv("AZURE_DALLE_DEPLOYMENT_NAME")
         self.dalle_api_version = os.getenv("AZURE_DALLE_API_VERSION")
+        self.dalle_model = self.dalle_deployment_name  # Use deployment name as model
         
         # Debug prints for env vars (mask sensitive parts)
         print("[AzureServices] AZURE_OPENAI_API_KEY:", (self.openai_api_key[:4] + "..." + self.openai_api_key[-4:]) if self.openai_api_key else None)
