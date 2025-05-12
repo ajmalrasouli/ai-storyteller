@@ -70,21 +70,32 @@ def create_story():
         
         print(f"[DEBUG] Using title: {title}", file=sys.stderr)
         
-        # Generate illustration
+        # Save story content to storage
+        try:
+            story_url = azure_services.save_story_content(story_content, title)
+            print(f"[DEBUG] Story content saved to: {story_url}", file=sys.stderr)
+        except Exception as e:
+            print(f"[ERROR] Failed to save story content: {str(e)}", file=sys.stderr)
+            tb.print_exc(file=sys.stderr)
+            story_url = None
+        
+        # Generate illustration and save to storage
         print(f"[DEBUG] Generating illustration for title: {title}", file=sys.stderr)
         try:
-            image_url = azure_services.generate_illustration(
+            image_data = azure_services.generate_illustration(
                 title,
                 data['theme'],
                 json.dumps(data['characters']),
                 data['age_group']
             )
-            print(f"[DEBUG] Successfully generated illustration: {image_url[:50]}...", file=sys.stderr)
+            image_url = azure_services.save_image(image_data, title)
+            print(f"[DEBUG] Successfully saved illustration: {image_url}", file=sys.stderr)
         except Exception as illustration_error:
-            print(f"[ERROR] DALL·E illustration generation failed: {str(illustration_error)}", file=sys.stderr)
+            print(f"[ERROR] Failed to save illustration: {str(illustration_error)}", file=sys.stderr)
             tb.print_exc(file=sys.stderr)
             # Use a placeholder image instead of failing the whole request
             image_url = "/static/placeholder.png"
+        
         # Create story
         story = Story(
             title=title,

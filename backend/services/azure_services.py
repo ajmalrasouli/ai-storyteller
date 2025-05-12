@@ -57,11 +57,54 @@ class AzureServices:
         Save data to Azure Blob Storage
         """
         try:
-            url = self.blob_storage.upload_blob(container_name, filename, data)
+            # Generate unique filename with timestamp
+            from datetime import datetime
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            base_name = filename.split('.')[0]
+            extension = filename.split('.')[-1]
+            unique_filename = f"{base_name}_{timestamp}.{extension}"
+            
+            # Save to storage
+            url = self.blob_storage.upload_blob(container_name, unique_filename, data)
             print(f"Successfully saved to storage: {url}")
             return url
         except Exception as e:
             print(f"Error saving to storage: {str(e)}")
+            raise
+
+    def save_story_content(self, story_content, title):
+        """
+        Save story content to Azure Blob Storage
+        """
+        try:
+            # Convert story content to bytes
+            content_bytes = story_content.encode('utf-8')
+            filename = f"story_{title.replace(' ', '_')}.txt"
+            return self.save_to_storage(content_bytes, filename, "stories")
+        except Exception as e:
+            print(f"Error saving story content: {str(e)}")
+            raise
+
+    def save_image(self, image_data, title):
+        """
+        Save image to Azure Blob Storage
+        """
+        try:
+            filename = f"{title.replace(' ', '_')}.png"
+            return self.save_to_storage(image_data, filename, "images")
+        except Exception as e:
+            print(f"Error saving image: {str(e)}")
+            raise
+
+    def save_audio(self, audio_data, title):
+        """
+        Save audio to Azure Blob Storage
+        """
+        try:
+            filename = f"{title.replace(' ', '_')}.mp3"
+            return self.save_to_storage(audio_data, filename, "audio")
+        except Exception as e:
+            print(f"Error saving audio: {str(e)}")
             raise
 
     def generate_story(self, theme, characters, age_group):
