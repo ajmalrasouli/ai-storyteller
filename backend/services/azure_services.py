@@ -103,10 +103,10 @@ class AzureServices:
             print(f"[DALLE] Using prompt: \n{prompt}")
 
             # Initialize DALL-E client
-            client = openai.OpenAI(
+            client = openai.AzureOpenAI(
                 api_key=self.dalle_api_key,
-                api_base=self.dalle_endpoint,
-                api_version=self.dalle_api_version
+                api_version=self.dalle_api_version,
+                azure_endpoint=self.dalle_endpoint
             )
 
             # Generate image
