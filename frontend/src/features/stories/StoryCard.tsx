@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Story } from '../../types';
 import { speechApi } from '../../services/api';
+import { SimpleAudioPlayer } from '../../components/SimpleAudioPlayer';
 
 interface StoryCardProps {
     story: Story;
@@ -15,56 +16,36 @@ export const StoryCard: React.FC<StoryCardProps> = ({
     onToggleFavorite,
     onRegenerateIllustration,
 }) => {
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [audioUrl, setAudioUrl] = useState<string | null>(null);
-
-    const handlePlayAudio = async () => {
-        if (isPlaying) {
-            setIsPlaying(false);
+    // State to track if we're generating audio
+    const [isGenerating, setIsGenerating] = useState(false);
+    // State to store dynamically generated audio URL
+    const [generatedAudioUrl, setGeneratedAudioUrl] = useState<string | null>(null);
+    
+    // Function to handle audio generation if needed
+    const handleAudioGeneration = async () => {
+        // If we already have a story audio URL or already generated one, don't do it again
+        if (story.audioUrl || generatedAudioUrl) {
             return;
         }
-
+        
         try {
-            console.log('Attempting to play audio for story:', story.id);
+            setIsGenerating(true);
+            console.log('Generating audio for story');
+            // Get audio URL from API
+            const audioUrl = await speechApi.textToSpeech(story.content);
+            console.log('Received audio URL from API:', audioUrl);
             
-            if (story.audioUrl) {
-                console.log('Using story.audioUrl:', story.audioUrl);
-                // Add cache buster to avoid caching issues
-                const audioUrlWithCacheBuster = `${story.audioUrl}${story.audioUrl.includes('?') ? '&' : '?'}cacheBuster=${Date.now()}`;
-                setAudioUrl(audioUrlWithCacheBuster);
-                setIsPlaying(true);
+            if (typeof audioUrl === 'string') {
+                setGeneratedAudioUrl(audioUrl);
             } else {
-                console.log('No audioUrl found, generating speech...');
-                try {
-                    // API now returns the URL string directly
-                    const audioUrlFromApi = await speechApi.textToSpeech(story.content);
-                    console.log('Received audio URL from API:', audioUrlFromApi);
-                    
-                    // The API now directly returns the URL string
-                    if (typeof audioUrlFromApi === 'string') {
-                        setAudioUrl(audioUrlFromApi);
-                    } else {
-                        console.error('Expected string URL but got:', typeof audioUrlFromApi);
-                        throw new Error('Unexpected response format');
-                    }
-                } catch (err) {
-                    console.error('Error generating speech:', err);
-                    throw err;
-                }
-                setIsPlaying(true);
+                console.error('Expected string URL but got:', typeof audioUrl);
             }
         } catch (err) {
-            console.error('Failed to play audio:', err);
+            console.error('Error generating audio:', err);
+        } finally {
+            setIsGenerating(false);
         }
     };
-
-    useEffect(() => {
-        return () => {
-            if (audioUrl) {
-                URL.revokeObjectURL(audioUrl);
-            }
-        };
-    }, [audioUrl]);
 
     return (
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -94,42 +75,41 @@ export const StoryCard: React.FC<StoryCardProps> = ({
                 <div className="mt-4">
                     <p className="text-gray-700 line-clamp-3">{story.content}</p>
                 </div>
-                <div className="mt-4 flex justify-between">
-                    <button
-                        onClick={handlePlayAudio}
-                        className="text-indigo-600 hover:text-indigo-800"
-                    >
-                        {isPlaying ? 'Stop' : 'Play'} Audio
-                    </button>
-                    <div className="space-x-2">
+                <div className="mt-4">
+                    <div className="flex justify-between mb-2">
+                        {/* Audio button - either plays existing audio or generates new audio */}
                         <button
-                            onClick={() => onRegenerateIllustration(story.id)}
-                            className="text-indigo-600 hover:text-indigo-800"
+                            onClick={handleAudioGeneration}
+                            className="text-indigo-600 hover:text-indigo-800 flex items-center"
+                            disabled={isGenerating}
                         >
-                            Regenerate Image
+                            {isGenerating ? 'Generating Audio...' : 'Listen to Story'}
+                            {isGenerating && (
+                                <span className="ml-2 animate-spin">⟳</span>
+                            )}
                         </button>
-                        <button
-                            onClick={() => onDelete(story.id)}
-                            className="text-red-600 hover:text-red-800"
-                        >
-                            Delete
-                        </button>
+                        <div className="space-x-2">
+                            <button
+                                onClick={() => onRegenerateIllustration(story.id)}
+                                className="text-indigo-600 hover:text-indigo-800"
+                            >
+                                Regenerate Image
+                            </button>
+                            <button
+                                onClick={() => onDelete(story.id)}
+                                className="text-red-600 hover:text-red-800"
+                            >
+                                Delete
+                            </button>
+                        </div>
                     </div>
+                    
+                    {/* Use our SimpleAudioPlayer if we have an audio URL */}
+                    {(story.audioUrl || generatedAudioUrl) && (
+                        <SimpleAudioPlayer url={story.audioUrl || generatedAudioUrl!} />
+                    )}
                 </div>
             </div>
-            {isPlaying && audioUrl && (
-                <audio
-                    src={audioUrl}
-                    autoPlay
-                    controls
-                    onPlay={() => console.log('Audio started playing')}
-                    onError={(e) => console.error('Audio error:', e)}
-                    onEnded={() => {
-                        console.log('Audio playback ended');
-                        setIsPlaying(false);
-                    }}
-                />
-            )}
         </div>
     );
 }; 
