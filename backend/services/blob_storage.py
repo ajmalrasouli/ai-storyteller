@@ -7,7 +7,6 @@ class BlobStorageService:
         self.config = Config()
         self.connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
         self.account_name = os.getenv("AZURE_STORAGE_ACCOUNT_NAME")
-        self.container_name = os.getenv("AZURE_STORAGE_CONTAINER_NAME")
         
         # Initialize BlobServiceClient
         self.blob_service_client = BlobServiceClient.from_connection_string(self.connection_string)
@@ -16,26 +15,26 @@ class BlobStorageService:
         self._initialize_containers()
 
     def _initialize_containers(self):
-        # Create containers for stories, audio, and images with public access
+        # Create containers for stories, audio, and images with proper access levels
         containers = {
-            'stories': 'container',  # Private access
-            'audio': 'container',    # Private access
-            'images': 'container',   # Public access
+            'stories': 'private',
+            'audio': 'private',
+            'images': 'public'
         }
         
-        for container, access_type in containers.items():
+        for container_name, access_type in containers.items():
             try:
-                container_client = self.blob_service_client.get_container_client(container)
+                container_client = self.blob_service_client.get_container_client(container_name)
                 if not container_client.exists():
                     container_client.create_container()
-                    if container == 'images':
+                    if access_type == 'public':
                         # Set public access level for images container
                         container_client.set_container_access_policy(
                             public_access='container'
                         )
-                print(f"Created container: {container} with access type: {access_type}")
+                print(f"Created container: {container_name} with access type: {access_type}")
             except Exception as e:
-                print(f"Container {container} already exists or error occurred: {str(e)}")
+                print(f"Container {container_name} already exists or error occurred: {str(e)}")
 
     def upload_blob(self, container_name, blob_name, data):
         """

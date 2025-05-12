@@ -8,6 +8,7 @@ from .blob_storage import BlobStorageService
 class AzureServices:
     def __init__(self):
         # Initialize Blob Storage
+        self.config = Config()
         self.blob_storage = BlobStorageService()
         
         # GPT (text) configuration
@@ -15,6 +16,30 @@ class AzureServices:
         self.openai_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
         self.openai_deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME")
         self.openai_api_version = os.getenv("AZURE_OPENAI_API_VERSION")
+        
+        # Initialize Azure OpenAI client for text generation
+        self.text_client = AzureOpenAI(
+            api_key=self.openai_api_key,
+            api_version=self.openai_api_version,
+            azure_endpoint=self.openai_endpoint
+        )
+        
+        # Speech Services configuration
+        self.speech_key = os.getenv("AZURE_SPEECH_KEY")
+        self.speech_region = os.getenv("AZURE_SPEECH_REGION")
+        self.speech_config = speechsdk.SpeechConfig(
+            subscription=self.speech_key,
+            region=self.speech_region
+        )
+        # Set speech synthesis voice
+        self.speech_config.speech_synthesis_voice_name = "en-US-JennyNeural"
+        
+        # Initialize container names from config
+        self.container_names = {
+            'stories': self.config.AZURE_STORAGE_CONTAINER_STORIES,
+            'audio': self.config.AZURE_STORAGE_CONTAINER_AUDIO,
+            'images': self.config.AZURE_STORAGE_CONTAINER_IMAGES
+        }
         
         # DALL-E (image) configuration
         self.dalle_api_key = os.getenv("AZURE_DALLE_API_KEY")
@@ -80,7 +105,7 @@ class AzureServices:
             # Convert story content to bytes
             content_bytes = story_content.encode('utf-8')
             filename = f"story_{title.replace(' ', '_')}.txt"
-            return self.save_to_storage(content_bytes, filename, "stories")
+            return self.save_to_storage(content_bytes, filename, self.container_names['stories'])
         except Exception as e:
             print(f"Error saving story content: {str(e)}")
             raise
@@ -91,7 +116,7 @@ class AzureServices:
         """
         try:
             filename = f"{title.replace(' ', '_')}.png"
-            return self.save_to_storage(image_data, filename, "images")
+            return self.save_to_storage(image_data, filename, self.container_names['images'])
         except Exception as e:
             print(f"Error saving image: {str(e)}")
             raise
@@ -102,7 +127,7 @@ class AzureServices:
         """
         try:
             filename = f"{title.replace(' ', '_')}.mp3"
-            return self.save_to_storage(audio_data, filename, "audio")
+            return self.save_to_storage(audio_data, filename, self.container_names['audio'])
         except Exception as e:
             print(f"Error saving audio: {str(e)}")
             raise
