@@ -3,7 +3,6 @@ import azure.cognitiveservices.speech as speechsdk
 import os
 from config.config import Config
 from openai import AzureOpenAI
-from .blob_storage import BlobStorageService
 
 class AzureServices:
     def __init__(self):
@@ -56,46 +55,54 @@ class AzureServices:
         print("[AzureServices] AZURE_DALLE_ENDPOINT:", self.dalle_endpoint)
         print("[AzureServices] AZURE_DALLE_DEPLOYMENT_NAME:", self.dalle_deployment_name)
         print("[AzureServices] AZURE_DALLE_API_VERSION:", self.dalle_api_version)
-        
-        # Initialize Azure OpenAI client for text generation
-        self.text_client = AzureOpenAI(
-            api_key=self.openai_api_key,
-            api_version=self.openai_api_version,
-            azure_endpoint=self.openai_endpoint
-        )
-        
-        # Speech Services configuration
-        self.speech_key = os.getenv("AZURE_SPEECH_KEY")
-        self.speech_region = os.getenv("AZURE_SPEECH_REGION")
         print("[AzureServices] AZURE_SPEECH_KEY:", (self.speech_key[:4] + "..." + self.speech_key[-4:]) if self.speech_key else None)
         print("[AzureServices] AZURE_SPEECH_REGION:", self.speech_region)
-        
-        self.speech_config = speechsdk.SpeechConfig(
-            subscription=self.speech_key,
-            region=self.speech_region
-        )
-        # Set speech synthesis voice
-        self.speech_config.speech_synthesis_voice_name = "en-US-JennyNeural"
 
-    def save_to_storage(self, data, filename, container_name):
+    def generate_illustration(self, title, theme, characters, age_group):
         """
-        Save data to Azure Blob Storage
+        Generate an illustration using DALL-E
         """
         try:
-            # Generate unique filename with timestamp
-            from datetime import datetime
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            base_name = filename.split('.')[0]
-            extension = filename.split('.')[-1]
-            unique_filename = f"{base_name}_{timestamp}.{extension}"
+            import sys
+            print(f"[DALLE] Starting illustration generation for title: '{title}'", file=sys.stderr)
+            print(f"[DALLE] Using API key: {self.dalle_api_key[:4]}...{self.dalle_api_key[-4:] if self.dalle_api_key else None}", file=sys.stderr)
+            print(f"[DALLE] Using endpoint: {self.dalle_endpoint}", file=sys.stderr)
+            print(f"[DALLE] Using deployment: {self.dalle_deployment_name}", file=sys.stderr)
+            print(f"[DALLE] Using API version: {self.dalle_api_version}", file=sys.stderr)
+            print(f"[DALLE] Using model: {self.dalle_model}")
+
+            # Create a simple, child-friendly prompt
+            prompt = f"Draw a happy, cartoon-style illustration of {', '.join(characters)} in a {theme} setting. "
+            prompt += "Use bright, cheerful colors and keep the style simple and friendly. "
+            prompt += "Make sure the image is safe and appropriate for children aged 3-5."
             
-            # Save to storage
-            url = self.blob_storage.upload_blob(container_name, unique_filename, data)
-            print(f"Successfully saved to storage: {url}")
-            return url
+            print(f"[DALLE] Using prompt: \n{prompt}")
+
+            # Initialize DALL-E client
+            client = openai.OpenAI(
+                api_key=self.dalle_api_key,
+                api_base=self.dalle_endpoint,
+                api_version=self.dalle_api_version
+            )
+
+            # Generate image
+            response = client.images.generate(
+                model=self.dalle_model,
+                prompt=prompt,
+                n=1,
+                size="1024x1024",
+                response_format="url"
+            )
+
+            # Get image URL
+            image_url = response.data[0].url
+            print(f"[DALLE] Successfully generated image URL: {image_url}")
+
+            return image_url
+
         except Exception as e:
-            print(f"Error saving to storage: {str(e)}")
-            raise
+            print(f"[DALLE ERROR] Failed to generate illustration: {str(e)}")
+            raise Exception(f"Error generating illustration: {str(e)}")
 
     def save_story_content(self, story_content, title):
         """
@@ -158,112 +165,30 @@ class AzureServices:
             print(traceback.format_exc())
             raise
 
-    def save_audio(self, audio_data, title):
-        """
-        Save audio to Azure Blob Storage
-        """
-        try:
-            # Ensure audio data is in bytes
-            if isinstance(audio_data, str):
-                # If it's a URL or base64 string, download the audio
-                import requests
-                from io import BytesIO
-                response = requests.get(audio_data)
-                audio_data = BytesIO(response.content).getvalue()
-            
-            filename = f"{title.replace(' ', '_')}.mp3"
-            url = self.blob_storage.upload_blob(
-                self.container_names['audio'],
-                filename,
-                audio_data,
-                content_type='audio/mpeg'
-            )
-            print(f"Successfully saved audio to: {url}")
-            return url
-        except Exception as e:
-            print(f"Error saving audio: {str(e)}")
-            raise
-
-    def generate_story(self, theme, characters, age_group):
-        try:
-            response = self.text_client.chat.completions.create(
-                model=self.openai_deployment_name,
-                messages=[
-                    {"role": "system", "content": f"You are a creative children's story writer. Write a story appropriate for {age_group} age group."},
-                    {"role": "user", "content": f"Write a story with theme: {theme} and characters: {characters}"}
-                ]
-            )
-            return response.choices[0].message.content
-        except Exception as e:
-            raise Exception(f"Error generating story: {str(e)}")
-
-    def generate_illustration(self, title, theme, characters, age_group):
-        import sys
-        print(f"[DALLE] Starting illustration generation for title: '{title}'", file=sys.stderr)
-        print(f"[DALLE] Using API key: {self.dalle_api_key[:4]}...{self.dalle_api_key[-4:] if self.dalle_api_key else None}", file=sys.stderr)
-        print(f"[DALLE] Using endpoint: {self.dalle_endpoint}", file=sys.stderr)
-        print(f"[DALLE] Using deployment: {self.dalle_deployment_name}", file=sys.stderr)
-        print(f"[DALLE] Using API version: {self.dalle_api_version}", file=sys.stderr)
-        print(f"[DALLE] Using model: {self.dalle_model}")
-
-        # Create a simple, child-friendly prompt
-        prompt = f"Draw a happy, cartoon-style illustration of {', '.join(characters)} in a {theme} setting. "
-        prompt += "Use bright, cheerful colors and keep the style simple and friendly. "
-        prompt += "Make sure the image is safe and appropriate for children aged 3-5."
-        
-        print(f"[DALLE] Using prompt: \n{prompt}")
-
-        # Initialize DALL-E client
-        client = openai.OpenAI(
-            api_key=self.dalle_api_key,
-            api_base=self.dalle_endpoint,
-            api_version=self.dalle_api_version
-        )
-                api_key=self.dalle_api_key,
-                api_base=self.dalle_endpoint,
-                api_version=self.dalle_api_version
-            )
-
-            # Generate image
-            response = client.images.generate(
-                model=self.dalle_model,
-                prompt=prompt,
-                n=1,
-                size="1024x1024",
-                response_format="url"
-            )
-
-            # Get image URL
-            image_url = response.data[0].url
-            print(f"[DALLE] Successfully generated image URL: {image_url}")
-
-            return image_url
-
-        except Exception as e:
-            print(f"[DALLE ERROR] Failed to generate illustration: {str(e)}")
-            raise Exception(f"Error generating illustration: {str(e)}")
-
     def text_to_speech(self, text):
+        """
+        Convert text to speech using Azure Speech Services
+        """
         try:
-            print(f"[AzureServices] Generating speech for text of length: {len(text)}")
-            # Create a speech synthesizer using the configured speech config
-            synthesizer = speechsdk.SpeechSynthesizer(speech_config=self.speech_config)
+            # Create audio configuration
+            audio_config = speechsdk.audio.AudioOutputConfig(use_default_speaker=True)
             
-            # Limit text length if needed (Azure has limits)
-            if len(text) > 5000:
-                text = text[:5000] + "..."
-                print("[AzureServices] Text truncated for speech synthesis (>5000 chars)")
+            # Create speech synthesizer
+            synthesizer = speechsdk.SpeechSynthesizer(
+                speech_config=self.speech_config,
+                audio_config=audio_config
+            )
             
-            # Generate speech
+            # Synthesize speech
             result = synthesizer.speak_text_async(text).get()
             
             if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-                print("[AzureServices] Speech synthesis successful")
+                print("Speech synthesis completed successfully")
                 return result.audio_data
             else:
-                print(f"[AzureServices] Speech synthesis failed with reason: {result.reason}")
-                raise Exception(f"Speech synthesis failed with reason: {result.reason}")
+                print(f"Speech synthesis failed: {result.reason}")
+                raise Exception(f"Speech synthesis failed: {result.reason}")
+                
         except Exception as e:
-            print(f"[AzureServices] Error in text_to_speech: {str(e)}")
-            raise Exception(f"Error converting text to speech: {str(e)}")
- 
+            print(f"Error in text_to_speech: {str(e)}")
+            raise
