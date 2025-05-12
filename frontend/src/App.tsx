@@ -682,12 +682,12 @@ const StoryModal = ({ story, isOpen, onClose, onToggleFavorite, onDelete }: Stor
         audioRef.current = null;
       }
       
-      // Use the speechApi service instead of direct fetch
-      const audioBlob = await speechApi.textToSpeech(text);
+      // Use the speechApi service to get the audio URL directly
+      const audioUrl = await speechApi.textToSpeech(text);
       
-      // Create new audio element
+      // Create new audio element and set source to the URL string
       const audio = new Audio();
-      audio.src = URL.createObjectURL(audioBlob);
+      audio.src = audioUrl; // Direct URL usage - no createObjectURL needed
       audio.onended = () => {
         setIsSpeaking(false);
         audioRef.current = null;
