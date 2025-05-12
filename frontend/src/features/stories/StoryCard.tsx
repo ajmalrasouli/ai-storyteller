@@ -35,22 +35,21 @@ export const StoryCard: React.FC<StoryCardProps> = ({
                 setIsPlaying(true);
             } else {
                 console.log('No audioUrl found, generating speech...');
-                const response = await speechApi.textToSpeech(story.content);
-                console.log('Text-to-speech API response type:', typeof response, response);
-                
-                // If backend returns { audioUrl }, use that
-                if (response && response.audioUrl) {
-                    console.log('Using audioUrl from response:', response.audioUrl);
-                    setAudioUrl(response.audioUrl);
-                } else if (response instanceof Blob) {
-                    // Only create object URL if response is actually a Blob
-                    console.log('Using blob response of type:', response.type);
-                    const url = URL.createObjectURL(response);
-                    console.log('Created object URL:', url);
-                    setAudioUrl(url);
-                } else {
-                    console.error('Unexpected response format, not a Blob or audioUrl');
-                    throw new Error('Unexpected response format');
+                try {
+                    // API now returns the URL string directly
+                    const audioUrlFromApi = await speechApi.textToSpeech(story.content);
+                    console.log('Received audio URL from API:', audioUrlFromApi);
+                    
+                    // The API now directly returns the URL string
+                    if (typeof audioUrlFromApi === 'string') {
+                        setAudioUrl(audioUrlFromApi);
+                    } else {
+                        console.error('Expected string URL but got:', typeof audioUrlFromApi);
+                        throw new Error('Unexpected response format');
+                    }
+                } catch (err) {
+                    console.error('Error generating speech:', err);
+                    throw err;
                 }
                 setIsPlaying(true);
             }

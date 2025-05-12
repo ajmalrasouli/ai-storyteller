@@ -70,27 +70,21 @@ export const authApi = {
 export const speechApi = {
     textToSpeech: async (text: string) => {
         try {
-            // First attempt to get JSON response with audioUrl
-            const jsonResponse = await api.post('/speech', { text });
+            // Always request JSON response with audioUrl
+            const response = await api.post('/speech', { text });
+            console.log('Speech API response:', response.data);
             
-            // If we get a successful JSON response with audioUrl, return it
-            if (jsonResponse.data && jsonResponse.data.audioUrl) {
-                console.log('Received audioUrl from server:', jsonResponse.data.audioUrl);
-                return jsonResponse.data;
+            // Return the response data which should contain audioUrl
+            if (response.data && response.data.audioUrl) {
+                console.log('Successfully received audioUrl:', response.data.audioUrl);
+                // Return just the URL string to avoid createObjectURL issues
+                return response.data.audioUrl;
+            } else {
+                throw new Error('No audioUrl in response');
             }
         } catch (error) {
-            console.log('JSON response failed, trying blob response');
-            // If JSON response fails, try blob response as fallback
-            const blobResponse = await api.post('/speech', { text }, {
-                responseType: 'blob',
-            });
-            
-            if (blobResponse.data) {
-                console.log('Received blob data of type:', blobResponse.data.type);
-                return blobResponse.data;
-            }
+            console.error('Error in textToSpeech:', error);
+            throw error;
         }
-        
-        throw new Error('Failed to get audio response');
     },
 }; 
