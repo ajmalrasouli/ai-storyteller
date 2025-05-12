@@ -23,5 +23,5 @@ class Story(db.Model):
     age_group = db.Column(db.String(20), nullable=False)
     is_favorite = db.Column(db.Boolean, default=False)
     image_url = db.Column(db.String(500), nullable=True)  # URL for the AI-generated illustration
+    audio_url = db.Column(db.String(500), nullable=True)  # URL for the AI-generated audio
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
- 

@@ -108,19 +108,36 @@ def create_story():
             tb.print_exc(file=sys.stderr)
             audio_url = None
         
-        # Create story
-        story = Story(
-            title=title,
-            content=story_content,
-            theme=data['theme'],
-            characters=json.dumps(data['characters']),
-            age_group=data['age_group'],
-            image_url=image_url,
-            audio_url=audio_url
-        )
+        # Create story - handle case where audio_url column might not exist yet
+        try:
+            # First try creating with audio_url
+            story = Story(
+                title=title,
+                content=story_content,
+                theme=data['theme'],
+                characters=json.dumps(data['characters']),
+                age_group=data['age_group'],
+                image_url=image_url,
+                audio_url=audio_url
+            )
+        except TypeError as e:
+            # If 'audio_url' is an invalid keyword argument, create without it
+            if "'audio_url' is an invalid keyword argument" in str(e):
+                print(f"[WARNING] Story model doesn't have audio_url column yet, creating without it", file=sys.stderr)
+                story = Story(
+                    title=title,
+                    content=story_content,
+                    theme=data['theme'],
+                    characters=json.dumps(data['characters']),
+                    age_group=data['age_group'],
+                    image_url=image_url
+                )
+            else:
+                raise
         db.session.add(story)
         db.session.commit()
-        return jsonify({
+        # Build response JSON, conditionally adding audioUrl if available
+        response_data = {
             'id': story.id,
             'title': story.title,
             'content': story.content,
@@ -128,9 +145,16 @@ def create_story():
             'characters': safe_json_loads(story.characters),
             'ageGroup': story.age_group,
             'imageUrl': story.image_url,
-            'audioUrl': story.audio_url,
             'createdAt': story.created_at.isoformat()
-        }), 201
+        }
+        
+        # Only add audioUrl if it exists in the story model
+        if hasattr(story, 'audio_url'):
+            response_data['audioUrl'] = story.audio_url
+        elif audio_url:  # If we have audio_url from generation but couldn't store it in the model
+            response_data['audioUrl'] = audio_url
+            
+        return jsonify(response_data), 201
     except Exception as e:
         print("[ERROR] Exception in create_story:", str(e), file=sys.stderr)
         tb.print_exc(file=sys.stderr)
