@@ -161,12 +161,13 @@ class AzureServices:
         Save audio to Azure Blob Storage with proper SAS token handling
         """
         try:
-            filename = f"{title.replace(' ', '_')}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.wav"
+            # Use MP3 extension and content type for better browser compatibility
+            filename = f"{title.replace(' ', '_')}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.mp3"
             url = self.blob_storage.upload_blob(
                 self.container_names['audio'],
                 filename,
                 audio_data,
-                content_type='audio/wav'
+                content_type='audio/mpeg'
             )
             print(f"Successfully saved audio to: {url}")
             return url
@@ -215,8 +216,14 @@ class AzureServices:
         Convert text to speech using Azure Speech Services
         """
         try:
-            # Create audio configuration
-            audio_config = speechsdk.audio.AudioOutputConfig(use_default_speaker=True)
+            # Set output format to MP3 for better browser compatibility
+            self.speech_config.set_speech_synthesis_output_format(
+                speechsdk.SpeechSynthesisOutputFormat.Audio16Khz32KBitRateMonoMp3
+            )
+            
+            # Create audio configuration for file output
+            temp_filename = f"temp_audio_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.mp3"
+            audio_config = speechsdk.audio.AudioOutputConfig(filename=temp_filename)
             
             # Create speech synthesizer
             synthesizer = speechsdk.SpeechSynthesizer(
@@ -229,7 +236,13 @@ class AzureServices:
             
             if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
                 print("Speech synthesis completed successfully")
-                return result.audio_data
+                # Read the file data
+                with open(temp_filename, 'rb') as audio_file:
+                    audio_data = audio_file.read()
+                # Clean up the temporary file
+                import os
+                os.remove(temp_filename)
+                return audio_data
             else:
                 print(f"Speech synthesis failed: {result.reason}")
                 raise Exception(f"Speech synthesis failed: {result.reason}")
