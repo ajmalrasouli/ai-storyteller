@@ -25,10 +25,21 @@ export const StoryCard: React.FC<StoryCardProps> = ({
         }
 
         try {
-            const audioBlob = await speechApi.textToSpeech(story.content);
-            const url = URL.createObjectURL(audioBlob);
-            setAudioUrl(url);
-            setIsPlaying(true);
+            if (story.audioUrl) {
+                setAudioUrl(story.audioUrl);
+                setIsPlaying(true);
+            } else {
+                const response = await speechApi.textToSpeech(story.content);
+                // If backend returns { audioUrl }, use that
+                if (response && response.audioUrl) {
+                    setAudioUrl(response.audioUrl);
+                } else {
+                    // Fallback: treat as blob
+                    const url = URL.createObjectURL(response);
+                    setAudioUrl(url);
+                }
+                setIsPlaying(true);
+            }
         } catch (err) {
             console.error('Failed to play audio:', err);
         }

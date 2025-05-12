@@ -32,6 +32,7 @@ def get_stories():
         'ageGroup': story.age_group,
         'isFavorite': story.is_favorite,
         'imageUrl': story.image_url,
+        'audioUrl': getattr(story, 'audio_url', None),
         'createdAt': story.created_at.isoformat()
     } for story in stories])
 
@@ -96,6 +97,17 @@ def create_story():
             # Use a placeholder image instead of failing the whole request
             image_url = "/static/placeholder.png"
         
+        # Generate and save audio to blob storage
+        print(f"[DEBUG] Generating and saving audio for title: {title}", file=sys.stderr)
+        try:
+            audio_data = azure_services.text_to_speech(story_content)
+            audio_url = azure_services.save_audio(audio_data, title)
+            print(f"[DEBUG] Successfully saved audio: {audio_url}", file=sys.stderr)
+        except Exception as audio_error:
+            print(f"[ERROR] Failed to save audio: {str(audio_error)}", file=sys.stderr)
+            tb.print_exc(file=sys.stderr)
+            audio_url = None
+        
         # Create story
         story = Story(
             title=title,
@@ -103,7 +115,8 @@ def create_story():
             theme=data['theme'],
             characters=json.dumps(data['characters']),
             age_group=data['age_group'],
-            image_url=image_url
+            image_url=image_url,
+            audio_url=audio_url
         )
         db.session.add(story)
         db.session.commit()
@@ -115,6 +128,7 @@ def create_story():
             'characters': safe_json_loads(story.characters),
             'ageGroup': story.age_group,
             'imageUrl': story.image_url,
+            'audioUrl': story.audio_url,
             'createdAt': story.created_at.isoformat()
         }), 201
     except Exception as e:

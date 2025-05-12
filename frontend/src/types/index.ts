@@ -7,6 +7,7 @@ export interface Story {
     ageGroup: string;
     isFavorite: boolean;
     imageUrl: string | null;
+    audioUrl?: string | null;
     createdAt: string;
     userId: number;
 }

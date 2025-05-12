@@ -156,6 +156,27 @@ class AzureServices:
             print(traceback.format_exc())
             raise
 
+    def save_audio(self, audio_data, title):
+        """
+        Save audio to Azure Blob Storage with proper SAS token handling
+        """
+        try:
+            filename = f"{title.replace(' ', '_')}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.wav"
+            url = self.blob_storage.upload_blob(
+                self.container_names['audio'],
+                filename,
+                audio_data,
+                content_type='audio/wav'
+            )
+            print(f"Successfully saved audio to: {url}")
+            return url
+        except Exception as e:
+            print(f"Error saving audio: {str(e)}")
+            import traceback
+            print("Stack trace:")
+            print(traceback.format_exc())
+            raise
+
     def save_image(self, image_data, title):
         """
         Save image to Azure Blob Storage with proper SAS token handling

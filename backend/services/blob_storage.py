@@ -1,6 +1,7 @@
 import os
-from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
+from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient, generate_blob_sas, BlobSasPermissions
 from config.config import Config
+from datetime import datetime, timedelta
 
 class BlobStorageService:
     def __init__(self):
@@ -93,12 +94,23 @@ class BlobStorageService:
             print(f"Successfully uploaded blob")
             
             # Generate SAS token for the blob
-            sas_token = blob_client.generate_sas(
-                permission="r",
-                expiry=datetime.utcnow() + timedelta(days=365),
-                start=datetime.utcnow()
-            )
-            
+            print(f"Generating SAS token with: account_name={self.account_name}, container={container_name}, blob={blob_name}")
+            try:
+                # Always use generate_blob_sas from azure.storage.blob
+                sas_token = generate_blob_sas(
+                    account_name=self.account_name,
+                    container_name=container_name,
+                    blob_name=blob_name,
+                    account_key=self.account_key,
+                    permission=BlobSasPermissions(read=True),
+                    expiry=datetime.utcnow() + timedelta(days=365)
+                )
+                print(f"SAS token generated successfully: {sas_token[:10]}...")
+            except Exception as sas_error:
+                print(f"Error generating SAS token: {str(sas_error)}")
+                import traceback
+                print(traceback.format_exc())
+                raise
             # Return URL with SAS token
             url = f"{blob_client.url}?{sas_token}"
             print(f"Generated URL with SAS: {url}")

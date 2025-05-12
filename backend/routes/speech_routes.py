@@ -25,18 +25,11 @@ def text_to_speech():
     try:
         print(f"[Speech API] Converting text to speech, length: {len(data['text'])}")
         audio_data = azure_services.text_to_speech(data['text'])
-        
-        # Create a BytesIO object to send the audio data
-        audio_stream = io.BytesIO(audio_data)
-        audio_stream.seek(0)
-        
-        print("[Speech API] Successfully generated speech, sending response")
-        return send_file(
-            audio_stream,
-            mimetype='audio/wav',
-            as_attachment=True,
-            download_name='speech.wav'
-        )
+        # Save audio to Azure Blob Storage
+        title = data.get('title', 'story_audio')
+        audio_url = azure_services.save_audio(audio_data, title)
+        print(f"[Speech API] Successfully generated and saved speech. audioUrl: {audio_url}")
+        return {'audioUrl': audio_url}, 200
         
     except Exception as e:
         print(f"[Speech API] Error: {str(e)}")
