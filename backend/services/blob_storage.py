@@ -16,22 +16,56 @@ class BlobStorageService:
         self._initialize_containers()
 
     def _initialize_containers(self):
-        # Create containers for stories, audio, and images
-        containers = ['stories', 'audio', 'images']
-        for container in containers:
+        # Create containers for stories, audio, and images with public access
+        containers = {
+            'stories': 'container',  # Private access
+            'audio': 'container',    # Private access
+            'images': 'container',   # Public access
+        }
+        
+        for container, access_type in containers.items():
             try:
-                self.blob_service_client.create_container(container)
-                print(f"Created container: {container}")
+                container_client = self.blob_service_client.get_container_client(container)
+                if not container_client.exists():
+                    container_client.create_container()
+                    if container == 'images':
+                        # Set public access level for images container
+                        container_client.set_container_access_policy(
+                            public_access='container'
+                        )
+                print(f"Created container: {container} with access type: {access_type}")
             except Exception as e:
                 print(f"Container {container} already exists or error occurred: {str(e)}")
 
     def upload_blob(self, container_name, blob_name, data):
         """
-        Upload data to a specific container
+        Upload data to a specific container with proper content type
         """
         try:
             blob_client = self.blob_service_client.get_blob_client(container=container_name, blob=blob_name)
-            blob_client.upload_blob(data, overwrite=True)
+            
+            # Set appropriate content type based on container
+            content_type = {
+                'images': 'image/png',
+                'audio': 'audio/mpeg',
+                'stories': 'text/plain'
+            }.get(container_name, 'application/octet-stream')
+            
+            blob_client.upload_blob(
+                data, 
+                overwrite=True,
+                content_settings={'content_type': content_type}
+            )
+            
+            # For images container, ensure the URL is publicly accessible
+            if container_name == 'images':
+                sas_token = blob_client.generate_sas(
+                    permission="r",
+                    expiry=datetime.utcnow() + timedelta(days=365),
+                    start=datetime.utcnow()
+                )
+                return f"{blob_client.url}?{sas_token}"
+            
             return blob_client.url
         except Exception as e:
             print(f"Error uploading blob: {str(e)}")
