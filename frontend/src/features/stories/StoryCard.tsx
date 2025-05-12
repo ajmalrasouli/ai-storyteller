@@ -36,18 +36,21 @@ export const StoryCard: React.FC<StoryCardProps> = ({
             } else {
                 console.log('No audioUrl found, generating speech...');
                 const response = await speechApi.textToSpeech(story.content);
-                console.log('Text-to-speech API response:', response);
+                console.log('Text-to-speech API response type:', typeof response, response);
                 
                 // If backend returns { audioUrl }, use that
                 if (response && response.audioUrl) {
                     console.log('Using audioUrl from response:', response.audioUrl);
                     setAudioUrl(response.audioUrl);
-                } else {
-                    // Fallback: treat as blob
-                    console.log('Using blob response');
+                } else if (response instanceof Blob) {
+                    // Only create object URL if response is actually a Blob
+                    console.log('Using blob response of type:', response.type);
                     const url = URL.createObjectURL(response);
                     console.log('Created object URL:', url);
                     setAudioUrl(url);
+                } else {
+                    console.error('Unexpected response format, not a Blob or audioUrl');
+                    throw new Error('Unexpected response format');
                 }
                 setIsPlaying(true);
             }
