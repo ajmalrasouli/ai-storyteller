@@ -20,5 +20,11 @@ class Config:
     AZURE_SPEECH_KEY = os.getenv("AZURE_SPEECH_KEY")
     AZURE_SPEECH_REGION = os.getenv("AZURE_SPEECH_REGION")
 
+    # Azure Blob Storage configuration
+    AZURE_STORAGE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+    AZURE_STORAGE_CONTAINER_NAME = os.getenv("AZURE_STORAGE_CONTAINER_NAME", "stories")
+    AZURE_STORAGE_ACCOUNT_NAME = os.getenv("AZURE_STORAGE_ACCOUNT_NAME")
+    AZURE_STORAGE_ACCOUNT_KEY = os.getenv("AZURE_STORAGE_ACCOUNT_KEY")
+
     # Security
-    SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here") 
+    SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here")

@@ -3,9 +3,13 @@ import azure.cognitiveservices.speech as speechsdk
 import os
 from config.config import Config
 from openai import AzureOpenAI
+from .blob_storage import BlobStorageService
 
 class AzureServices:
     def __init__(self):
+        # Initialize Blob Storage
+        self.blob_storage = BlobStorageService()
+        
         # GPT (text) configuration
         self.openai_api_key = os.getenv("AZURE_OPENAI_API_KEY")
         self.openai_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
@@ -47,6 +51,18 @@ class AzureServices:
         )
         # Set speech synthesis voice
         self.speech_config.speech_synthesis_voice_name = "en-US-JennyNeural"
+
+    def save_to_storage(self, data, filename, container_name):
+        """
+        Save data to Azure Blob Storage
+        """
+        try:
+            url = self.blob_storage.upload_blob(container_name, filename, data)
+            print(f"Successfully saved to storage: {url}")
+            return url
+        except Exception as e:
+            print(f"Error saving to storage: {str(e)}")
+            raise
 
     def generate_story(self, theme, characters, age_group):
         try:

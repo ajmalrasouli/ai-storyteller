@@ -16,9 +16,17 @@ print(f"AZURE_SPEECH_REGION: {'Set' if os.getenv('AZURE_SPEECH_REGION') else 'No
 
 app = create_app()
 if os.getenv('FLASK_ENV') == 'production':
-    CORS(app, origins=["https://proud-water-076db370f.6.azurestaticapps.net", "http://localhost:5174"], supports_credentials=True)
+    CORS(app, 
+         origins=["https://proud-water-076db370f.6.azurestaticapps.net", "http://localhost:5174"],
+         supports_credentials=True,
+         allow_headers=['Content-Type', 'Authorization'],
+         expose_headers=['Content-Type', 'Authorization'])
 else:
-    CORS(app, origins=["http://localhost:5174", "http://localhost:5173"], supports_credentials=True)
+    CORS(app, 
+         origins=["http://localhost:5174", "http://localhost:5173"],
+         supports_credentials=True,
+         allow_headers=['Content-Type', 'Authorization'],
+         expose_headers=['Content-Type', 'Authorization'])
 
 if __name__ == '__main__':
     app.run(debug=True)
