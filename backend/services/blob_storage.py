@@ -50,7 +50,9 @@ class BlobStorageService:
         Upload data to a specific container with proper content type
         """
         try:
-            blob_client = self.blob_service_client.get_blob_client(container=container_name, blob=blob_name)
+            print(f"\n=== Starting blob upload ===")
+            print(f"Container: {container_name}")
+            print(f"Blob name: {blob_name}")
             
             # Set content type based on container or provided type
             if content_type is None:
@@ -61,12 +63,20 @@ class BlobStorageService:
                 }
                 content_type = content_type_map.get(container_name, 'application/octet-stream')
             
+            print(f"Content type: {content_type}")
+            print(f"Data length: {len(data)} bytes")
+            
+            # Get blob client
+            blob_client = self.blob_service_client.get_blob_client(container=container_name, blob=blob_name)
+            print(f"Blob client URL: {blob_client.url}")
+            
             # Upload blob with content type
             blob_client.upload_blob(
                 data, 
                 overwrite=True,
                 content_settings={'content_type': content_type}
             )
+            print(f"Successfully uploaded blob")
             
             # Return URL with SAS token for images
             if container_name == 'images':
@@ -75,11 +85,19 @@ class BlobStorageService:
                     expiry=datetime.utcnow() + timedelta(days=365),
                     start=datetime.utcnow()
                 )
-                return f"{blob_client.url}?{sas_token}"
+                url = f"{blob_client.url}?{sas_token}"
+                print(f"Generated public URL with SAS: {url}")
+                return url
             
-            return blob_client.url
+            url = blob_client.url
+            print(f"Generated URL: {url}")
+            return url
         except Exception as e:
-            print(f"Error uploading blob: {str(e)}")
+            print(f"\n=== Error uploading blob ===")
+            print(f"Error: {str(e)}")
+            import traceback
+            print("Stack trace:")
+            print(traceback.format_exc())
             raise
 
     def get_blob_url(self, container_name, blob_name):
