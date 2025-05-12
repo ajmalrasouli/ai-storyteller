@@ -204,17 +204,14 @@ class AzureServices:
         print(f"[DALLE] Using endpoint: {self.dalle_endpoint}", file=sys.stderr)
         print(f"[DALLE] Using deployment: {self.dalle_deployment_name}", file=sys.stderr)
         print(f"[DALLE] Using API version: {self.dalle_api_version}", file=sys.stderr)
-        try:
-            print(f"[DALLE] Starting illustration generation for title: '{title}'")
-            print(f"[DALLE] Using API key: {self.dalle_api_key[:4]}...{self.dalle_api_key[-4:]}")
-            print(f"[DALLE] Using endpoint: {self.dalle_endpoint}")
-            print(f"[DALLE] Using deployment: {self.dalle_deployment}")
-            print(f"[DALLE] Using API version: {self.dalle_api_version}")
-            print(f"[DALLE] Using model: {self.dalle_model}")
+        print(f"[DALLE] Using model: {self.dalle_model}")
 
-            # Create a simple, child-friendly prompt
-            prompt = f"Draw a happy, cartoon-style illustration of {', '.join(characters)} in a {theme} setting. "
-            prompt += "Use bright, cheerful colors and keep the style simple and friendly. "
+        # Create a simple, child-friendly prompt
+        prompt = f"Draw a happy, cartoon-style illustration of {', '.join(characters)} in a {theme} setting. "
+        prompt += "Use bright, cheerful colors and keep the style simple and friendly. "
+        prompt += "Make sure the image is safe and appropriate for children aged 3-5."
+        
+        print(f"[DALLE] Using prompt: \n{prompt}")
             prompt += "Make sure the image is safe and appropriate for children aged 3-5."
             
             print(f"[DALLE] Using prompt: \n{prompt}")
