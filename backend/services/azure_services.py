@@ -182,60 +182,45 @@ class AzureServices:
         print(f"[DALLE] Using endpoint: {self.dalle_endpoint}", file=sys.stderr)
         print(f"[DALLE] Using deployment: {self.dalle_deployment_name}", file=sys.stderr)
         print(f"[DALLE] Using API version: {self.dalle_api_version}", file=sys.stderr)
-        
         try:
-            # Create a more detailed, child-friendly prompt with explicit safety instructions
-            prompt = f"""
-            Create a colorful, cartoon-style illustration for a children's story titled '{title}'. 
-            Theme: {theme}
-            Characters: {characters}
-            Age Group: {age_group}
+            print(f"[DALLE] Starting illustration generation for title: '{title}'")
+            print(f"[DALLE] Using API key: {self.dalle_api_key[:4]}...{self.dalle_api_key[-4:]}")
+            print(f"[DALLE] Using endpoint: {self.dalle_endpoint}")
+            print(f"[DALLE] Using deployment: {self.dalle_deployment}")
+            print(f"[DALLE] Using API version: {self.dalle_api_version}")
+            print(f"[DALLE] Using model: {self.dalle_model}")
+
+            # Create a simple, child-friendly prompt
+            prompt = f"Draw a happy, cartoon-style illustration of {', '.join(characters)} in a {theme} setting. "
+            prompt += "Use bright, cheerful colors and keep the style simple and friendly. "
+            prompt += "Make sure the image is safe and appropriate for children aged 3-5."
             
-            Important Instructions:
-            1. This is for a children's story - make it cute and friendly
-            2. No scary, violent, or mature content
-            3. Use bright, cheerful colors
-            4. Show characters in a friendly, non-threatening way
-            5. Focus on positive interactions and happy moments
-            6. No weapons, blood, or scary elements
-            7. Keep it simple and easy for children to understand
-            8. Make it appropriate for {age_group} age group
-            
-            The illustration should be:
-            - Safe for children
-            - Non-violent
-            - Friendly and welcoming
-            - Bright and cheerful
-            - Easy to understand
-            - Age-appropriate
-            """
-            
-            print(f"[DALLE] Using prompt: {prompt[:100]}...", file=sys.stderr)
-            
-            # Initialize the Azure OpenAI client
-            client = AzureOpenAI(
+            print(f"[DALLE] Using prompt: \n{prompt}")
+
+            # Initialize DALL-E client
+            client = openai.OpenAI(
                 api_key=self.dalle_api_key,
-                api_version=self.dalle_api_version,
-                azure_endpoint=self.dalle_endpoint
+                api_base=self.dalle_endpoint,
+                api_version=self.dalle_api_version
             )
-            
-            print(f"[DALLE] Using model: {self.dalle_deployment_name}", file=sys.stderr)
+
+            # Generate image
             response = client.images.generate(
-                model=self.dalle_deployment_name,
+                model=self.dalle_model,
                 prompt=prompt,
                 n=1,
-                size="1024x1024"
+                size="1024x1024",
+                response_format="url"
             )
-            
-            # Get the image URL
+
+            # Get image URL
             image_url = response.data[0].url
-            print(f"[DALLE] Successfully generated image: {image_url[:50]}...", file=sys.stderr)
+            print(f"[DALLE] Successfully generated image URL: {image_url}")
+
             return image_url
-            
+
         except Exception as e:
-            import traceback
-            print(f"[DALLE ERROR] Failed to generate illustration: {str(e)}", file=sys.stderr)
-            traceback.print_exc(file=sys.stderr)
+            print(f"[DALLE ERROR] Failed to generate illustration: {str(e)}")
             raise Exception(f"Error generating illustration: {str(e)}")
 
     def text_to_speech(self, text):

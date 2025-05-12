@@ -70,11 +70,16 @@ class BlobStorageService:
             blob_client = self.blob_service_client.get_blob_client(container=container_name, blob=blob_name)
             print(f"Blob client URL: {blob_client.url}")
             
-            # Upload blob with content type
+            # Create proper content settings object
+            from azure.storage.blob import ContentSettings
+            
+            # Upload blob with content settings
             blob_client.upload_blob(
                 data, 
                 overwrite=True,
-                content_settings={'content_type': content_type}
+                content_settings=ContentSettings(
+                    content_type=content_type
+                )
             )
             print(f"Successfully uploaded blob")
             
