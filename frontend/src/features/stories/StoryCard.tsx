@@ -25,17 +25,28 @@ export const StoryCard: React.FC<StoryCardProps> = ({
         }
 
         try {
+            console.log('Attempting to play audio for story:', story.id);
+            
             if (story.audioUrl) {
-                setAudioUrl(story.audioUrl);
+                console.log('Using story.audioUrl:', story.audioUrl);
+                // Add cache buster to avoid caching issues
+                const audioUrlWithCacheBuster = `${story.audioUrl}${story.audioUrl.includes('?') ? '&' : '?'}cacheBuster=${Date.now()}`;
+                setAudioUrl(audioUrlWithCacheBuster);
                 setIsPlaying(true);
             } else {
+                console.log('No audioUrl found, generating speech...');
                 const response = await speechApi.textToSpeech(story.content);
+                console.log('Text-to-speech API response:', response);
+                
                 // If backend returns { audioUrl }, use that
                 if (response && response.audioUrl) {
+                    console.log('Using audioUrl from response:', response.audioUrl);
                     setAudioUrl(response.audioUrl);
                 } else {
                     // Fallback: treat as blob
+                    console.log('Using blob response');
                     const url = URL.createObjectURL(response);
+                    console.log('Created object URL:', url);
                     setAudioUrl(url);
                 }
                 setIsPlaying(true);
@@ -108,7 +119,13 @@ export const StoryCard: React.FC<StoryCardProps> = ({
                 <audio
                     src={audioUrl}
                     autoPlay
-                    onEnded={() => setIsPlaying(false)}
+                    controls
+                    onPlay={() => console.log('Audio started playing')}
+                    onError={(e) => console.error('Audio error:', e)}
+                    onEnded={() => {
+                        console.log('Audio playback ended');
+                        setIsPlaying(false);
+                    }}
                 />
             )}
         </div>
