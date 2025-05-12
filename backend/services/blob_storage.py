@@ -6,26 +6,19 @@ class BlobStorageService:
     def __init__(self):
         self.config = Config()
         self.connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
-        self.account_name = os.getenv("AZURE_STORAGE_ACCOUNT_NAME")
         
-        # Initialize BlobServiceClient with SAS token
-        from datetime import datetime, timedelta
-        from azure.storage.blob import generate_account_sas, ResourceTypes, AccountSasPermissions
+        # Parse account name from connection string
+        if self.connection_string:
+            self.account_name = self.connection_string.split("AccountName=")[1].split(";")[0]
+            self.account_key = self.connection_string.split("AccountKey=")[1].split(";")[0]
+        else:
+            raise ValueError("AZURE_STORAGE_CONNECTION_STRING environment variable is not set")
         
-        # Generate SAS token with read/write permissions
-        sas_token = generate_account_sas(
-            account_name=self.account_name,
-            account_key=self.connection_string.split("AccountKey=")[1].split(";")[0],
-            resource_types=ResourceTypes(object=True, container=True),
-            permission=AccountSasPermissions(read=True, write=True, list=True),
-            expiry=datetime.utcnow() + timedelta(hours=24)
+        # Initialize BlobServiceClient with account name and key
+        self.blob_service_client = BlobServiceClient(
+            account_url=f"https://{self.account_name}.blob.core.windows.net",
+            credential=self.account_key
         )
-        
-        # Create connection string with SAS token
-        sas_connection_string = f"DefaultEndpointsProtocol=https;AccountName={self.account_name};AccountKey={self.connection_string.split('AccountKey=')[1].split(';')[0]};EndpointSuffix=core.windows.net;SharedAccessSignature={sas_token}"
-        
-        # Initialize BlobServiceClient with SAS token
-        self.blob_service_client = BlobServiceClient.from_connection_string(sas_connection_string)
         
         # Create containers if they don't exist
         self._initialize_containers()
