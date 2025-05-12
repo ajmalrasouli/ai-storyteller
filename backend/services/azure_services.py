@@ -212,12 +212,13 @@ class AzureServices:
         prompt += "Make sure the image is safe and appropriate for children aged 3-5."
         
         print(f"[DALLE] Using prompt: \n{prompt}")
-            prompt += "Make sure the image is safe and appropriate for children aged 3-5."
-            
-            print(f"[DALLE] Using prompt: \n{prompt}")
 
-            # Initialize DALL-E client
-            client = openai.OpenAI(
+        # Initialize DALL-E client
+        client = openai.OpenAI(
+            api_key=self.dalle_api_key,
+            api_base=self.dalle_endpoint,
+            api_version=self.dalle_api_version
+        )
                 api_key=self.dalle_api_key,
                 api_base=self.dalle_endpoint,
                 api_version=self.dalle_api_version
