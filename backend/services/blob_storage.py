@@ -8,8 +8,24 @@ class BlobStorageService:
         self.connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
         self.account_name = os.getenv("AZURE_STORAGE_ACCOUNT_NAME")
         
-        # Initialize BlobServiceClient
-        self.blob_service_client = BlobServiceClient.from_connection_string(self.connection_string)
+        # Initialize BlobServiceClient with SAS token
+        from datetime import datetime, timedelta
+        from azure.storage.blob import generate_account_sas, ResourceTypes, AccountSasPermissions
+        
+        # Generate SAS token with read/write permissions
+        sas_token = generate_account_sas(
+            account_name=self.account_name,
+            account_key=self.connection_string.split("AccountKey=")[1].split(";")[0],
+            resource_types=ResourceTypes(object=True, container=True),
+            permission=AccountSasPermissions(read=True, write=True, list=True),
+            expiry=datetime.utcnow() + timedelta(hours=24)
+        )
+        
+        # Create connection string with SAS token
+        sas_connection_string = f"DefaultEndpointsProtocol=https;AccountName={self.account_name};AccountKey={self.connection_string.split('AccountKey=')[1].split(';')[0]};EndpointSuffix=core.windows.net;SharedAccessSignature={sas_token}"
+        
+        # Initialize BlobServiceClient with SAS token
+        self.blob_service_client = BlobServiceClient.from_connection_string(sas_connection_string)
         
         # Create containers if they don't exist
         self._initialize_containers()
@@ -47,7 +63,7 @@ class BlobStorageService:
 
     def upload_blob(self, container_name, blob_name, data, content_type=None):
         """
-        Upload data to a specific container with proper content type
+        Upload data to a specific container with proper content type and SAS token
         """
         try:
             print(f"\n=== Starting blob upload ===")
@@ -83,19 +99,16 @@ class BlobStorageService:
             )
             print(f"Successfully uploaded blob")
             
-            # Return URL with SAS token for images
-            if container_name == 'images':
-                sas_token = blob_client.generate_sas(
-                    permission="r",
-                    expiry=datetime.utcnow() + timedelta(days=365),
-                    start=datetime.utcnow()
-                )
-                url = f"{blob_client.url}?{sas_token}"
-                print(f"Generated public URL with SAS: {url}")
-                return url
+            # Generate SAS token for the blob
+            sas_token = blob_client.generate_sas(
+                permission="r",
+                expiry=datetime.utcnow() + timedelta(days=365),
+                start=datetime.utcnow()
+            )
             
-            url = blob_client.url
-            print(f"Generated URL: {url}")
+            # Return URL with SAS token
+            url = f"{blob_client.url}?{sas_token}"
+            print(f"Generated URL with SAS: {url}")
             return url
         except Exception as e:
             print(f"\n=== Error uploading blob ===")

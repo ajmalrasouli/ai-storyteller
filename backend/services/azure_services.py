@@ -99,41 +99,63 @@ class AzureServices:
 
     def save_story_content(self, story_content, title):
         """
-        Save story content to Azure Blob Storage
+        Save story content to Azure Blob Storage with proper SAS token handling
         """
         try:
             # Convert story content to bytes
             content_bytes = story_content.encode('utf-8')
-            filename = f"story_{title.replace(' ', '_')}.txt"
-            return self.save_to_storage(content_bytes, filename, self.container_names['stories'])
+            
+            # Generate a unique filename
+            filename = f"story_{title.replace(' ', '_')}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.txt"
+            
+            # Upload to blob storage
+            url = self.blob_storage.upload_blob(
+                self.container_names['stories'],
+                filename,
+                content_bytes,
+                content_type='text/plain'
+            )
+            
+            print(f"Successfully saved story content to: {url}")
+            return url
         except Exception as e:
             print(f"Error saving story content: {str(e)}")
+            import traceback
+            print("Stack trace:")
+            print(traceback.format_exc())
             raise
 
     def save_image(self, image_data, title):
         """
-        Save image to Azure Blob Storage
+        Save image to Azure Blob Storage with proper SAS token handling
         """
         try:
             # Ensure image data is in bytes
             if isinstance(image_data, str):
-                # If it's a URL or base64 string, download the image
+                # If it's a URL, download the image
                 import requests
                 from io import BytesIO
                 response = requests.get(image_data)
                 image_data = BytesIO(response.content).getvalue()
             
-            filename = f"{title.replace(' ', '_')}.png"
+            # Generate a unique filename
+            filename = f"{title.replace(' ', '_')}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.png"
+            
+            # Upload to blob storage
             url = self.blob_storage.upload_blob(
                 self.container_names['images'],
                 filename,
                 image_data,
                 content_type='image/png'
             )
+            
             print(f"Successfully saved image to: {url}")
             return url
         except Exception as e:
             print(f"Error saving image: {str(e)}")
+            import traceback
+            print("Stack trace:")
+            print(traceback.format_exc())
             raise
 
     def save_audio(self, audio_data, title):
