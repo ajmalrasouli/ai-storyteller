@@ -42,6 +42,7 @@ Curious how AI Storyteller works in action? Watch a quick walkthrough of the pla
 
 ## 🎨 Colorful Architecture Overview
 
+
 ```mermaid
 flowchart LR
     subgraph Azure Static Web Apps
