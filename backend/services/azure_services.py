@@ -3,6 +3,7 @@ import azure.cognitiveservices.speech as speechsdk
 import os
 from config.config import Config
 from openai import AzureOpenAI
+from services.blob_storage import BlobStorageService
 
 class AzureServices:
     def __init__(self):
