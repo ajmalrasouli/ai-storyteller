@@ -115,8 +115,23 @@ class AzureServices:
         Save image to Azure Blob Storage
         """
         try:
+            # Ensure image data is in bytes
+            if isinstance(image_data, str):
+                # If it's a URL or base64 string, download the image
+                import requests
+                from io import BytesIO
+                response = requests.get(image_data)
+                image_data = BytesIO(response.content).getvalue()
+            
             filename = f"{title.replace(' ', '_')}.png"
-            return self.save_to_storage(image_data, filename, self.container_names['images'])
+            url = self.blob_storage.upload_blob(
+                self.container_names['images'],
+                filename,
+                image_data,
+                content_type='image/png'
+            )
+            print(f"Successfully saved image to: {url}")
+            return url
         except Exception as e:
             print(f"Error saving image: {str(e)}")
             raise
@@ -126,8 +141,23 @@ class AzureServices:
         Save audio to Azure Blob Storage
         """
         try:
+            # Ensure audio data is in bytes
+            if isinstance(audio_data, str):
+                # If it's a URL or base64 string, download the audio
+                import requests
+                from io import BytesIO
+                response = requests.get(audio_data)
+                audio_data = BytesIO(response.content).getvalue()
+            
             filename = f"{title.replace(' ', '_')}.mp3"
-            return self.save_to_storage(audio_data, filename, self.container_names['audio'])
+            url = self.blob_storage.upload_blob(
+                self.container_names['audio'],
+                filename,
+                audio_data,
+                content_type='audio/mpeg'
+            )
+            print(f"Successfully saved audio to: {url}")
+            return url
         except Exception as e:
             print(f"Error saving audio: {str(e)}")
             raise

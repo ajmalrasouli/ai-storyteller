@@ -15,48 +15,60 @@ class BlobStorageService:
         self._initialize_containers()
 
     def _initialize_containers(self):
-        # Create containers for stories, audio, and images with proper access levels
-        containers = {
-            'stories': 'private',
-            'audio': 'private',
-            'images': 'public'
-        }
-        
-        for container_name, access_type in containers.items():
-            try:
+        """
+        Initialize all required containers with proper access levels
+        """
+        try:
+            # Get or create containers
+            for container_name in ['stories', 'audio', 'images']:
                 container_client = self.blob_service_client.get_container_client(container_name)
                 if not container_client.exists():
                     container_client.create_container()
-                    if access_type == 'public':
-                        # Set public access level for images container
-                        container_client.set_container_access_policy(
-                            public_access='container'
-                        )
-                print(f"Created container: {container_name} with access type: {access_type}")
-            except Exception as e:
-                print(f"Container {container_name} already exists or error occurred: {str(e)}")
+                    print(f"Created container: {container_name}")
+                else:
+                    print(f"Container {container_name} already exists")
+                    
+                # Set access policy for images container
+                if container_name == 'images':
+                    try:
+                        # Get current policy
+                        policy = container_client.get_container_access_policy()
+                        # Set public access if not already set
+                        if not policy['public_access'] == 'container':
+                            container_client.set_container_access_policy(
+                                public_access='container'
+                            )
+                            print(f"Set public access for container: {container_name}")
+                    except Exception as e:
+                        print(f"Error setting access policy for {container_name}: {str(e)}")
+        except Exception as e:
+            print(f"Error initializing containers: {str(e)}")
+            raise
 
-    def upload_blob(self, container_name, blob_name, data):
+    def upload_blob(self, container_name, blob_name, data, content_type=None):
         """
         Upload data to a specific container with proper content type
         """
         try:
             blob_client = self.blob_service_client.get_blob_client(container=container_name, blob=blob_name)
             
-            # Set appropriate content type based on container
-            content_type = {
-                'images': 'image/png',
-                'audio': 'audio/mpeg',
-                'stories': 'text/plain'
-            }.get(container_name, 'application/octet-stream')
+            # Set content type based on container or provided type
+            if content_type is None:
+                content_type_map = {
+                    'images': 'image/png',
+                    'audio': 'audio/mpeg',
+                    'stories': 'text/plain'
+                }
+                content_type = content_type_map.get(container_name, 'application/octet-stream')
             
+            # Upload blob with content type
             blob_client.upload_blob(
                 data, 
                 overwrite=True,
                 content_settings={'content_type': content_type}
             )
             
-            # For images container, ensure the URL is publicly accessible
+            # Return URL with SAS token for images
             if container_name == 'images':
                 sas_token = blob_client.generate_sas(
                     permission="r",
