@@ -30,12 +30,11 @@
 https://proud-water-076db370f.6.azurestaticapps.net/
 
 ---
-## 🏆 Video Demo
+## 🎥 Demo
 
-Curious how AI Storyteller works in action? Watch a quick walkthrough of the platform’s features and user experience:
+[![Watch the Demo](frontend/public/images/tn1.png)](https://youtu.be/HLox3JVXD2I)
 
-[![Watch the Demo](https://img.youtube.com/vi/lQT9TpDTtO8/0.jpg)](https://youtu.be/HLox3JVXD2I)
-[Watch the Demo on YouTube](https://youtu.be/lQT9TpDTtO8)
+👉 [Watch the Demo on YouTube](https://youtu.be/HLox3JVXD2I)
 
 ## 🏆 Hackathons Challenge 🏆
 
