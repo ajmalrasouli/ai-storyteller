@@ -12,9 +12,13 @@
 [![OpenAI](https://img.shields.io/badge/Azure%20OpenAI-GPT--4-10a37f?logo=openai&logoColor=white)](https://azure.microsoft.com/en-us/products/cognitive-services/openai-service/)
 [![DALL-E](https://img.shields.io/badge/Azure%20DALL--E-Image%20Gen-7FBA00?logo=microsoftazure&logoColor=white)](https://azure.microsoft.com/en-us/products/cognitive-services/dall-e/)
 [![Speech](https://img.shields.io/badge/Azure%20Speech-Text--to--Speech-FFB900?logo=microsoftazure&logoColor=white)](https://azure.microsoft.com/en-us/products/cognitive-services/speech-services/)
-[![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Railway](https://img.shields.io/badge/Railway-PostgreSQL-000000?logo=railway&logoColor=white)](https://railway.app)
 [![Azure Blob Storage](https://img.shields.io/badge/Azure%20Blob%20Storage-Containers-0089D6?logo=microsoftazure&logoColor=white)](https://azure.microsoft.com/en-us/products/storage/blobs/)
+![CI](https://github.com/ajmalrasouli/ai-storyteller/actions/workflows/azure-static-web-apps-proud-water-076db370f.yml/badge.svg)
+![Build](https://img.shields.io/badge/build-passing-brightgreen)
+![AI Powered](https://img.shields.io/badge/powered%20by-AI-blueviolet)
+![Made With](https://img.shields.io/badge/made%20with-💖%20+%20Python%20%26%20React-orange)
+![Last Commit](https://img.shields.io/github/last-commit/ajmalrasouli/ai-storyteller)
 
 > **AI Storyteller** is an interactive, AI-powered storytelling platform for children, featuring:
 > - Personalized story generation (Azure OpenAI)
@@ -30,7 +34,7 @@ https://proud-water-076db370f.6.azurestaticapps.net/
 
 Curious how AI Storyteller works in action? Watch a quick walkthrough of the platform’s features and user experience:
 
-[![Watch the Demo](https://img.youtube.com/vi/lQT9TpDTtO8/0.jpg)](https://youtu.be/lQT9TpDTtO8)
+[![Watch the Demo](https://img.youtube.com/vi/lQT9TpDTtO8/0.jpg)](https://youtu.be/HLox3JVXD2I)
 [Watch the Demo on YouTube](https://youtu.be/lQT9TpDTtO8)
 
 ## 🏆 Hackathons Challenge 🏆
@@ -235,19 +239,40 @@ ai-storyteller/
 
 *Impress the judges with your modern, scalable, and beautiful AI-powered storytelling platform!*
 
-## Screenshots
+## 📸 Screenshots
 
-| ![Adventure](frontend/public/images/adventure.png) | ![Story Creation](frontend/public/images/story.png) |
-|:---:|:---:|
-| *Adventure Map* | *Story Creation* |
+### 🌍 Adventure Experience
 
-| ![My Stories](frontend/public/images/mystories.png) | ![Favorites](frontend/public/images/favorites.png) |
-|:---:|:---:|
-| *My Stories* | *Favorites* |
+| ![Adventure Map](frontend/public/images/adventure.png) | ![Story Creation](frontend/public/images/adventure.png) |
+|:--:|:--:|
+| **Adventure Map** | **Story Creation** |
 
-| ![Story Page View](frontend/public/images/storypage.png) | ![About](frontend/public/images/about.png) |
-|:---:|:---:|
-| *Story Page with Read Aloud* | *About* |
+---
+
+### 📚 Your Library
+
+| ![My Stories](frontend/public/images/mystories.png) | ![Favorites](frontend/public/images/mystories.png) |
+|:--:|:--:|
+| **My Stories** | **Favorites** |
+
+---
+
+### 📖 Story View
+
+| ![Story Page](frontend/public/images/storypage.png) | ![About Page](frontend/public/images/aboutpage.png) |
+|:--:|:--:|
+| **Story Page with Read Aloud** | **About** |
+
+---
+
+### 📊 Project Status
+
+![Status](https://img.shields.io/badge/status-active-brightgreen)
+![Contributions](https://img.shields.io/badge/contributions-welcome-yellowgreen)
+![Open Issues](https://img.shields.io/github/issues/ajmalrasouli/ai-storyteller)
+![Stars](https://img.shields.io/github/stars/ajmalrasouli/ai-storyteller?style=social)
+
+🧠 *AI-generated stories with interactive visuals and a personalized experience.*
 
 
 
@@ -628,6 +653,12 @@ The project includes several test scripts:
 - `FLASK_APP`: Flask application entry point
 - `FLASK_ENV`: Flask environment (development/production)
 
-## License
+## 📄 License
 
-MIT
+This project is licensed under the [MIT License](LICENSE).
+
+You are free to use, modify, and distribute this software with attribution.
+
+---
+
+© 2025 [Ajmal Rasouli](https://github.com/ajmalrasouli). All rights reserved.
