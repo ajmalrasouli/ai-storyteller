@@ -2,9 +2,9 @@
 
 > **AI Storyteller for Children**
 >
-> 🧒📚 _This innovative AI-powered application creates personalized bedtime stories for children based on their interests, favorite characters, and educational themes. _
+> 🧒📚 _An innovative AI-powered application that creates personalized bedtime stories for children based on their interests, favorite characters, and educational themes._
 >
-> By leveraging advanced natural language processing (NLP) and generative models, the AI crafts engaging, interactive stories that can teach valuable lessons such as kindness, patience, and sharing. The app adapts to each child’s preferences, ensuring a unique and enjoyable experience every time. With features like character customization and moral story adaptation, the AI Storyteller fosters imagination, learning, and positive values in an interactive way.
+> By leveraging advanced natural language processing (NLP) and generative models, the AI crafts engaging, interactive stories that teach valuable lessons such as kindness, patience, and sharing. The app adapts to each child’s preferences, ensuring a unique and enjoyable experience every time. With features like character customization and moral story adaptation, AI Storyteller fosters imagination, learning, and positive values in an interactive way.
 
 [![Azure Static Web Apps](https://img.shields.io/badge/Azure%20Static%20Web%20Apps-Frontend-0078D4?logo=azure-devops&logoColor=white)](https://azure.microsoft.com/en-us/services/app-service/static/)
 [![Azure Container Apps](https://img.shields.io/badge/Azure%20Container%20Apps-Backend-008272?logo=microsoftazure&logoColor=white)](https://azure.microsoft.com/en-us/products/container-apps/)
@@ -20,11 +20,16 @@
 ![Made With](https://img.shields.io/badge/made%20with-💖%20+%20Python%20%26%20React-orange)
 ![Last Commit](https://img.shields.io/github/last-commit/ajmalrasouli/ai-storyteller)
 
-> **AI Storyteller** is an interactive, AI-powered storytelling platform for children, featuring:
-> - Personalized story generation (Azure OpenAI)
-> - AI-generated illustrations (Azure DALL-E)
-> - Lifelike narration (Azure Speech Service)
-> - A beautiful, modern user experience
+---
+
+## About
+
+**AI Storyteller** is an interactive, AI-powered storytelling platform for children, featuring:
+
+- Personalized story generation (Azure OpenAI)
+- AI-generated illustrations (Azure DALL-E)
+- Lifelike narration (Azure Speech Service)
+- A beautiful, modern user experience
 ---
 ### View Live App
 https://proud-water-076db370f.6.azurestaticapps.net/
