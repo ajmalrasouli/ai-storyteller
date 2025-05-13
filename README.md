@@ -4,7 +4,14 @@
 >
 > 🧒📚 _An innovative AI-powered application that creates personalized bedtime stories for children based on their interests, favorite characters, and educational themes._
 >
-> By leveraging advanced natural language processing (NLP) and generative models, the AI crafts engaging, interactive stories that teach valuable lessons such as kindness, patience, and sharing. The app adapts to each child’s preferences, ensuring a unique and enjoyable experience every time. With features like character customization and moral story adaptation, AI Storyteller fosters imagination, learning, and positive values in an interactive way.
+> By leveraging advanced natural language processing (NLP) and generative models, the AI crafts engaging, interactive stories that teach valuable lessons such as kindness, patience, and sharing. The app adapts to each child's preferences, ensuring a unique and enjoyable experience every time. With features like character customization and moral story adaptation, AI Storyteller fosters imagination, learning, and positive values in an interactive way.
+
+<div align="center">
+
+[![Watch the Demo](frontend/public/images/tn1.png)](https://youtu.be/HLox3JVXD2I)
+
+[![Live Demo](https://img.shields.io/badge/LIVE_DEMO-Visit_App-ff69b4?style=for-the-badge)](https://proud-water-076db370f.6.azurestaticapps.net/)
+[![Watch Demo](https://img.shields.io/badge/WATCH_DEMO-YouTube-red?style=for-the-badge&logo=youtube)](https://youtu.be/HLox3JVXD2I)
 
 [![Azure Static Web Apps](https://img.shields.io/badge/Azure%20Static%20Web%20Apps-Frontend-0078D4?logo=azure-devops&logoColor=white)](https://azure.microsoft.com/en-us/services/app-service/static/)
 [![Azure Container Apps](https://img.shields.io/badge/Azure%20Container%20Apps-Backend-008272?logo=microsoftazure&logoColor=white)](https://azure.microsoft.com/en-us/products/container-apps/)
@@ -14,11 +21,35 @@
 [![Speech](https://img.shields.io/badge/Azure%20Speech-Text--to--Speech-FFB900?logo=microsoftazure&logoColor=white)](https://azure.microsoft.com/en-us/products/cognitive-services/speech-services/)
 [![Railway](https://img.shields.io/badge/Railway-PostgreSQL-000000?logo=railway&logoColor=white)](https://railway.app)
 [![Azure Blob Storage](https://img.shields.io/badge/Azure%20Blob%20Storage-Containers-0089D6?logo=microsoftazure&logoColor=white)](https://azure.microsoft.com/en-us/products/storage/blobs/)
+
 ![CI](https://github.com/ajmalrasouli/ai-storyteller/actions/workflows/azure-static-web-apps-proud-water-076db370f.yml/badge.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen)
 ![AI Powered](https://img.shields.io/badge/powered%20by-AI-blueviolet)
 ![Made With](https://img.shields.io/badge/made%20with-💖%20+%20Python%20%26%20React-orange)
 ![Last Commit](https://img.shields.io/github/last-commit/ajmalrasouli/ai-storyteller)
+</div>
+
+## 📋 Table of Contents
+- [About](#about)
+- [Feature Highlights](#-feature-highlights)
+- [Architecture Overview](#-colorful-architecture-overview)
+- [Storage Infrastructure](#-storage-infrastructure)
+- [Two-Server Cloud Architecture](#two-server-cloud-architecture)
+- [Demo](#-demo)
+- [Hackathons Challenge](#-hackathons-challenge-)
+- [Screenshots](#-screenshots)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Deployment](#deployment)
+- [Setup](#setup)
+- [Project Structure](#project-structure)
+- [System Architecture](#system-architecture)
+- [Component Flow](#component-flow)
+- [Development](#development)
+- [Testing](#testing)
+- [Using the Application](#using-the-application)
+- [Environment Variables](#environment-variables)
+- [License](#-license)
 
 ---
 
@@ -30,11 +61,12 @@
 - AI-generated illustrations (Azure DALL-E)
 - Lifelike narration (Azure Speech Service)
 - A beautiful, modern user experience
----
+
 ### View Live App
 https://proud-water-076db370f.6.azurestaticapps.net/
 
 ---
+
 ## 🎥 Demo
 
 [![Watch the Demo](frontend/public/images/tn1.png)](https://youtu.be/HLox3JVXD2I)
@@ -50,6 +82,7 @@ https://proud-water-076db370f.6.azurestaticapps.net/
 
 ## 🎨 Colorful Architecture Overview
 
+<div align="center">
 
 ```mermaid
 flowchart LR
@@ -82,7 +115,11 @@ flowchart LR
     BE -- "DB" --> DB
 ```
 
+</div>
+
 ## 📦 Storage Infrastructure
+
+<div align="center">
 
 ### Azure Blob Storage
 ![Azure Storage](frontend/public/images/azurestorage.png)
@@ -99,6 +136,8 @@ flowchart LR
 - Stores user data, stories, and favorites
 - Secure and scalable database service
 - Easy to manage and monitor
+
+</div>
 
 ---
 
@@ -129,33 +168,119 @@ flowchart LR
 
 ## 🦄 Feature Highlights
 
-| Feature                | Description                                                                 |
-|------------------------|-----------------------------------------------------------------------------|
-| 🤖 AI Story Generation | Azure OpenAI GPT-4 creates magical, personalized stories                    |
-| 🎨 AI Illustrations    | Azure DALL-E generates whimsical, child-friendly images                     |
-| 🗣️ Text-to-Speech      | Azure Speech Service narrates stories with lifelike voices                  |
-| ⭐ Favorites & Sharing  | Email, print, and social media integration for stories                      |
-| 🐳 Backend Container   | Dockerized backend for portability and scalability                          |
-| ☁️ Cloud-Native        | Modern Azure deployment, CI/CD, and secure environment variables            |
-| 📱 Responsive UI       | Animated, mobile-friendly, and accessible for all ages                      |
+<table>
+  <tr>
+    <td width="33%">
+      <h3>🤖 AI Story Generation</h3>
+      <ul>
+        <li>Azure OpenAI GPT-4 creates magical, personalized stories</li>
+        <li>Personalized characters & themes</li>
+        <li>Educational value & moral lessons</li>
+        <li>Age-appropriate content (3-5, 6-8, 9-12)</li>
+      </ul>
+    </td>
+    <td width="33%">
+      <h3>🎨 AI Illustrations</h3>
+      <ul>
+        <li>Azure DALL-E 3 generates whimsical, child-friendly images</li>
+        <li>Character-specific illustrations</li>
+        <li>Theme-based visual content</li>
+        <li>Automatic regeneration option</li>
+      </ul>
+    </td>
+    <td width="33%">
+      <h3>🗣️ Text-to-Speech</h3>
+      <ul>
+        <li>Azure Speech Service narrates with lifelike voices</li>
+        <li>Custom voice styles for characters</li>
+        <li>Dynamic speech rate by age group</li>
+        <li>Background music integration</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <td width="33%">
+      <h3>⭐ User Experience</h3>
+      <ul>
+        <li>Story favoriting system</li>
+        <li>Email stories with smart content truncation</li>
+        <li>Print-friendly story formatting</li>
+        <li>Social sharing integration</li>
+      </ul>
+    </td>
+    <td width="33%">
+      <h3>✨ Enhanced UI</h3>
+      <ul>
+        <li>Typewriter effect for story reveal</li>
+        <li>Book flipping animation during generation</li>
+        <li>Magical sparkle effects & dynamic elements</li>
+        <li>Confetti celebration on generation</li>
+      </ul>
+    </td>
+    <td width="33%">
+      <h3>☁️ Cloud-Native</h3>
+      <ul>
+        <li>Dockerized backend for portability</li>
+        <li>Modern Azure deployment architecture</li>
+        <li>CI/CD workflow automation</li>
+        <li>Secure environment variables</li>
+      </ul>
+    </td>
+  </tr>
+</table>
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Layer      | Stack / Service                        | Icon   |
-|------------|----------------------------------------|--------|
-| Frontend   | React, TypeScript, Vite, CSS           | 🌐     |
-| Backend    | Flask, SQLAlchemy, Python              | 🐍     |
-| Container  | Docker, Docker Hub                     | 🐳     |
-| Cloud      | Azure SWA, Azure ACA                   | ☁️     |
-| AI         | Azure OpenAI, DALL-E, Speech           | 🤖🎨🗣️ |
-| Database   | SQLite                                 | 🗄️     |
-| DevOps     | GitHub Actions, Azure CLI              | 🔁     |
+<table>
+  <tr>
+    <th>Layer</th>
+    <th>Stack / Service</th>
+    <th>Icon</th>
+  </tr>
+  <tr>
+    <td>Frontend</td>
+    <td>React, TypeScript, Vite, CSS</td>
+    <td>🌐</td>
+  </tr>
+  <tr>
+    <td>Backend</td>
+    <td>Flask, SQLAlchemy, Python</td>
+    <td>🐍</td>
+  </tr>
+  <tr>
+    <td>Container</td>
+    <td>Docker, Docker Hub</td>
+    <td>🐳</td>
+  </tr>
+  <tr>
+    <td>Cloud</td>
+    <td>Azure SWA, Azure ACA</td>
+    <td>☁️</td>
+  </tr>
+  <tr>
+    <td>AI</td>
+    <td>Azure OpenAI, DALL-E, Speech</td>
+    <td>🤖🎨🗣️</td>
+  </tr>
+  <tr>
+    <td>Database</td>
+    <td>SQLite (Dev), PostgreSQL (Prod)</td>
+    <td>🗄️</td>
+  </tr>
+  <tr>
+    <td>DevOps</td>
+    <td>GitHub Actions, Azure CLI</td>
+    <td>🔁</td>
+  </tr>
+</table>
 
 ---
 
 ## 🧩 Component Sequence
+
+<div align="center">
 
 ```mermaid
 sequenceDiagram
@@ -164,7 +289,7 @@ sequenceDiagram
     participant Backend as Azure ACA (Docker)
     participant DockerHub
     participant AzureAI as Azure AI Services
-    participant DB as SQLite
+    participant DB as SQLite/PostgreSQL
 
     User->>Frontend: Use App (UI)
     Frontend->>Backend: API Requests (Stories, Images, Speech)
@@ -174,6 +299,74 @@ sequenceDiagram
     Backend-->>Frontend: Return Results
     Frontend-->>User: Show Story, Image, Play Audio
 ```
+
+</div>
+
+---
+
+## 📸 Screenshots
+
+<div align="center">
+
+### 🌍 Adventure Experience
+
+| ![Adventure Map](frontend/public/images/adventure.png) | ![Story Creation](frontend/public/images/adventure.png) |
+|:--:|:--:|
+| **Adventure Map** | **Story Creation** |
+
+### 📚 Your Library
+
+| ![My Stories](frontend/public/images/mystories.png) | ![Favorites](frontend/public/images/mystories.png) |
+|:--:|:--:|
+| **My Stories** | **Favorites** |
+
+### 📖 Story View
+
+| ![Story Page](frontend/public/images/storypage.png) | ![About Page](frontend/public/images/aboutpage.png) |
+|:--:|:--:|
+| **Story Page with Read Aloud** | **About** |
+
+</div>
+
+---
+
+## Features
+
+- 🤖 AI-powered story generation using Azure OpenAI (GPT-4)
+- 🎨 AI-generated illustrations using Azure DALL-E 3
+  - Child-friendly, whimsical digital art style
+  - Theme and character-specific illustrations
+  - Age-appropriate visual content
+  - Automatic regeneration option
+  - Fallback to curated theme-based images
+- 🗣️ High-quality text-to-speech using Azure Speech Service
+  - Natural-sounding voices with multiple language support
+  - Custom voice styles for different story characters
+  - Dynamic speech rate adjustment based on age group
+  - Background music integration for immersive storytelling
+  - Voice selection for different story themes
+- 📚 Multiple age group support (3-5, 6-8, 9-12 years)
+- 🎨 Various story themes (Space Adventure, Magic Kingdom, Ocean Explorer, etc.)
+- ⭐ Story favoriting system
+- 🔊 Text-to-speech narration with natural-sounding voices
+- 📧 Email stories with smart content truncation
+  - Automatic length management for email clients
+  - Includes story metadata and illustration links
+  - Fallback to print option for long stories
+- 📱 Social sharing integration
+  - Direct sharing to Twitter, Facebook, and WhatsApp
+  - Native Web Share API support
+  - Clipboard fallback for unsupported browsers
+  - Custom sharing messages with story metadata
+- 🖨️ Print-friendly story formatting
+- 🎯 Educational focus with learning objectives
+- ✨ Enhanced animated UI with visual feedback:
+  - 📝 Typewriter effect for story reveal
+  - 📖 Book flipping animation during story generation
+  - 💫 Magical sparkle effects and dynamic elements
+  - 🔄 Rotating loading messages during story creation
+  - ✨ Confetti celebration when stories are generated
+  - 📱 Responsive design with smooth transitions
 
 ---
 
@@ -217,175 +410,10 @@ cd ai-storyteller
 
 ---
 
-## 📦 Project Structure
-
-```
-ai-storyteller/
-├── frontend/   # React/TypeScript SPA (Azure SWA)
-├── backend/    # Flask API (Docker, Azure ACA)
-├── .github/    # CI/CD workflows
-└── README.md
-```
-
----
-
-## ⚡ Environment Variables
-
-| Variable           | Where              | Purpose                                |
-|--------------------|--------------------|----------------------------------------|
-| `VITE_API_URL`     | Azure SWA, Frontend| URL of backend API                     |
-| `DATABASE_URL`     | Backend/ACA        | SQLite DB connection                   |
-| `AZURE_OPENAI_KEY` | Backend/ACA        | Azure OpenAI API Key                   |
-| `AZURE_DALLE_KEY`  | Backend/ACA        | Azure DALL-E API Key                   |
-| `AZURE_SPEECH_KEY` | Backend/ACA        | Azure Speech API Key                   |
-| ...                | ...                | ...                                    |
----
-
-*Impress the judges with your modern, scalable, and beautiful AI-powered storytelling platform!*
-
-## 📸 Screenshots
-
-### 🌍 Adventure Experience
-
-| ![Adventure Map](frontend/public/images/adventure.png) | ![Story Creation](frontend/public/images/adventure.png) |
-|:--:|:--:|
-| **Adventure Map** | **Story Creation** |
-
----
-
-### 📚 Your Library
-
-| ![My Stories](frontend/public/images/mystories.png) | ![Favorites](frontend/public/images/mystories.png) |
-|:--:|:--:|
-| **My Stories** | **Favorites** |
-
----
-
-### 📖 Story View
-
-| ![Story Page](frontend/public/images/storypage.png) | ![About Page](frontend/public/images/aboutpage.png) |
-|:--:|:--:|
-| **Story Page with Read Aloud** | **About** |
-
----
-
-### 📊 Project Status
-
-![Status](https://img.shields.io/badge/status-active-brightgreen)
-![Contributions](https://img.shields.io/badge/contributions-welcome-yellowgreen)
-![Open Issues](https://img.shields.io/github/issues/ajmalrasouli/ai-storyteller)
-![Stars](https://img.shields.io/github/stars/ajmalrasouli/ai-storyteller?style=social)
-
-🧠 *AI-generated stories with interactive visuals and a personalized experience.*
-
-
-
-## Features
-
-- 🤖 AI-powered story generation using Azure OpenAI (GPT-4)
-- 🎨 AI-generated illustrations using Azure DALL-E 3
-  - Child-friendly, whimsical digital art style
-  - Theme and character-specific illustrations
-  - Age-appropriate visual content
-  - Automatic regeneration option
-  - Fallback to curated theme-based images
-- 🗣️ High-quality text-to-speech using Azure Speech Service
-  - Natural-sounding voices with multiple language support
-  - Custom voice styles for different story characters
-  - Dynamic speech rate adjustment based on age group
-  - Background music integration for immersive storytelling
-  - Voice selection for different story themes
-- 📚 Multiple age group support (3-5, 6-8, 9-12 years)
-- 🎨 Various story themes (Space Adventure, Magic Kingdom, Ocean Explorer, etc.)
-- ⭐ Story favoriting system
-- 🔊 Text-to-speech narration with natural-sounding voices
-- 📧 Email stories with smart content truncation
-  - Automatic length management for email clients
-  - Includes story metadata and illustration links
-  - Fallback to print option for long stories
-- 📱 Social sharing integration
-  - Direct sharing to Twitter, Facebook, and WhatsApp
-  - Native Web Share API support
-  - Clipboard fallback for unsupported browsers
-  - Custom sharing messages with story metadata
-- 🖨️ Print-friendly story formatting
-- 🎯 Educational focus with learning objectives
-- ✨ Enhanced animated UI with visual feedback:
-  - 📝 Typewriter effect for story reveal
-  - 📖 Book flipping animation during story generation
-  - 💫 Magical sparkle effects and dynamic elements
-  - 🔄 Rotating loading messages during story creation
-  - ✨ Confetti celebration when stories are generated
-  - 📱 Responsive design with smooth transitions
-
-## Tech Stack
-
-- Frontend: React + TypeScript
-- Backend: Flask + SQLAlchemy
-- AI: Azure OpenAI (GPT-4)
-- Image Generation: Azure DALL-E 3
-- Text-to-Speech: Azure Speech Service with premium voice selection
-- Database: SQLite
-- Styling: CSS with inline styles for consistent rendering
-- Containerization: Docker
-
 ## Deployment
 
-### Frontend: Azure Static Web Apps (SWA)
-
----
-
-### Backend: Deploy to Azure Container Apps (ACA) via Docker Hub
-
-You can deploy the backend as a scalable containerized service on Azure using Azure Container Apps (ACA) and Docker Hub.
-
-#### **Step 1: Push Docker Image to Docker Hub**
-1. Build your Docker image locally:
-   ```sh
-   docker build -t storyteller-backend -f Dockerfile .
-   ```
-2. Tag your image for Docker Hub:
-   ```sh
-   docker tag storyteller-backend <dockerhub-username>/storyteller-backend:latest
-   ```
-3. Push the image to Docker Hub:
-   ```sh
-   docker push <dockerhub-username>/storyteller-backend:latest
-   ```
-
-#### **Step 2: Azure Setup**
-1. Log in to Azure CLI:
-   ```sh
-   az login
-   ```
-2. Create a resource group (if needed):
-   ```sh
-   az group create --name storyteller-rg --location westeurope
-   ```
-3. Create a Container Apps environment:
-   ```sh
-   az containerapp env create --name storyteller-env --resource-group storyteller-rg --location westeurope
-   ```
-
-#### **Step 3: Deploy Container to ACA**
-1. Deploy your container app (replace env vars as needed):
-   ```sh
-   az containerapp create \
-     --name storyteller-backend \
-     --resource-group storyteller-rg \
-     --environment storyteller-env \
-     --image <dockerhub-username>/storyteller-backend:latest \
-     --target-port 5000 \
-     --ingress 'external' \
-     --env-vars KEY1=VALUE1 KEY2=VALUE2
-   ```
-   - Set your environment variables (API keys, DB URL, etc.) using `--env-vars` or via the Azure Portal.
-
-2. After deployment, Azure will provide a public URL for your backend API.
-
-**Tip:** For full details, see the main documentation or ask for help with persistent storage, CORS, or CI/CD integration.
-
----
+<details>
+<summary><b>Frontend: Azure Static Web Apps (SWA)</b></summary>
 
 The frontend is deployed on [Azure Static Web Apps](https://azure.microsoft.com/en-us/products/app-service/static) for a cost-effective, scalable, and Microsoft-native solution (ideal for hackathons). Deployment is automated via a GitHub Actions workflow, so every push to the `main` branch triggers a new build and deploy.
 
@@ -436,37 +464,68 @@ az staticwebapp hostname set --name ai-storyteller-app --hostname yourdomain.com
 - Each push to GitHub triggers a new deployment via Actions workflow.
 
 **Estimated Cost:** Free for hackathon-scale usage (100,000 requests/month on free tier).
+</details>
 
----
-
-### Backend: Azure Container Apps (ACA) or Azure Functions
+<details>
+<summary><b>Backend: Azure Container Apps (ACA)</b></summary>
 
 You can deploy the backend to Azure Container Apps for maximum flexibility, or use Azure Functions for a fully serverless, cost-optimized solution (recommended for hackathons).
 
-#### Example: Deploying Backend to Azure Container Apps
+#### Deploying Backend to Azure Container Apps
 
-1. Build and push Docker image to Azure Container Registry (ACR):
-    ```bash
-    az acr create --resource-group ai-storyteller-rg --name aistorytelleracr --sku Basic
-    docker build -t ai-storyteller-backend .
-    docker tag ai-storyteller-backend aistorytelleracr.azurecr.io/ai-storyteller-backend:v1
-    docker push aistorytelleracr.azurecr.io/ai-storyteller-backend:v1
-    ```
-    
-2. Create Container App Environment and deploy:
-    ```bash
-    az containerapp env create --name ai-storyteller-env --resource-group ai-storyteller-rg --location eastus2
-    az containerapp create --name ai-storyteller-backend --resource-group ai-storyteller-rg --environment ai-storyteller-env --image aistorytelleracr.azurecr.io/ai-storyteller-backend:v1 --target-port 8000 --ingress external --registry-server aistorytelleracr.azurecr.io
-    ```
-3. Set environment variables:
-    ```bash
-    az containerapp update --name ai-storyteller-backend --resource-group ai-storyteller-rg --set-env-vars "OPENAI_API_KEY=your_key" "MONGO_URI=your_mongo_uri" "JWT_SECRET=your_secret"
-    ```
-4. [Optional] Set up CI/CD with GitHub Actions for automated deployments.
+1. Build and push Docker image to Docker Hub:
+   ```bash
+   # Build your Docker image locally:
+   docker build -t storyteller-backend -f Dockerfile .
+   
+   # Tag your image for Docker Hub:
+   docker tag storyteller-backend <dockerhub-username>/storyteller-backend:latest
+   
+   # Push the image to Docker Hub:
+   docker push <dockerhub-username>/storyteller-backend:latest
+   ```
 
-#### Cost & Simplicity Recommendation
-- For hackathons or demos, Azure Static Web Apps (frontend) + Azure Functions (backend) is the most cost-effective and simple setup (often $0 for limited usage).
-- Azure Container Apps is suitable if you need custom Docker or persistent runtime, but incurs some cost (~$20-50/month for basic usage).
+2. Azure Setup:
+   ```bash
+   # Log in to Azure CLI:
+   az login
+   
+   # Create a resource group (if needed):
+   az group create --name storyteller-rg --location westeurope
+   
+   # Create a Container Apps environment:
+   az containerapp env create --name storyteller-env --resource-group storyteller-rg --location westeurope
+   ```
+
+3. Deploy to ACA:
+   ```bash
+   # Deploy your container app (replace env vars as needed):
+   az containerapp create \
+     --name storyteller-backend \
+     --resource-group storyteller-rg \
+     --environment storyteller-env \
+     --image <dockerhub-username>/storyteller-backend:latest \
+     --target-port 5000 \
+     --ingress 'external' \
+     --env-vars KEY1=VALUE1 KEY2=VALUE2
+   ```
+   - Set your environment variables (API keys, DB URL, etc.) using `--env-vars` or via the Azure Portal.
+
+4. After deployment, Azure will provide a public URL for your backend API.
+
+#### Alternative: Azure Functions (More Cost-Effective)
+For smaller projects or hackathons, you might consider Azure Functions:
+
+1. Create Function App:
+   ```bash
+   az functionapp create --name ai-storyteller-api --resource-group ai-storyteller-rg --storage-account aistorytellerstorage --consumption-plan-location eastus2 --runtime python --functions-version 4
+   ```
+
+2. Deploy your code:
+   ```bash
+   func azure functionapp publish ai-storyteller-api
+   ```
+</details>
 
 ---
 
@@ -539,6 +598,8 @@ ai-storyteller/
 
 ## System Architecture
 
+<div align="center">
+
 ```mermaid
 graph TD
     A[Frontend React/TypeScript] --> B[Flask Backend]
@@ -566,7 +627,11 @@ graph TD
     end
 ```
 
+</div>
+
 ## Component Flow
+
+<div align="center">
 
 ```mermaid
 sequenceDiagram
@@ -593,6 +658,8 @@ sequenceDiagram
     Backend-->>Frontend: Audio Data
     Frontend->>User: Play Narration
 ```
+
+</div>
 
 ## Development
 
@@ -656,6 +723,17 @@ The project includes several test scripts:
 - `AZURE_SPEECH_REGION`: Your Azure Speech Service region
 - `FLASK_APP`: Flask application entry point
 - `FLASK_ENV`: Flask environment (development/production)
+- `VITE_API_URL`: URL of backend API (frontend environment variable)
+
+## 👥 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## 📄 License
 
@@ -665,4 +743,10 @@ You are free to use, modify, and distribute this software with attribution.
 
 ---
 
+<div align="center">
+
+**[Live Demo](https://proud-water-076db370f.6.azurestaticapps.net/)** | **[Watch Video](https://youtu.be/HLox3JVXD2I)** | **[Report Issue](https://github.com/ajmalrasouli/ai-storyteller/issues)**
+
 © 2025 [Ajmal Rasouli](https://github.com/ajmalrasouli). All rights reserved.
+
+</div>
